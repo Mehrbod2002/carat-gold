@@ -1,0 +1,12 @@
+[Unit]
+Description=Meta Clients handler
+After=network.target nginx.service
+
+[Service]
+ExecStart=/usr/bin/python3 /root/server/meta/meta.py >> /var/log/meta.log 2>&1
+Restart=always
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
