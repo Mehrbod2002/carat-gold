@@ -9,10 +9,5 @@ cp meta.service /etc/systemd/system
 # sudo systemctl enable meta.service
 # sudo systemctl restart meta.service
 
-mkdir -p /var/www/html
-rm -rf /var/www/html/*
-cp -r /root/server/meta/chart/* /var/www/html/
-cp cert.pem /etc/nginx/ssl
-cp key.pem /etc/nginx/ssl
 cp nginx.conf /etc/nginx/sites-available/default
 systemctl restart nginx

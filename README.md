@@ -1,1 +1,1 @@
-Carat trade panel
+Carat panel
