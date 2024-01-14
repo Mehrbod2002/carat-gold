@@ -1,6 +1,7 @@
 package routes
 
 import (
+	controllers "carat-gold/app/controllers/admin"
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
@@ -75,6 +76,13 @@ func SetupRouter() *gin.Engine {
 	adminRoutes := apis.Group("/admin")
 	adminRoutes.Use(AdminAuthMiddleware())
 	{
+		adminRoutes.GET("/get_users", controllers.GetAllUsers)
+		adminRoutes.DELETE("/delete_user", controllers.DeleteUser)
+		adminRoutes.POST("/logout", controllers.AdminLogout)
+		adminRoutes.POST("/freeze_user", controllers.FreezeUser)
+		adminRoutes.POST("/unfreeze_user", controllers.FreezeUser)
+		adminRoutes.POST("/set_user_permissions", controllers.SetUserPermissions)
+		adminRoutes.POST("/edit_user", controllers.EditUser)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {

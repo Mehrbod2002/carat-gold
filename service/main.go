@@ -56,7 +56,7 @@ func main() {
 			return
 		}
 		if _, err := db.Collection("admin").InsertOne(context.Background(), bson.M{
-			"phone":    os.Getenv("ADMIN_"),
+			"email":    os.Getenv("ADMIN_USERNAME"),
 			"password": hashedPassword,
 		}); err != nil {
 			log.Println("failed to create admin user ", err)

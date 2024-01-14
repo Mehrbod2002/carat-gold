@@ -16,6 +16,7 @@ type User struct {
 	Password          string             `bson:"password" json:"password"`
 	PhoneVerified     bool               `bson:"phone_verified" json:"phone_verified"`
 	OtpCode           *int               `bson:"otp_code" json:"otp_code"`
+	Address           string             `bson:"address" json:"address"`
 	RegisterCompleted bool               `bson:"register_completed" json:"register_completed"`
 	ResetToken        string             `bson:"reset_token" json:"reset_token"`
 	ResetTokenValid   time.Time          `bson:"reset_token_valid" json:"reset_token_valid"`
@@ -73,4 +74,18 @@ type UserMessage struct {
 	Type        string      `json:"type"`
 	Content     string      `json:"message"`
 	TypeMessage TypeMessage `json:"message_type"`
+}
+
+type Currency struct {
+	Currency   string `bson:"currency" json:"currency"`
+	USDConvert int64  `bson:"usd_convert" json:"usd_convert"`
+}
+
+type Products struct {
+	Currency   string `bson:"currency" json:"currency"`
+	USDConvert int64  `bson:"usd_convert" json:"usd_convert"`
+}
+
+type Symbols struct {
+	Symbols []string `bson:"symbols" json:"symbols"`
 }

@@ -10,8 +10,6 @@ const (
 	ActionDelete             Action = "delete_user"
 	ActionFreeUser           Action = "freeze_user"
 	ActionUnfreezeUser       Action = "unfreeze_user"
-	ActionTicketAccess       Action = "review_tickets"
-	ActionActOnTickets       Action = "act_on_tickets"
 	ActionChat               Action = "chat"
 	ActionSupport            Action = "support"
 	ActionSendNotification   Action = "send_notification"
