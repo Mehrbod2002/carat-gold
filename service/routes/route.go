@@ -1,7 +1,9 @@
 package routes
 
 import (
-	controllers "carat-gold/app/controllers/admin"
+	adminAuth "carat-gold/app/controllers/admin"
+	adminSetter "carat-gold/app/controllers/admin/setter"
+	adminView "carat-gold/app/controllers/admin/views"
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
@@ -41,17 +43,22 @@ func SetupRouter() *gin.Engine {
 	r.Use(sessions.Sessions("token", store))
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://0.0.0.0:4000", "http://localhost:4000", "http://127.0.0.1:5173"},
+		AllowOrigins:     []string{"http://0.0.0.0:3001", "http://localhost:3001", "http://127.0.0.1:5173"},
 		AllowMethods:     []string{"PUT", "PATCH", "GET", "POST", "HEAD", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Set-Cookie", "Cookie", "Authorization", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length", "Set-Cookie", "Cookie"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
-			return origin == "http://0.0.0.0:4000" || origin == "http://localhost:4000" || origin == "http://127.0.0.1:5173"
+			return origin == "http://0.0.0.0:3001" || origin == "http://localhost:3001" || origin == "http://127.0.0.1:5173"
 		},
 	}))
 
 	apis := r.Group("/api")
+	authRoutes := apis.Group("/auth")
+	{
+		authRoutes.POST("/admin/login", adminAuth.AdminLogin)
+	}
+
 	// public := apis.Group("/public")
 	// {
 	// }
@@ -76,13 +83,14 @@ func SetupRouter() *gin.Engine {
 	adminRoutes := apis.Group("/admin")
 	adminRoutes.Use(AdminAuthMiddleware())
 	{
-		adminRoutes.GET("/get_users", controllers.GetAllUsers)
-		adminRoutes.DELETE("/delete_user", controllers.DeleteUser)
-		adminRoutes.POST("/logout", controllers.AdminLogout)
-		adminRoutes.POST("/freeze_user", controllers.FreezeUser)
-		adminRoutes.POST("/unfreeze_user", controllers.FreezeUser)
-		adminRoutes.POST("/set_user_permissions", controllers.SetUserPermissions)
-		adminRoutes.POST("/edit_user", controllers.EditUser)
+		adminRoutes.GET("/get_users", adminView.ViewAllUsers)
+		adminRoutes.DELETE("/delete_user", adminSetter.SetDeleteUser)
+		adminRoutes.POST("/logout", adminAuth.AdminLogout)
+		adminRoutes.POST("/freeze_user", adminSetter.SetFreezeUser)
+		adminRoutes.POST("/unfreeze_user", adminSetter.SetUnFreezeUser)
+		adminRoutes.POST("/set_user_permissions", adminSetter.SetUserPermissions)
+		adminRoutes.POST("/edit_user", adminSetter.SetUser)
+		adminRoutes.POST("/define_support", adminSetter.SetSupport)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {

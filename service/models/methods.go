@@ -228,3 +228,23 @@ func AllowedAction(c *gin.Context, action Action) bool {
 	})
 	return false
 }
+
+func (user *User) GenerateToken() (string, error) {
+	claims := &Claims{
+		ID:          user.ID.Hex(),
+		CreatedAt:   user.CreatedAt,
+		PhoneNumber: user.PhoneNumber,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 24 * 30).Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString([]byte(os.Getenv("SESSION_SECRET")))
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	return signedToken, nil
+}

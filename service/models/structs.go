@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/websocket"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -57,6 +58,14 @@ type NotificationAdmin struct {
 	Names   []string `json:"names"`
 }
 
+type Claims struct {
+	ID          string    `json:"_id"`
+	Name        string    `json:"name"`
+	PhoneNumber string    `json:"phone"`
+	CreatedAt   time.Time `json:"created_at"`
+	jwt.StandardClaims
+}
+
 type Message struct {
 	ID               primitive.ObjectID `bson:"_id,omitempty" json:"-"`
 	Sender           primitive.ObjectID `json:"sender" bson:"sender"`
@@ -89,3 +98,11 @@ type Products struct {
 type Symbols struct {
 	Symbols []string `bson:"symbols" json:"symbols"`
 }
+
+type PaymentMethods struct{}
+type DeliveryMethods struct{}
+type GeneralData struct{}
+type HistoryOrders struct{}
+type RealTimeOrders struct{}
+type MetaData struct{}
+type ChatHistories struct{}

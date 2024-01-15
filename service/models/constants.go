@@ -7,9 +7,7 @@ const (
 	ActionReview             Action = "review_transaction"
 	ActionActTransaction     Action = "act_on_transaction"
 	ActionWrite              Action = "edit_user"
-	ActionDelete             Action = "delete_user"
 	ActionFreeUser           Action = "freeze_user"
-	ActionUnfreezeUser       Action = "unfreeze_user"
 	ActionChat               Action = "chat"
 	ActionSupport            Action = "support"
 	ActionSendNotification   Action = "send_notification"
@@ -21,7 +19,8 @@ const (
 	ActionReviewMessage      Action = "review_message"
 	ActionOpenChat           Action = "open_message"
 	ActionSetPermission      Action = "set_permissions"
-	ActionGetReferal         Action = "referal"
+	ActionEditUser           Action = "edit_user"
+	ActionDeleteUser         Action = "delete_user"
 )
 
 const (
