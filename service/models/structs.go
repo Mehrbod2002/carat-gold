@@ -104,8 +104,23 @@ type Symbols struct {
 	Symbols []string `bson:"symbols" json:"symbols"`
 }
 
-type PaymentMethods struct{}
-type DeliveryMethods struct{}
+type PaymentMethods struct {
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	PaymentName string             `bson:"name,omitempty" json:"name"`
+	Provider    map[string]string  `bson:"provider,omitempty" json:"provider"`
+	Description string             `bson:"description,omitempty" json:"description"`
+	WhoDefine   string             `bson:"who_define" json:"who_define"`
+	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
+}
+
+type DeliveryMethods struct {
+	ID           primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	DeliveryName string             `bson:"name,omitempty" json:"name"`
+	Description  string             `bson:"description,omitempty" json:"description"`
+	WhoDefine    string             `bson:"who_define" json:"who_define"`
+	CreatedAt    time.Time          `bson:"created_at" json:"created_at"`
+}
+
 type GeneralData struct{}
 type HistoryOrders struct{}
 type RealTimeOrders struct{}
@@ -113,10 +128,14 @@ type MetaData struct{}
 type ChatHistories struct{}
 
 type Transctions struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	UserID    primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
-	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
-	Status    bool               `bson:"verified" json:"verified"`
+	ID            primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	OrderID       string             `json:"order_id" bson:"order_id,omitempty"`
+	UserID        primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
+	CreatedAt     time.Time          `bson:"created_at" json:"created_at"`
+	Status        UserStatus         `bson:"status" json:"status"`
+	PaymentMethod string             `bson:"payment_method" json:"payment_method"`
+	Symbol        string             `bson:"symbol" json:"symbol"`
+	ExternalData  map[string]string  `bson:"external_data" json:"external_data"`
 }
 
 type Purchaed struct {
