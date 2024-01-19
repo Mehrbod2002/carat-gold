@@ -6,8 +6,8 @@ const (
 	ActionActDocument        Action = "act_on_document"
 	ActionReview             Action = "review_transaction"
 	ActionActTransaction     Action = "act_on_transaction"
-	ActionWrite              Action = "edit_user"
 	ActionFreeUser           Action = "freeze_user"
+	ActionSetUser            Action = "define_user"
 	ActionChat               Action = "chat"
 	ActionSupport            Action = "support"
 	ActionSendNotification   Action = "send_notification"
@@ -27,3 +27,32 @@ const (
 	TextType TypeMessage = "text"
 	FileType TypeMessage = "file"
 )
+
+const (
+	PendingStatus  UserStatus = "pending"
+	RejectedStatus UserStatus = "rejected"
+	ApprovedStatus UserStatus = "approved"
+)
+
+var AllActions = []Action{
+	ActionRead,
+	ActionDocument,
+	ActionActDocument,
+	ActionReview,
+	ActionActTransaction,
+	ActionFreeUser,
+	ActionSetUser,
+	ActionChat,
+	ActionSupport,
+	ActionSendNotification,
+	ActionChangeTradeReport,
+	ActionReportsTransaction,
+	ActionSetTransactions,
+	ActionGeneralDataView,
+	ActionGeneralDataEdit,
+	ActionReviewMessage,
+	ActionOpenChat,
+	ActionSetPermission,
+	ActionEditUser,
+	ActionDeleteUser,
+}

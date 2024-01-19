@@ -4,6 +4,8 @@ import (
 	adminAuth "carat-gold/app/controllers/admin"
 	adminSetter "carat-gold/app/controllers/admin/setter"
 	adminView "carat-gold/app/controllers/admin/views"
+	user "carat-gold/app/controllers/user"
+
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
@@ -57,23 +59,21 @@ func SetupRouter() *gin.Engine {
 	authRoutes := apis.Group("/auth")
 	{
 		authRoutes.POST("/admin/login", adminAuth.AdminLogin)
+		authRoutes.POST("/user/login_step_1", user.LoginOneTimeLoginStep1)
+		authRoutes.POST("/user/login_step_2", user.LoginOneTimeLoginStep2)
+		authRoutes.POST("/user/register", user.Register)
 	}
 
 	// public := apis.Group("/public")
 	// {
 	// }
 
-	// authRoutes := apis.Group("/auth")
-	// {
-	// }
-
-	// authRoutesAdmin := apis.Group("/auth/admin")
-	// {
-	// }
-
-	// authRoutesSupport := apis.Group("/auth/support")
-	// {
-	// }
+	userRoutes := apis.Group("/user")
+	userRoutes.Use(AuthMiddleware())
+	{
+		userRoutes.POST("/upload_documents", user.SendDocuments)
+		userRoutes.POST("/send_otp", user.SendOTP)
+	}
 
 	supportRoutes := apis.Group("/support")
 	supportRoutes.Use(AdminAuthMiddleware())
@@ -84,13 +84,14 @@ func SetupRouter() *gin.Engine {
 	adminRoutes.Use(AdminAuthMiddleware())
 	{
 		adminRoutes.GET("/get_users", adminView.ViewAllUsers)
-		adminRoutes.DELETE("/delete_user", adminSetter.SetDeleteUser)
+		adminRoutes.POST("/delete_user", adminSetter.SetDeleteUser)
 		adminRoutes.POST("/logout", adminAuth.AdminLogout)
 		adminRoutes.POST("/freeze_user", adminSetter.SetFreezeUser)
 		adminRoutes.POST("/unfreeze_user", adminSetter.SetUnFreezeUser)
 		adminRoutes.POST("/set_user_permissions", adminSetter.SetUserPermissions)
 		adminRoutes.POST("/edit_user", adminSetter.SetUser)
-		adminRoutes.POST("/define_support", adminSetter.SetSupport)
+		adminRoutes.POST("/get_users", adminView.ViewAllUsers)
+		adminRoutes.POST("/define_user", adminSetter.SetDefineUser)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -135,11 +136,9 @@ func SetupRouter() *gin.Engine {
 			return
 		}
 		if !allowed {
-			for _, permission := range currentUser.Permissions {
-				for _, action := range permission.Actions {
-					if action == models.ActionSendNotification {
-						allowed = true
-					}
+			for _, action := range currentUser.Permissions.Actions {
+				if action == models.ActionSendNotification {
+					allowed = true
 				}
 			}
 		}

@@ -9,28 +9,30 @@ import (
 )
 
 type User struct {
-	ID                primitive.ObjectID `bson:"_id,omitempty" json:"-"`
-	Avatar            string             `bson:"avatar" json:"avatar"`
-	Name              string             `bson:"name" json:"name"`
-	Email             string             `bson:"email" json:"email"`
-	PhoneNumber       string             `bson:"phone" json:"phone"`
-	Password          string             `bson:"password" json:"password"`
-	PhoneVerified     bool               `bson:"phone_verified" json:"phone_verified"`
-	OtpCode           *int               `bson:"otp_code" json:"otp_code"`
-	Address           string             `bson:"address" json:"address"`
-	RegisterCompleted bool               `bson:"register_completed" json:"register_completed"`
-	ResetToken        string             `bson:"reset_token" json:"reset_token"`
-	ResetTokenValid   time.Time          `bson:"reset_token_valid" json:"reset_token_valid"`
-	ChangePhone       bool               `bson:"change_phone" json:"change_phone"`
-	ExchangeMobile    string             `bson:"exchange_phone" json:"exchange_phone"`
-	Freeze            bool               `bson:"freeze" json:"freeze"`
-	File              string             `bson:"document" json:"document"`
-	ChatList          []string           `bson:"chat_list" json:"chat_list"`
-	Permissions       []Permission       `bson:"permissions" json:"permissions"`
-	OtpValid          time.Time          `bson:"otp_valid" json:"otp_valid"`
-	ReTryOtp          int                `bson:"retry_otp" json:"retry_otp"`
-	CreatedAt         time.Time          `bson:"created_at" json:"created_at"`
-	IsSupportOrAdmin  bool               `bson:"support_or_admin" json:"support_or_admin"`
+	ID               primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Avatar           string             `bson:"avatar" json:"avatar"`
+	Name             string             `bson:"name" json:"name"`
+	Email            string             `bson:"email" json:"email"`
+	PhoneNumber      string             `bson:"phone" json:"phone"`
+	Password         string             `bson:"password" json:"password"`
+	PhoneVerified    bool               `bson:"phone_verified" json:"phone_verified"`
+	OtpCode          *int               `bson:"otp_code" json:"otp_code"`
+	Address          string             `bson:"address" json:"address"`
+	ResetToken       string             `bson:"reset_token" json:"reset_token"`
+	ResetTokenValid  time.Time          `bson:"reset_token_valid" json:"reset_token_valid"`
+	ChangePhone      bool               `bson:"change_phone" json:"change_phone"`
+	ExchangeMobile   string             `bson:"exchange_phone" json:"exchange_phone"`
+	Freeze           bool               `bson:"freeze" json:"freeze"`
+	Documents        Documents          `bson:"documents" json:"documents"`
+	ChatList         []string           `bson:"chat_list" json:"chat_list"`
+	Permissions      Permission         `bson:"permissions" json:"permissions"`
+	OtpValid         time.Time          `bson:"otp_valid" json:"otp_valid"`
+	ReTryOtp         int                `bson:"retry_otp" json:"retry_otp"`
+	CreatedAt        time.Time          `bson:"created_at" json:"created_at"`
+	UserVerified     bool               `bson:"user_verified" json:"user_verified"`
+	StatusString     UserStatus         `bson:"user_status" json:"user_status"`
+	Reason           string             `bson:"reason" json:"reason"`
+	IsSupportOrAdmin bool               `bson:"support_or_admin" json:"support_or_admin"`
 }
 
 type Permission struct {
@@ -62,12 +64,13 @@ type Claims struct {
 	ID          string    `json:"_id"`
 	Name        string    `json:"name"`
 	PhoneNumber string    `json:"phone"`
+	Email       string    `json:"email"`
 	CreatedAt   time.Time `json:"created_at"`
 	jwt.StandardClaims
 }
 
 type Message struct {
-	ID               primitive.ObjectID `bson:"_id,omitempty" json:"-"`
+	ID               primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	Sender           primitive.ObjectID `json:"sender" bson:"sender"`
 	Receiver         primitive.ObjectID `json:"receiver" bson:"receiver"`
 	SenderUsername   string             `json:"sender_username" bson:"sender_username"`
@@ -86,13 +89,15 @@ type UserMessage struct {
 }
 
 type Currency struct {
-	Currency   string `bson:"currency" json:"currency"`
-	USDConvert int64  `bson:"usd_convert" json:"usd_convert"`
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Currency string             `bson:"currency,omitempty" json:"currency"`
 }
 
 type Products struct {
-	Currency   string `bson:"currency" json:"currency"`
-	USDConvert int64  `bson:"usd_convert" json:"usd_convert"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Name      string             `bson:"name,omitempty" json:"name"`
+	WhoDefine string             `bson:"who_define" json:"who_define"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 }
 
 type Symbols struct {
@@ -106,3 +111,57 @@ type HistoryOrders struct{}
 type RealTimeOrders struct{}
 type MetaData struct{}
 type ChatHistories struct{}
+
+type Transctions struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	UserID    primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	Status    bool               `bson:"verified" json:"verified"`
+}
+
+type Purchaed struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	UserID    primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
+	ProductID primitive.ObjectID `bson:"product_id,omitempty" json:"product_id"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+}
+
+type RequestSetDefineUser struct {
+	UserID      *string     `json:"user_id"`
+	Name        *string     `json:"name"`
+	Email       *string     `json:"email"`
+	Password    *string     `json:"password"`
+	Phone       *string     `json:"phone"`
+	PhoneVerify *bool       `json:"phone_verified"`
+	IsSupport   *bool       `json:"support"`
+	Freeze      *bool       `json:"freeze"`
+	Status      *UserStatus `json:"status"`
+	Reason      *string     `json:"reason"`
+	Permissions *Permission `json:"permissions"`
+	Address     *string     `json:"address"`
+}
+
+type LoginDataStep1 struct {
+	Phone string `json:"phone"`
+}
+
+type LoginDataStep2 struct {
+	Phone string `json:"phone"`
+	Otp   *int   `json:"otp"`
+}
+
+type SendOTP struct {
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phone" binding:"required"`
+}
+
+type RegisterRequest struct {
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phone" binding:"required"`
+	OtpCode     *int   `json:"otp_code" binding:"required"`
+}
+
+type Documents struct {
+	FrontShot string `json:"front_shot" bson:"front_shot"`
+	BackShot  string `json:"back_shot" bson:"back_shot"`
+}

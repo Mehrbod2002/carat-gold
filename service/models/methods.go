@@ -3,9 +3,12 @@ package models
 import (
 	"carat-gold/utils"
 	"context"
+	"encoding/base64"
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -15,6 +18,71 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+func IsValidEmail(email string) bool {
+	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+	re := regexp.MustCompile(emailRegex)
+
+	return re.MatchString(email)
+}
+
+func IsValidPhoneNumber(phoneNumber string) bool {
+	phoneRegex := `^\+\d{1,4}\d{6,14}$`
+	re := regexp.MustCompile(phoneRegex)
+
+	return re.MatchString(phoneNumber)
+}
+
+func IsValidPassowrd(password string, c *gin.Context) bool {
+	if len(password) > 36 || len(password) < 6 {
+		utils.Method(c, "invalid password length")
+		return false
+	}
+	if strings.Contains(password, ".") {
+		utils.Method(c, "password not allowed to includes '.'")
+		return false
+	}
+	return true
+}
+
+func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
+	if len(*req.Name) > 20 || len(*req.Name) < 4 {
+		utils.Method(c, "invalid name length")
+		return false
+	}
+	if !IsValidPhoneNumber(*req.Phone) {
+		utils.Method(c, "invalid phone")
+		return false
+	}
+	if *req.IsSupport {
+		if len(req.Permissions.Actions) == 0 {
+			utils.Method(c, "as support , needs at least one permission")
+			return false
+		}
+		if !ActionChecker(req.Permissions.Actions) {
+			utils.Method(c, "invalid password permissions")
+			return false
+		}
+		if !IsValidEmail(*req.Email) {
+			utils.Method(c, "invalid email")
+			return false
+		}
+		if !Edit {
+			if valid := IsValidPassowrd(*req.Password, c); !valid {
+				return false
+			}
+		}
+	}
+	if len(*req.Reason) > 200 {
+		utils.Method(c, "invalid reason length")
+		return false
+	}
+	if len(*req.Address) > 300 {
+		utils.Method(c, "invalid address length")
+		return false
+	}
+	return true
+}
 
 func ErrInSocket(ws *websocket.Conn, user *User, message string) error {
 	err := ws.WriteJSON(Socket{
@@ -192,6 +260,9 @@ func ReceiveSession(c *gin.Context) *User {
 
 func AllowedAction(c *gin.Context, action Action) bool {
 	user, isAdmin := ValidateSession(c)
+	if isAdmin {
+		return true
+	}
 	db, DBerr := utils.GetDB(c)
 	if DBerr != nil {
 		log.Println(DBerr)
@@ -199,9 +270,6 @@ func AllowedAction(c *gin.Context, action Action) bool {
 	}
 	var currentUser User
 	tableName := "users"
-	if isAdmin {
-		tableName = "admin"
-	}
 	err := db.Collection(tableName).
 		FindOne(context.Background(), bson.M{
 			"_id": user.ID,
@@ -211,14 +279,9 @@ func AllowedAction(c *gin.Context, action Action) bool {
 		utils.InternalError(c)
 		return false
 	}
-	if tableName == "admin" {
-		return true
-	}
-	for _, i := range currentUser.Permissions {
-		for _, act := range i.Actions {
-			if act == action {
-				return true
-			}
+	for _, act := range currentUser.Permissions.Actions {
+		if act == action {
+			return true
 		}
 	}
 	c.JSON(http.StatusMethodNotAllowed, gin.H{
@@ -232,6 +295,7 @@ func AllowedAction(c *gin.Context, action Action) bool {
 func (user *User) GenerateToken() (string, error) {
 	claims := &Claims{
 		ID:          user.ID.Hex(),
+		Email:       user.Email,
 		CreatedAt:   user.CreatedAt,
 		PhoneNumber: user.PhoneNumber,
 		StandardClaims: jwt.StandardClaims{
@@ -247,4 +311,84 @@ func (user *User) GenerateToken() (string, error) {
 	}
 
 	return signedToken, nil
+}
+
+func ActionChecker(actions []Action) bool {
+	for _, reqAct := range actions {
+		found := false
+		for _, act := range AllActions {
+			if reqAct == act {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (loginData *LoginDataStep1) Validate(c *gin.Context) bool {
+	if IsValidPhoneNumber(loginData.Phone) {
+		utils.Method(c, "invalid phone number")
+		return false
+	}
+	return true
+}
+
+func (loginData *LoginDataStep2) Validate(c *gin.Context) bool {
+	if IsValidPhoneNumber(loginData.Phone) {
+		utils.Method(c, "invalid phone number")
+		return false
+	}
+	return true
+}
+
+func (sendOTPData *SendOTP) Validate(c *gin.Context) bool {
+	if IsValidPhoneNumber(sendOTPData.PhoneNumber) {
+		utils.Method(c, "invalid phone number")
+		return false
+	}
+	return true
+}
+
+func (registerRequest *RegisterRequest) Validate(c *gin.Context) bool {
+	if len(registerRequest.Name) < 3 {
+		utils.Method(c, "name is short")
+		return false
+	}
+	if !IsValidPhoneNumber(registerRequest.PhoneNumber) {
+		utils.Method(c, "invalid phone number")
+		return false
+	}
+	return true
+}
+
+func (body *Documents) Validate(c *gin.Context) bool {
+	decodedFile, err := base64.StdEncoding.DecodeString(body.FrontShot)
+	if err != nil {
+		utils.Method(c, "invalid front file format")
+		return false
+	}
+	fileSizeMB := float64(len(decodedFile)) / (1024 * 1024)
+	if fileSizeMB > 30 {
+		utils.Method(c, "front shot size exceeds 30 MB")
+		return false
+	}
+
+	decodedFile, err = base64.StdEncoding.DecodeString(body.BackShot)
+	if err != nil {
+		utils.Method(c, "invalid back file format")
+		return false
+	}
+	fileSizeMB = float64(len(decodedFile)) / (1024 * 1024)
+	if fileSizeMB > 30 {
+		utils.Method(c, "back shot size exceeds 30 MB")
+		return false
+	}
+
+	return true
 }
