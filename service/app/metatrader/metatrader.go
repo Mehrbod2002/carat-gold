@@ -12,11 +12,11 @@ import (
 	"time"
 )
 
-func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel chan<- models.DataMeta) {
+func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel chan<- interface{}, adminChannel chan interface{}) {
 	defer wg.Done()
 
 	for {
-		listener, err := net.Listen("tcp", os.Getenv("MQ5_PORT"))
+		listener, err := net.Listen("tcp", ":"+os.Getenv("MQ5_PORT"))
 		if err != nil {
 			errors <- err
 			continue
@@ -31,18 +31,29 @@ func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel 
 					return
 				}
 
-				go handleClientMetatrader(conn, dataChannel)
+				go handleClientMetatrader(conn, dataChannel, adminChannel)
 			}
 		}()
 	}
 }
 
-func handleClientMetatrader(conn net.Conn, dataChannel chan<- models.DataMeta) {
+func handleClientMetatrader(conn net.Conn, dataChannel chan<- interface{}, adminChannel chan interface{}) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
 	buffer := make([]byte, 0, 1024)
+
 	for {
+		select {
+		case adminMessage := <-adminChannel:
+			_, err := conn.Write([]byte(adminMessage.(string)))
+			if err != nil {
+				return
+			}
+			fmt.Println("Admin sent:", adminMessage)
+		default:
+		}
+
 		data, err := reader.ReadBytes('}')
 		if err != nil {
 			return
@@ -65,7 +76,7 @@ func handleClientMetatrader(conn net.Conn, dataChannel chan<- models.DataMeta) {
 	}
 }
 
-func handleMetaTrader(completeJSON []byte, dataChannel chan<- models.DataMeta) {
+func handleMetaTrader(completeJSON []byte, dataChannel chan<- interface{}) {
 	var dataMeta models.DataMeta
 
 	err := json.Unmarshal(completeJSON, &dataMeta)

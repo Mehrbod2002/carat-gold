@@ -1,7 +1,6 @@
 package metatrader
 
 import (
-	"carat-gold/models"
 	"os"
 	"os/signal"
 	"sync"
@@ -12,7 +11,8 @@ func InitiateMetatrader() {
 	errors := make(chan error)
 	var wg sync.WaitGroup
 
-	dataChannel := make(chan models.DataMeta, 200)
+	dataChannel := make(chan interface{}, 200)
+	adminChannel := make(chan interface{}, 200)
 	stop := make(chan struct{})
 	go func() {
 		sig := make(chan os.Signal, 1)
@@ -22,8 +22,8 @@ func InitiateMetatrader() {
 	}()
 
 	wg.Add(2)
-	go startServerWSS(errors, &wg, dataChannel)
-	go startServerMetaTrader(errors, &wg, dataChannel)
+	go startServerWSS(errors, &wg, dataChannel, adminChannel)
+	go startServerMetaTrader(errors, &wg, dataChannel, adminChannel)
 
 	<-stop
 	close(errors)

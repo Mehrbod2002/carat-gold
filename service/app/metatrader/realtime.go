@@ -1,7 +1,7 @@
 package metatrader
 
 import (
-	"carat-gold/models"
+	"carat-gold/utils"
 	"fmt"
 	"net/http"
 	"os"
@@ -20,11 +20,11 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func startServerWSS(errors chan<- error, wg *sync.WaitGroup, dataChannel <-chan models.DataMeta) {
+func startServerWSS(errors chan<- error, wg *sync.WaitGroup, dataChannel <-chan interface{}, adminChannel chan interface{}) {
 	defer wg.Done()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		handleWebSocket(w, r, dataChannel)
+		handleWebSocket(w, r, dataChannel, adminChannel)
 	})
 
 	err := http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("FEED_REALTIME")), nil)
@@ -33,11 +33,13 @@ func startServerWSS(errors chan<- error, wg *sync.WaitGroup, dataChannel <-chan 
 	}
 }
 
-func handleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan models.DataMeta) {
+func handleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan interface{}, adminChannel chan interface{}) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
+
+	isAdmin := utils.ValidateAdmin(r.Header.Get("Authorization"))
 
 	wssClientsLock.Lock()
 	wssClients[conn] = struct{}{}
@@ -62,6 +64,20 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan 
 				}
 			case <-closeSignal:
 				return
+			}
+		}
+	}()
+
+	go func() {
+		for {
+			var receivedData interface{}
+			err := conn.ReadJSON(&receivedData)
+			if err != nil {
+				return
+			}
+
+			if isAdmin {
+				adminChannel <- receivedData
 			}
 		}
 	}()

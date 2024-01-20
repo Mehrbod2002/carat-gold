@@ -23,8 +23,7 @@ func InitializeDB() error {
 	dbPassword := os.Getenv("DB_PASSWORD")
 
 	uri := fmt.Sprintf("mongodb%s://%s:%s@%s?%sssl=false", dbSRV, dbUser, dbPassword, dbHost, dbReplicaSet)
-	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	otps := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
+	otps := options.Client().ApplyURI(uri)
 	var err error
 	Client, err = mongo.Connect(context.TODO(), otps)
 

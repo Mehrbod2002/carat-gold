@@ -3,10 +3,12 @@ package utils
 import (
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -75,4 +77,34 @@ func Sendotp(mobileNumber string, otp string) (bool, *string) {
 	// } else {
 	return true, nil
 	// }
+}
+
+func ValidateAdmin(token string) bool {
+	jwtSecret := os.Getenv("SESSION_SECRET")
+	if jwtSecret == "" {
+		return false
+	}
+
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return []byte(jwtSecret), nil
+	})
+
+	if err != nil || !parsedToken.Valid {
+		return false
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+
+	if ok && claims["_id"] != nil {
+		userID, ok := claims["_id"].(string)
+		if !ok {
+			return false
+		}
+		if _, err := primitive.ObjectIDFromHex(userID); err == nil {
+			return false
+		}
+		return true
+	}
+
+	return false
 }

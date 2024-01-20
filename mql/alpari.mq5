@@ -245,6 +245,29 @@ void HistoryData(){
    }
 }
 
+void ReadFromSocket() {
+   char   rsp[];
+   string result;
+   uint   timeout_check=GetTickCount()+1000;
+
+   do {
+      uint len=SocketIsReadable(socket);
+      if(len) {
+        int rsp_len;
+        if(ExtTLS)
+            rsp_len=SocketTlsRead(socket,rsp,len);
+        else
+            rsp_len=SocketRead(socket,rsp,len,timeout);
+
+        if(rsp_len>0) {
+            result+=CharArrayToString(rsp,0,rsp_len);
+
+            ProcessData(result);
+        }
+      }
+   } while(GetTickCount()<timeout_check && !IsStopped());
+}
+
 string serverAddress = "185.202.113.18";
 int serverPort = 8081;
 
@@ -257,7 +280,6 @@ int OnInit() {
 
         if (SocketConnect(socket, serverAddress, serverPort, 1000)) {
             EventSetMillisecondTimer(10);
-            ReadFromSocket
             Print("Connected to the server");
             return(INIT_SUCCEEDED);
         }
@@ -302,18 +324,7 @@ void OnTick() {
 
 void OnTimer() {
     ConnectionAndTick(true);
-    ReadFromSocket(socket);
-}
-
-void ReadFromSocket(int socket) {
-    char buffer[1024];
-
-    int bytesRead = SocketRead(socket, buffer, ArraySize(buffer), 1000);
-
-    if (bytesRead > 0) {
-        string data = StringSubstr(buffer, 0, bytesRead);
-        ProcessData(data);
-    }
+    ReadFromSocket();
 }
 
 void ProcessData(const string &data) {
@@ -321,63 +332,80 @@ void ProcessData(const string &data) {
     int count = StringSplit(data, '|', components);
 
     if (count >= 2) {
-        if (components[0] == "TRADE") {
+        if (components[0] == "OPEN_TRADE") {
             string symbol = components[1];
             double price = StringToDouble(components[1]);
             
             if (count >= 11) {
                 int option = StringToInteger(components[2]);
                 double volume = StringToDouble(components[3]);
-                int slippageOpen = StringToInteger(components[4]);
+                int slipppage = StringToInteger(components[4]);
                 double stoploss = StringToDouble(components[5]);
                 double takeprofit = StringToDouble(components[6]);
-                int slippageClose = StringToInteger(components[7]);
                 string comment = components[8];
                 int magic = StringToInteger(components[9]);
                 datetime expiration = StringToTime(components[10]);
 
-                OpenTrade(option, symbol, price, volume, slipppage, stoploss, takeprofit, slippage, comment, magic, expiration);
+                OpenTrade(option, symbol, price, volume, slipppage, stoploss, takeprofit, comment, magic, expiration);
             } else {
                 SendError("INVALID");
-                return
+                return;
             }
-        } else if (components[0] == "ORDERS") {
+        } else if (components[0] == "HISTORY_ORDERS") {
             CreateJsonString();
-            return
+            return;
+        } else if (components[0] == "CLOSE_TRADE") {
+            string symbol = components[1];
+            int ticket = StringToInteger(components[4]);
+            CloseTrade(symbol, ticket);
+        } else if (components[0] == "CURRENT_ORDERS") {
+            CurrentCreateJsonString();
+            return;
         }
     } else {
         SendError("INVALID");
-        return
+        return;
     }
 }
 
 void OpenTrade(int opt, string symbol, double price, double volume, int slipppage, 
-    double stoploss, double takeprofit, int slippage, string comment, int magic, datetime expiration) {
+    double stoploss, double takeprofit, string comment, int magic, datetime expiration) {
 
-    int ticket = OrderSend(
-        symbol,
-        opt,
-        volume,
-        price,
-        slipppage,
-        stopLoss,
-        takeProfit,
-        comment,
-        magic,
-        expiration,
-        Green
-    );
-
-    if (ticket > 0) {
-        string ticketString = StringFormat("%u", ticket);
-        SendData(ticketString);
-    } else {
-        SendError();
+    MqlTradeRequest request={};
+    MqlTradeResult result={};
+    
+    request.action=TRADE_ACTION_DEAL;
+    request.magic=magic_number;
+    request.symbol=symbol;
+    request.volume=volume;
+    request.sl=stoploss;
+    request.tp=takeprofit;
+    request.type=opt;
+    request.price=price;
+    if (OrderSend(request,result) > 0) {
+        SendData("");
     }
+
+    SendError("");
+}
+
+void CloseTrade(string symbol, int ticket) {
+
+    MqlTradeRequest request={};
+    MqlTradeResult result={};
+    
+    request.action = TRADE_ACTION_REMOVE;
+    request.symbol = symbol;
+    request.order = ticket;
+    if (OrderSend(request,result) > 0) {
+        SendData("");
+    }
+
+    SendError("");
 }
 
 bool IsTradeRunning(ulong ticket) {
-    int orderSelectResult = OrderSelect(ticket, SELECT_BY_TICKET);
+    int orderSelectResult = OrderSelect(ticket);
     
     if (orderSelectResult) {
         int orderStatus = OrderGetInteger(ORDER_STATE);
@@ -388,35 +416,38 @@ bool IsTradeRunning(ulong ticket) {
     }
 }
 
-string CreateJsonString() {
+void CreateJsonString() {
     string jsonString = "[";
 
-    int totalOrders = OrdersHistoryTotal();
+    int totalOrders = HistoryOrdersTotal();
     for (int i = 0; i < totalOrders; i++) {
         ulong ticket = HistoryOrderGetTicket(i);
         double openPrice = HistoryOrderGetDouble(ticket, ORDER_PRICE_OPEN);
-        double closePrice = HistoryOrderGetDouble(ticket, ORDER_PRICE_CLOSE);
-        double lots = HistoryOrderGetDouble(ticket, ORDER_VOLUME);
-        int type = HistoryOrderGetInteger(ticket, ORDER_CMD);
+        double lots = HistoryOrderGetDouble(ticket, ORDER_VOLUME_CURRENT);
+        int type = HistoryOrderGetInteger(ticket, ORDER_TYPE);
 
         string symbol = HistoryOrderGetString(ticket, ORDER_SYMBOL);
 
         string tradeType;
-        if (type == OP_BUY) {
+        if (type == ORDER_TYPE_BUY) {
             tradeType = "Buy";
-        } else if (type == OP_BUYLIMIT) {
+        } else if (type == ORDER_TYPE_BUY_LIMIT) {
             tradeType = "Buy Limit";
-        } else if (type == OP_BUYSTOP) {
-            tradeType = "Buy Stop";
-        } else {
-            tradeType = "Unknown";
+        } else if (type == ORDER_TYPE_BUY_STOP) {
+            tradeType = "Buy";
+        } else if (type == ORDER_TYPE_SELL) {
+            tradeType = "Sell";
+        } else if (type == ORDER_TYPE_SELL_LIMIT) {
+            tradeType = "Sell limit";
+        } else if (type == ORDER_TYPE_SELL_STOP) {
+            tradeType = "Sell Stop";
         }
 
         bool isOpen = IsTradeRunning(ticket);
 
         string tradeInfo = StringFormat(
-            "{\"Ticket\":%d,\"Symbol\":\"%s\",\"Type\":\"%s\",\"Lots\":%f,\"OpenPrice\":%f,\"ClosePrice\":%f,\"IsOpen\":%s}",
-            ticket, symbol, tradeType, lots, openPrice, closePrice, isOpen ? "true" : "false"
+            "{\"Ticket\":%d,\"Symbol\":\"%s\",\"Type\":\"%s\",\"Lots\":%f,\"OpenPrice\":%f,\"IsOpen\":%s}",
+            ticket, symbol, tradeType, lots, openPrice, isOpen ? "true" : "false"
         );
 
         jsonString += tradeInfo;
@@ -438,10 +469,61 @@ void SendData(string data) {
     SocketSend(socket, byteArray, StringLen(data));
 }
 
-void SendError() {
-    int lastError = GetLastError();
-    string errorDescription = "FALSE|"+ErrorDescription(lastError);
+void SendError(string data) {
+    string errorDescription;
+    if (data == "") {
+        int lastError = GetLastError();
+        errorDescription = "FALSE|"+IntegerToString(lastError);
+    } else {
+        errorDescription = data;
+    }
     uchar byteArray[];
     StringToCharArray(errorDescription, byteArray);
     SocketSend(socket, byteArray, StringLen(errorDescription));
+}
+
+void CurrentCreateJsonString() {
+    string jsonString = "[";
+
+    int totalOrders = OrdersTotal();
+    for (int i = 0; i < totalOrders; i++) {
+        ulong ticket = HistoryOrderGetTicket(i);
+        double openPrice = HistoryOrderGetDouble(ticket, ORDER_PRICE_OPEN);
+        double lots = HistoryOrderGetDouble(ticket, ORDER_VOLUME_CURRENT);
+        int type = HistoryOrderGetInteger(ticket, ORDER_TYPE);
+
+        string symbol = HistoryOrderGetString(ticket, ORDER_SYMBOL);
+
+        string tradeType;
+        if (type == ORDER_TYPE_BUY) {
+            tradeType = "Buy";
+        } else if (type == ORDER_TYPE_BUY_LIMIT) {
+            tradeType = "Buy Limit";
+        } else if (type == ORDER_TYPE_BUY_STOP) {
+            tradeType = "Buy";
+        } else if (type == ORDER_TYPE_SELL) {
+            tradeType = "Sell";
+        } else if (type == ORDER_TYPE_SELL_LIMIT) {
+            tradeType = "Sell limit";
+        } else if (type == ORDER_TYPE_SELL_STOP) {
+            tradeType = "Sell Stop";
+        }
+
+        bool isOpen = true;
+
+        string tradeInfo = StringFormat(
+            "{\"Ticket\":%d,\"Symbol\":\"%s\",\"Type\":\"%s\",\"Lots\":%f,\"OpenPrice\":%f,\"IsOpen\":%s}",
+            ticket, symbol, tradeType, lots, openPrice, isOpen ? "true" : "false"
+        );
+
+        jsonString += tradeInfo;
+
+        if (i < totalOrders - 1) {
+            jsonString += ",";
+        }
+    }
+
+    jsonString += "]";
+    SendData(jsonString);
+    return;
 }
