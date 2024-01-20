@@ -184,3 +184,42 @@ type Documents struct {
 	FrontShot string `json:"front_shot" bson:"front_shot"`
 	BackShot  string `json:"back_shot" bson:"back_shot"`
 }
+
+type DataMeta struct {
+	Time      string  `json:"time" bson:"time"`
+	Symbol    string  `json:"symbol" bson:"symbol"`
+	Ask       float64 `json:"ask" bson:"ask"`
+	Bid       float64 `json:"bid" bson:"bid"`
+	High      float64 `json:"high" bson:"high"`
+	Low       float64 `json:"low" bson:"low"`
+	Open      float64 `json:"open" bson:"open"`
+	Close     float64 `json:"close" bson:"close"`
+	Type      string  `json:"type" bson:"type"`
+	Timeframe string  `json:"timeframe" bson:"timeframe"`
+}
+
+type OpenTrade struct {
+	Time      string  `json:"time" bson:"time"`
+	Symbol    string  `json:"symbol" bson:"symbol"`
+	Ask       float64 `json:"ask" bson:"ask"`
+	Bid       float64 `json:"bid" bson:"bid"`
+	High      float64 `json:"high" bson:"high"`
+	Low       float64 `json:"low" bson:"low"`
+	Open      float64 `json:"open" bson:"open"`
+	Close     float64 `json:"close" bson:"close"`
+	Type      string  `json:"type" bson:"type"`
+	Timeframe string  `json:"timeframe" bson:"timeframe"`
+}
+
+type OperationMetaTrader struct {
+	OP_BUY       string `json:"OP_BUY"`
+	OP_SELL      string `json:"OP_SELL"`
+	OP_BUYLIMIT  string `json:"OP_BUYLIMIT"`
+	OP_SELLLIMIT string `json:"OP_SELLLIMIT"`
+	OP_BUYSTOP   string `json:"OP_BUYSTOP"`
+	OP_SELLSTOP  string `json:"OP_SELLSTOP"`
+	OP_BALANCE   string `json:"OP_BALANCE"`
+	OP_CREDIT    string `json:"OP_CREDIT"`
+	OP_BUYTO     string `json:"OP_BUYTO"`
+	OP_SELLTO    string `json:"OP_SELLTO"`
+}

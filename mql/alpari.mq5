@@ -107,6 +107,15 @@ string DataSymbol(string symbolName,string type) {
     );
 }
 
+void HolidayGetSymbolList() {
+    for (int i = 0; i < ArraySize(cryptoSymbols); i++) {
+        string jsonData4 = DataSymbol(cryptoSymbols[i], "crypto");
+        uchar byteArray4[];
+        StringToCharArray(jsonData4, byteArray4);
+        int sentBytes = SocketSend(socket, byteArray4, StringLen(jsonData4));
+    }
+}
+
 void GetSymbolList() {
     for (int i = 0; i < ArraySize(forexSymbols); i++) {
         string jsonData1 = DataSymbol(forexSymbols[i], "forex");
@@ -236,7 +245,7 @@ void HistoryData(){
    }
 }
 
-string serverAddress = "51.68.200.17";
+string serverAddress = "185.202.113.18";
 int serverPort = 8081;
 
 int OnInit() {
@@ -247,7 +256,8 @@ int OnInit() {
         socket = SocketCreate();
 
         if (SocketConnect(socket, serverAddress, serverPort, 1000)) {
-            EventSetMillisecondTimer(200);
+            EventSetMillisecondTimer(10);
+            ReadFromSocket
             Print("Connected to the server");
             return(INIT_SUCCEEDED);
         }
@@ -267,7 +277,7 @@ void OnDeinit(const int reason) {
     SocketClose(socket);
 }
 
-void ConnectionAndTick() {
+void ConnectionAndTick(bool holiday) {
     if (!SocketIsConnected(socket)) {
         Print("Disconnected from the server");
         socket = SocketCreate();
@@ -279,13 +289,159 @@ void ConnectionAndTick() {
             Sleep(1000);
         }
     }
-    GetSymbolList();
+    if (holiday) {
+        HolidayGetSymbolList();
+    } else {
+        GetSymbolList();
+    }
 }
 
 void OnTick() {
-    ConnectionAndTick();
+    ConnectionAndTick(false);
 }
 
 void OnTimer() {
-    ConnectionAndTick();
+    ConnectionAndTick(true);
+    ReadFromSocket(socket);
+}
+
+void ReadFromSocket(int socket) {
+    char buffer[1024];
+
+    int bytesRead = SocketRead(socket, buffer, ArraySize(buffer), 1000);
+
+    if (bytesRead > 0) {
+        string data = StringSubstr(buffer, 0, bytesRead);
+        ProcessData(data);
+    }
+}
+
+void ProcessData(const string &data) {
+    string components[];
+    int count = StringSplit(data, '|', components);
+
+    if (count >= 2) {
+        if (components[0] == "TRADE") {
+            string symbol = components[1];
+            double price = StringToDouble(components[1]);
+            
+            if (count >= 11) {
+                int option = StringToInteger(components[2]);
+                double volume = StringToDouble(components[3]);
+                int slippageOpen = StringToInteger(components[4]);
+                double stoploss = StringToDouble(components[5]);
+                double takeprofit = StringToDouble(components[6]);
+                int slippageClose = StringToInteger(components[7]);
+                string comment = components[8];
+                int magic = StringToInteger(components[9]);
+                datetime expiration = StringToTime(components[10]);
+
+                OpenTrade(option, symbol, price, volume, slipppage, stoploss, takeprofit, slippage, comment, magic, expiration);
+            } else {
+                SendError("INVALID");
+                return
+            }
+        } else if (components[0] == "ORDERS") {
+            CreateJsonString();
+            return
+        }
+    } else {
+        SendError("INVALID");
+        return
+    }
+}
+
+void OpenTrade(int opt, string symbol, double price, double volume, int slipppage, 
+    double stoploss, double takeprofit, int slippage, string comment, int magic, datetime expiration) {
+
+    int ticket = OrderSend(
+        symbol,
+        opt,
+        volume,
+        price,
+        slipppage,
+        stopLoss,
+        takeProfit,
+        comment,
+        magic,
+        expiration,
+        Green
+    );
+
+    if (ticket > 0) {
+        string ticketString = StringFormat("%u", ticket);
+        SendData(ticketString);
+    } else {
+        SendError();
+    }
+}
+
+bool IsTradeRunning(ulong ticket) {
+    int orderSelectResult = OrderSelect(ticket, SELECT_BY_TICKET);
+    
+    if (orderSelectResult) {
+        int orderStatus = OrderGetInteger(ORDER_STATE);
+        
+        return (orderStatus == ORDER_STATE_FILLED || orderStatus == ORDER_STATE_PARTIAL);
+    } else {
+        return false;
+    }
+}
+
+string CreateJsonString() {
+    string jsonString = "[";
+
+    int totalOrders = OrdersHistoryTotal();
+    for (int i = 0; i < totalOrders; i++) {
+        ulong ticket = HistoryOrderGetTicket(i);
+        double openPrice = HistoryOrderGetDouble(ticket, ORDER_PRICE_OPEN);
+        double closePrice = HistoryOrderGetDouble(ticket, ORDER_PRICE_CLOSE);
+        double lots = HistoryOrderGetDouble(ticket, ORDER_VOLUME);
+        int type = HistoryOrderGetInteger(ticket, ORDER_CMD);
+
+        string symbol = HistoryOrderGetString(ticket, ORDER_SYMBOL);
+
+        string tradeType;
+        if (type == OP_BUY) {
+            tradeType = "Buy";
+        } else if (type == OP_BUYLIMIT) {
+            tradeType = "Buy Limit";
+        } else if (type == OP_BUYSTOP) {
+            tradeType = "Buy Stop";
+        } else {
+            tradeType = "Unknown";
+        }
+
+        bool isOpen = IsTradeRunning(ticket);
+
+        string tradeInfo = StringFormat(
+            "{\"Ticket\":%d,\"Symbol\":\"%s\",\"Type\":\"%s\",\"Lots\":%f,\"OpenPrice\":%f,\"ClosePrice\":%f,\"IsOpen\":%s}",
+            ticket, symbol, tradeType, lots, openPrice, closePrice, isOpen ? "true" : "false"
+        );
+
+        jsonString += tradeInfo;
+
+        if (i < totalOrders - 1) {
+            jsonString += ",";
+        }
+    }
+
+    jsonString += "]";
+    SendData(jsonString);
+    return;
+}
+
+void SendData(string data) {
+    data = "TRUE|"+data;
+    uchar byteArray[];
+    StringToCharArray(data, byteArray);
+    SocketSend(socket, byteArray, StringLen(data));
+}
+
+void SendError() {
+    int lastError = GetLastError();
+    string errorDescription = "FALSE|"+ErrorDescription(lastError);
+    uchar byteArray[];
+    StringToCharArray(errorDescription, byteArray);
+    SocketSend(socket, byteArray, StringLen(errorDescription));
 }
