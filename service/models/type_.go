@@ -5,3 +5,6 @@ type TypeMessage string
 type UserStatus string
 type SymbolType string
 type SymbolSide string
+type MetaTraderActon string
+type OrderOption string
+type OrderOperation int

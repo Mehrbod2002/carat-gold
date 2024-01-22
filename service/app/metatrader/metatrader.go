@@ -11,13 +11,14 @@ import (
 	"time"
 )
 
+var SharedConnection net.Conn
+
 func startServerMetaTrader(
 	errors chan<- error,
 	wg *sync.WaitGroup,
 	dataChannel chan<- interface{},
 	stop chan struct{},
 	adminChannel chan interface{},
-	sharedConnection chan net.Conn,
 	sharedReader chan map[string]interface{}) {
 	defer wg.Done()
 
@@ -49,7 +50,7 @@ func startServerMetaTrader(
 					return
 				}
 
-				sharedConnection <- conn
+				SharedConnection = conn
 				go handleClientMetatrader(conn, dataChannel, adminChannel, sharedReader)
 			}
 		}()

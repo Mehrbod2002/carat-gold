@@ -4,6 +4,7 @@ import (
 	"carat-gold/utils"
 	"context"
 	"encoding/base64"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -399,4 +400,41 @@ func (registerRequest *RequestSetSymbol) Validate(c *gin.Context) bool {
 		return false
 	}
 	return true
+}
+
+func (order *RequestSetTrade) Validate(c *gin.Context) bool {
+	if len(order.SymbolName) == 0 {
+		utils.Method(c, "symbol is missed")
+		return false
+	}
+	if order.Volumn == 0 {
+		utils.Method(c, "volumn is missed")
+		return false
+	}
+	if order.Price == 0 {
+		utils.Method(c, "price is missed")
+		return false
+	}
+	return true
+}
+
+func CreateOrder(order *RequestSetTrade) (string, string) {
+	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())[1:]
+	price := fmt.Sprintf("%d", order.Price)
+	volumn := fmt.Sprintf("%d", order.Volumn)
+	operation := fmt.Sprintf("%d", order.Operation)
+	slippage := fmt.Sprintf("%d", *order.Slippage)
+	stopLoss := fmt.Sprintf("%d", *order.StopLoss)
+	takeProfit := fmt.Sprintf("%d", *order.TakeProfit)
+
+	expirationTime := time.Now().Add(1 * time.Hour)
+
+	expirationTimeString := expirationTime.Format("2006.01.02 15:04:00")
+
+	orderStr := requestID + "|OPEN_TRADE|" + order.SymbolName + "|" + price + "|" +
+		operation + "|" + volumn + "|" + slippage + "|" +
+		stopLoss + "|" + takeProfit + "|" +
+		*order.Comment + "|" + requestID + "|" + expirationTimeString
+
+	return requestID, orderStr
 }

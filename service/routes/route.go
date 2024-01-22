@@ -5,7 +5,6 @@ import (
 	adminSetter "carat-gold/app/controllers/admin/setter"
 	adminView "carat-gold/app/controllers/admin/views"
 	user "carat-gold/app/controllers/user"
-	"net"
 
 	"carat-gold/models"
 	"carat-gold/utils"
@@ -31,7 +30,7 @@ var (
 	OnlineClients = make(map[*websocket.Conn]*models.Client)
 )
 
-func SetupRouter(sharedConnection chan net.Conn, sharedReader chan map[string]interface{}) *gin.Engine {
+func SetupRouter(sharedReader chan map[string]interface{}) *gin.Engine {
 	r := gin.Default()
 
 	store := cookie.NewStore([]byte("session-secret"))
@@ -83,7 +82,6 @@ func SetupRouter(sharedConnection chan net.Conn, sharedReader chan map[string]in
 
 	adminRoutes := apis.Group("/admin")
 	adminRoutes.Use(func(c *gin.Context) {
-		c.Set("metatraderConnectionChannel", sharedConnection)
 		c.Set("sharedReader", sharedReader)
 		c.Next()
 	})

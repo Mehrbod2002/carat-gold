@@ -235,8 +235,20 @@ type RequestSetSymbol struct {
 }
 
 type MetaTraderAdmin struct {
-	Data string    `json:"data"`
-	ID   int       `json:"id"`
-	Time time.Time `json:"time"`
-	Status string `json:"status"`
+	Data   string    `json:"data"`
+	ID     int       `json:"id"`
+	Time   time.Time `json:"time"`
+	Status string    `json:"status"`
+}
+
+type RequestSetTrade struct {
+	SymbolName string     `json:"name"`
+	Volumn     int        `json:"volumn"`
+	Price      int        `json:"price"`
+	Operation  int        `json:"operation"`
+	StopLoss   *int       `json:"stoploss"`
+	TakeProfit *int       `json:"takeprofit"`
+	Comment    *string    `json:"comment"`
+	Slippage   *int       `json:"slippage"`
+	Expiration *time.Time `json:"expiration"`
 }

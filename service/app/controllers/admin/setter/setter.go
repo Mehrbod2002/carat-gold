@@ -469,16 +469,31 @@ func SetOrders(c *gin.Context) {
 	// if !models.AllowedAction(c, models.ActionMetaTrader) {
 	// 	return
 	// }
-	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())
+
+	var request models.RequestSetTrade
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	fmt.Println("before")
 	metaTrader, connected := utils.GetSharedSocket(c)
 
+	fmt.Print(connected, metaTrader)
 	if !connected {
 		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
 		return
 	}
 
-	data := requestID + "|" + "TRADE"
-	metaTrader.Write([]byte(data))
+	requestID, data := models.CreateOrder(&request)
+	fmt.Println("DATA: ", data)
+
+	n, err := metaTrader.Write([]byte(data))
+	if err != nil || n == 0 {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
 
 	response, connected := utils.GetSharedReader(c, requestID)
 

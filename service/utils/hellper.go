@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"carat-gold/app/metatrader"
+	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
@@ -119,25 +121,7 @@ func ValidateAdmin(token string) bool {
 }
 
 func GetSharedSocket(c *gin.Context) (net.Conn, bool) {
-	value, exists := c.Get("metatraderConnectionChannel")
-	if !exists {
-		InternalErrorMsg(c, "metatrader disconnected")
-		return nil, false
-	}
-
-	socket, ok := value.(chan net.Conn)
-	if !ok {
-		InternalErrorMsg(c, "metatrader disconnected")
-		return nil, false
-	}
-
-	conn, ok := <-socket
-	if !ok {
-		InternalErrorMsg(c, "metatrader connection channel is closed")
-		return nil, false
-	}
-
-	return conn, true
+	return metatrader.SharedConnection, true
 }
 
 func GetSharedReader(c *gin.Context, id string) (map[string]interface{}, bool) {
@@ -157,7 +141,7 @@ func GetSharedReader(c *gin.Context, id string) (map[string]interface{}, bool) {
 
 	var receivedMsg int = 0
 	for {
-		if receivedMsg == 3 {
+		if receivedMsg == 5 {
 			InternalErrorMsg(c, "metatrader connection channel is closed")
 			return nil, false
 		}
@@ -167,7 +151,9 @@ func GetSharedReader(c *gin.Context, id string) (map[string]interface{}, bool) {
 			return nil, false
 		}
 
+		fmt.Println(dataReceived)
 		if dataReceived["id"] == id {
+			fmt.Println(dataReceived)
 			return dataReceived, true
 		} else {
 			receivedMsg += 1

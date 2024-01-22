@@ -7,7 +7,6 @@ import (
 	"carat-gold/utils"
 	"context"
 	"log"
-	"net"
 	"os"
 	"path/filepath"
 
@@ -19,7 +18,6 @@ import (
 
 func main() {
 	// gin.SetMode(gin.ReleaseMode)
-	connChannel := make(chan net.Conn)
 	sharedReader := make(chan map[string]interface{})
 	currentDir, _ := os.Getwd()
 	envFilePath := filepath.Join(currentDir, ".env")
@@ -69,8 +67,8 @@ func main() {
 		}
 	}
 
-	go metatrader.InitiateMetatrader(connChannel, sharedReader)
-	routes := routes.SetupRouter(connChannel, sharedReader)
+	go metatrader.InitiateMetatrader(sharedReader)
+	routes := routes.SetupRouter(sharedReader)
 	runningErr := routes.Run(":3000")
 	log.Println("start serving ...")
 	if runningErr != nil {

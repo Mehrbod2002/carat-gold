@@ -53,6 +53,27 @@ const (
 	ApprovedStatus UserStatus = "approved"
 )
 
+const (
+	OpenOrder     MetaTraderActon = "OPEN_TRADE"
+	HistoryOrder  MetaTraderActon = "HISTORY_ORDERS"
+	CurrentOrders MetaTraderActon = "CURRENT_ORDERS"
+	CloseOrder    MetaTraderActon = "CLOSE_TRADE"
+)
+
+const (
+	RemoveOrder = "TRADE_ACTION_REMOVE"
+	DealOrder   = "TRADE_ACTION_DEAL"
+)
+
+const (
+	OpBuy       OrderOperation = 0
+	OpSell      OrderOperation = 1
+	OpBuyLimit  OrderOperation = 2
+	OpSellLimit OrderOperation = 3
+	OpBuyStop   OrderOperation = 4
+	OpSellStop  OrderOperation = 5
+)
+
 var AllActions = []Action{
 	ActionRead,
 	ActionDocument,
