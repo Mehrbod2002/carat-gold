@@ -1,7 +1,6 @@
 package metatrader
 
 import (
-	"carat-gold/utils"
 	"fmt"
 	"net/http"
 	"os"
@@ -20,14 +19,18 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func startServerWSS(errors chan<- error, wg *sync.WaitGroup, dataChannel <-chan interface{}, adminChannel chan interface{}) {
+func startServerWSS(errors chan<- error,
+	wg *sync.WaitGroup,
+	dataChannel <-chan interface{},
+	adminChannel chan interface{}) {
 	defer wg.Done()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/feed", func(w http.ResponseWriter, r *http.Request) {
 		handleWebSocket(w, r, dataChannel, adminChannel)
 	})
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("FEED_REALTIME")), nil)
+	server := &http.Server{Addr: fmt.Sprintf(":%s", os.Getenv("FEED_REALTIME"))}
+	err := server.ListenAndServe()
 	if err != nil {
 		errors <- fmt.Errorf("WebSocket server error: %v", err)
 	}
@@ -39,7 +42,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan 
 		return
 	}
 
-	isAdmin := utils.ValidateAdmin(r.Header.Get("Authorization"))
+	// isAdmin := utils.ValidateAdmin(r.URL.Query().Get("Authorization"))
 
 	wssClientsLock.Lock()
 	wssClients[conn] = struct{}{}
@@ -76,9 +79,9 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan 
 				return
 			}
 
-			if isAdmin {
-				adminChannel <- receivedData
-			}
+			// if isAdmin {
+			// 	adminChannel <- receivedData
+			// }
 		}
 	}()
 

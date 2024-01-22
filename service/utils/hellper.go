@@ -2,6 +2,7 @@ package utils
 
 import (
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -17,6 +18,14 @@ func BadBinding(c *gin.Context) {
 		"success": false,
 		"message": "invalid request parameters",
 		"data":    "invalid_parameters",
+	})
+}
+
+func InternalErrorMsg(c *gin.Context, message string) {
+	c.JSON(http.StatusInternalServerError, gin.H{
+		"success": false,
+		"message": Cap(message),
+		"data":    "internal_error",
 	})
 }
 
@@ -101,10 +110,67 @@ func ValidateAdmin(token string) bool {
 			return false
 		}
 		if _, err := primitive.ObjectIDFromHex(userID); err == nil {
-			return false
+			return true
 		}
-		return true
+		return false
 	}
 
 	return false
+}
+
+func GetSharedSocket(c *gin.Context) (net.Conn, bool) {
+	value, exists := c.Get("metatraderConnectionChannel")
+	if !exists {
+		InternalErrorMsg(c, "metatrader disconnected")
+		return nil, false
+	}
+
+	socket, ok := value.(chan net.Conn)
+	if !ok {
+		InternalErrorMsg(c, "metatrader disconnected")
+		return nil, false
+	}
+
+	conn, ok := <-socket
+	if !ok {
+		InternalErrorMsg(c, "metatrader connection channel is closed")
+		return nil, false
+	}
+
+	return conn, true
+}
+
+func GetSharedReader(c *gin.Context, id string) (map[string]interface{}, bool) {
+	value, exists := c.Get("sharedReader")
+	id = id[1:]
+	if !exists {
+		InternalErrorMsg(c, "metatrader disconnected")
+		return nil, false
+	}
+
+	channelString, ok := value.(chan map[string]interface{})
+
+	if !ok {
+		InternalErrorMsg(c, "metatrader disconnected")
+		return nil, false
+	}
+
+	var receivedMsg int = 0
+	for {
+		if receivedMsg == 3 {
+			InternalErrorMsg(c, "metatrader connection channel is closed")
+			return nil, false
+		}
+		dataReceived, ok := <-channelString
+		if !ok {
+			InternalErrorMsg(c, "metatrader connection channel is closed")
+			return nil, false
+		}
+
+		if dataReceived["id"] == id {
+			return dataReceived, true
+		} else {
+			receivedMsg += 1
+		}
+	}
 }

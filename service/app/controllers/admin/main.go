@@ -41,7 +41,6 @@ func AdminLogin(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&loginData); err != nil {
-		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "Invalid request data",
@@ -52,7 +51,7 @@ func AdminLogin(c *gin.Context) {
 	if loginData.Email == "" || loginData.Password == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "phone or password is empty",
+			"message": "email or password is empty",
 		})
 		return
 	}

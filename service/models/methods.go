@@ -392,3 +392,11 @@ func (body *Documents) Validate(c *gin.Context) bool {
 
 	return true
 }
+
+func (registerRequest *RequestSetSymbol) Validate(c *gin.Context) bool {
+	if len(*registerRequest.SymbolName) < 3 {
+		utils.Method(c, "symbol name is short")
+		return false
+	}
+	return true
+}

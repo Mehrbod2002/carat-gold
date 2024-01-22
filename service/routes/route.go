@@ -5,6 +5,7 @@ import (
 	adminSetter "carat-gold/app/controllers/admin/setter"
 	adminView "carat-gold/app/controllers/admin/views"
 	user "carat-gold/app/controllers/user"
+	"net"
 
 	"carat-gold/models"
 	"carat-gold/utils"
@@ -30,7 +31,7 @@ var (
 	OnlineClients = make(map[*websocket.Conn]*models.Client)
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(sharedConnection chan net.Conn, sharedReader chan map[string]interface{}) *gin.Engine {
 	r := gin.Default()
 
 	store := cookie.NewStore([]byte("session-secret"))
@@ -81,6 +82,12 @@ func SetupRouter() *gin.Engine {
 	}
 
 	adminRoutes := apis.Group("/admin")
+	adminRoutes.Use(func(c *gin.Context) {
+		c.Set("metatraderConnectionChannel", sharedConnection)
+		c.Set("sharedReader", sharedReader)
+		c.Next()
+	})
+	adminRoutes.POST("/set_order", adminSetter.SetOrders)
 	adminRoutes.Use(AdminAuthMiddleware())
 	{
 		adminRoutes.GET("/get_users", adminView.ViewAllUsers)
@@ -92,6 +99,10 @@ func SetupRouter() *gin.Engine {
 		adminRoutes.POST("/edit_user", adminSetter.SetUser)
 		adminRoutes.POST("/get_users", adminView.ViewAllUsers)
 		adminRoutes.POST("/define_user", adminSetter.SetDefineUser)
+		adminRoutes.GET("/get_symbols", adminView.ViewSymbols)
+		adminRoutes.POST("/delete_symbol", adminSetter.SetDeleteSymbol)
+		adminRoutes.POST("/set_symbol", adminSetter.SetSymbols)
+		// adminRoutes.POST("/set_order", adminSetter.SetOrders)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {

@@ -1,5 +1,9 @@
 package models
 
+import "net"
+
+var MetaTraderSocket *net.Conn
+
 const (
 	ActionRead               Action = "personal_access_data"
 	ActionDocument           Action = "review_document"
@@ -21,11 +25,26 @@ const (
 	ActionSetPermission      Action = "set_permissions"
 	ActionEditUser           Action = "edit_user"
 	ActionDeleteUser         Action = "delete_user"
+	ActionMetaTrader         Action = "metatrader"
 )
 
 const (
 	TextType TypeMessage = "text"
 	FileType TypeMessage = "file"
+)
+
+const (
+	ForexType     SymbolType = "forex"
+	CommodityType SymbolType = "commodity"
+	IndexesType   SymbolType = "index"
+	CryptoType    SymbolType = "crypto"
+	StockType     SymbolType = "stock"
+	FiatType      SymbolType = "fiat"
+)
+
+const (
+	PaymentSymbolType    SymbolSide = "payment"
+	MetaTraderSymbolType SymbolSide = "metatrader"
 )
 
 const (
@@ -55,4 +74,5 @@ var AllActions = []Action{
 	ActionSetPermission,
 	ActionEditUser,
 	ActionDeleteUser,
+	ActionMetaTrader,
 }

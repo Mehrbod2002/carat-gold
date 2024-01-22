@@ -4,6 +4,7 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -47,7 +48,56 @@ func SetDeliveryMethods(c *gin.Context) {
 }
 
 func SetSymbols(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+		return
+	}
 
+	var request models.RequestSetSymbol
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.BadBinding(c)
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return
+	}
+
+	filter := bson.M{"name": *request.SymbolName}
+
+	var symbols []models.Symbol
+	cursor, err := db.Collection("symbols").Find(context.Background(), filter)
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+
+	if err := cursor.All(context.Background(), &symbols); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	if len(symbols) == 0 {
+		newSymbol := models.Symbol{
+			SymbolName: *request.SymbolName,
+			SymbolType: *request.SymbolType,
+			SymbolSide: *request.SymbolSide,
+			CreatedAt:  time.Now(),
+		}
+		_, err := db.Collection("symbols").InsertOne(context.Background(), newSymbol)
+		if err != nil {
+			log.Println(err)
+			utils.InternalError(c)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+		return
+	}
+	c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "symbol already exsits"})
 }
 
 func SetUserPermissions(c *gin.Context) {
@@ -368,4 +418,79 @@ func SetDefineUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "user already exsits"})
+}
+
+func SetDeleteSymbol(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+		return
+	}
+	var request struct {
+		ID string `json:"symbol_id"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	symolID, err := primitive.ObjectIDFromHex(request.ID)
+	if err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	var symbol models.Symbol
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if err := db.Collection("symbols").FindOne(context.Background(), bson.M{
+		"_id": symolID,
+	}).Decode(&symbol); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	if _, err := db.Collection("symbols").DeleteOne(context.Background(), bson.M{
+		"_id": symbol.ID,
+	}); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "done"})
+}
+
+func SetOrders(c *gin.Context) {
+	// if !models.AllowedAction(c, models.ActionMetaTrader) {
+	// 	return
+	// }
+	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())
+	metaTrader, connected := utils.GetSharedSocket(c)
+
+	if !connected {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
+
+	data := requestID + "|" + "TRADE"
+	metaTrader.Write([]byte(data))
+
+	response, connected := utils.GetSharedReader(c, requestID)
+
+	if !connected {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
+
+	if response["status"] == "true" {
+		c.JSON(http.StatusOK, gin.H{"success": false, "data": response["data"], "message": response["data"]})
+		return
+	}
+
+	utils.InternalErrorMsg(c, "metatrader connection channel is closed")
 }

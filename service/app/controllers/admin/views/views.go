@@ -108,7 +108,7 @@ func ViewSymbols(c *gin.Context) {
 		log.Println(err)
 		return
 	}
-	var symbols []models.Symbols
+	var symbols []models.Symbol
 	cursor, err := db.Collection("symbols").Find(context.Background(), bson.M{})
 	if err != nil && err != mongo.ErrNoDocuments {
 		log.Println(err)

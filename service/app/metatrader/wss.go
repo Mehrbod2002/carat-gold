@@ -1,13 +1,14 @@
 package metatrader
 
 import (
+	"net"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 )
 
-func InitiateMetatrader() {
+func InitiateMetatrader(sharedConnection chan net.Conn, sharedReader chan map[string]interface{}) {
 	errors := make(chan error)
 	var wg sync.WaitGroup
 
@@ -23,7 +24,7 @@ func InitiateMetatrader() {
 
 	wg.Add(2)
 	go startServerWSS(errors, &wg, dataChannel, adminChannel)
-	go startServerMetaTrader(errors, &wg, dataChannel, adminChannel)
+	go startServerMetaTrader(errors, &wg, dataChannel, stop, adminChannel, sharedConnection, sharedReader)
 
 	<-stop
 	close(errors)

@@ -7,10 +7,10 @@ import (
 	"carat-gold/utils"
 	"context"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,7 +18,9 @@ import (
 )
 
 func main() {
-	gin.SetMode(gin.ReleaseMode)
+	// gin.SetMode(gin.ReleaseMode)
+	connChannel := make(chan net.Conn)
+	sharedReader := make(chan map[string]interface{})
 	currentDir, _ := os.Getwd()
 	envFilePath := filepath.Join(currentDir, ".env")
 	err := godotenv.Load(envFilePath)
@@ -67,8 +69,8 @@ func main() {
 		}
 	}
 
-	go metatrader.InitiateMetatrader()
-	routes := routes.SetupRouter()
+	go metatrader.InitiateMetatrader(connChannel, sharedReader)
+	routes := routes.SetupRouter(connChannel, sharedReader)
 	runningErr := routes.Run(":3000")
 	log.Println("start serving ...")
 	if runningErr != nil {

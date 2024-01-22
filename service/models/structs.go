@@ -100,8 +100,12 @@ type Products struct {
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 }
 
-type Symbols struct {
-	Symbols []string `bson:"symbols" json:"symbols"`
+type Symbol struct {
+	ID         primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	SymbolName string             `bson:"name" json:"name"`
+	SymbolType SymbolType         `bson:"type" json:"type"`
+	SymbolSide SymbolSide         `bson:"side" json:"side"`
+	CreatedAt  time.Time          `bson:"created_at" json:"created_at"`
 }
 
 type PaymentMethods struct {
@@ -222,4 +226,17 @@ type OperationMetaTrader struct {
 	OP_CREDIT    string `json:"OP_CREDIT"`
 	OP_BUYTO     string `json:"OP_BUYTO"`
 	OP_SELLTO    string `json:"OP_SELLTO"`
+}
+
+type RequestSetSymbol struct {
+	SymbolName *string     `json:"symbol_name"`
+	SymbolType *SymbolType `json:"symbol_type"`
+	SymbolSide *SymbolSide `json:"symbol_side"`
+}
+
+type MetaTraderAdmin struct {
+	Data string    `json:"data"`
+	ID   int       `json:"id"`
+	Time time.Time `json:"time"`
+	Status string `json:"status"`
 }
