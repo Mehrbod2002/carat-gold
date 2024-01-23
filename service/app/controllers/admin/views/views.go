@@ -215,64 +215,6 @@ func ViewGeneralData(c *gin.Context) {
 	})
 }
 
-func ViewHistoryOrders(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
-		return
-	}
-	db, err := utils.GetDB(c)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	var historyOrders []models.HistoryOrders
-	cursor, err := db.Collection("history_orders").Find(context.Background(), bson.M{})
-	if err != nil && err != mongo.ErrNoDocuments {
-		log.Println(err)
-		utils.InternalError(c)
-		return
-	}
-	defer cursor.Close(context.Background())
-	if err := cursor.All(context.Background(), &historyOrders); err != nil {
-		log.Println(err)
-		utils.InternalError(c)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"success":        true,
-		"message":        "done",
-		"history_orders": historyOrders,
-	})
-}
-
-func ViewCurrentOrders(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
-		return
-	}
-	db, err := utils.GetDB(c)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	var realTimeOrders []models.RealTimeOrders
-	cursor, err := db.Collection("real_time_orders").Find(context.Background(), bson.M{})
-	if err != nil && err != mongo.ErrNoDocuments {
-		log.Println(err)
-		utils.InternalError(c)
-		return
-	}
-	defer cursor.Close(context.Background())
-	if err := cursor.All(context.Background(), &realTimeOrders); err != nil {
-		log.Println(err)
-		utils.InternalError(c)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"success":          true,
-		"message":          "done",
-		"real_time_orders": realTimeOrders,
-	})
-}
-
 func ViewMetaData(c *gin.Context) {
 	if !models.AllowedAction(c, models.ActionGeneralDataView) {
 		return
@@ -329,4 +271,72 @@ func ViewChatsHistories(c *gin.Context) {
 		"message":        "done",
 		"chat_histories": chatHistories,
 	})
+}
+
+func ViewCurrentOrders(c *gin.Context) {
+	// if !models.AllowedAction(c, models.ActionMetaTrader) {
+	// 	return
+	// }
+	metaTrader, connected := utils.GetSharedSocket(c)
+
+	if !connected {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
+
+	requestID, data := models.GetCurrentOrder()
+
+	n, err := metaTrader.Write([]byte(data))
+	if err != nil || n == 0 {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
+
+	response, connected := utils.GetSharedReader(c, requestID)
+
+	if !connected {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
+
+	if response["status"] == "true" {
+		c.JSON(http.StatusOK, gin.H{"success": false, "data": response["data"], "message": response["data"]})
+		return
+	}
+
+	utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+}
+
+func ViewHistoryOrders(c *gin.Context) {
+	// if !models.AllowedAction(c, models.ActionMetaTrader) {
+	// 	return
+	// }
+	metaTrader, connected := utils.GetSharedSocket(c)
+
+	if !connected {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
+
+	requestID, data := models.GetHistoryOrder()
+
+	n, err := metaTrader.Write([]byte(data))
+	if err != nil || n == 0 {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
+
+	response, connected := utils.GetSharedReader(c, requestID)
+
+	if !connected {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
+
+	if response["status"] == "true" {
+		c.JSON(http.StatusOK, gin.H{"success": false, "data": response["data"], "message": response["data"]})
+		return
+	}
+
+	utils.InternalErrorMsg(c, "metatrader connection channel is closed")
 }

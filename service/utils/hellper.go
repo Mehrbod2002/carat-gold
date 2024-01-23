@@ -153,7 +153,6 @@ func GetSharedReader(c *gin.Context, id string) (map[string]interface{}, bool) {
 
 		fmt.Println(dataReceived)
 		if dataReceived["id"] == id {
-			fmt.Println(dataReceived)
 			return dataReceived, true
 		} else {
 			receivedMsg += 1

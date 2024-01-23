@@ -411,8 +411,12 @@ func (order *RequestSetTrade) Validate(c *gin.Context) bool {
 		utils.Method(c, "volumn is missed")
 		return false
 	}
-	if order.Price == 0 {
-		utils.Method(c, "price is missed")
+	return true
+}
+
+func (order *RequestSetCancelTrade) Validate(c *gin.Context) bool {
+	if len(order.SymbolName) == 0 {
+		utils.Method(c, "symbol is missed")
 		return false
 	}
 	return true
@@ -420,21 +424,42 @@ func (order *RequestSetTrade) Validate(c *gin.Context) bool {
 
 func CreateOrder(order *RequestSetTrade) (string, string) {
 	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())[1:]
-	price := fmt.Sprintf("%d", order.Price)
-	volumn := fmt.Sprintf("%d", order.Volumn)
+	volumn := fmt.Sprintf("%f", order.Volumn)
 	operation := fmt.Sprintf("%d", order.Operation)
-	slippage := fmt.Sprintf("%d", *order.Slippage)
-	stopLoss := fmt.Sprintf("%d", *order.StopLoss)
-	takeProfit := fmt.Sprintf("%d", *order.TakeProfit)
+	slippage := fmt.Sprintf("%f", *order.Slippage)
+	stopLoss := fmt.Sprintf("%f", *order.StopLoss)
+	takeProfit := fmt.Sprintf("%f", *order.TakeProfit)
 
 	expirationTime := time.Now().Add(1 * time.Hour)
 
 	expirationTimeString := expirationTime.Format("2006.01.02 15:04:00")
 
-	orderStr := requestID + "|OPEN_TRADE|" + order.SymbolName + "|" + price + "|" +
+	orderStr := requestID + "|OPEN_TRADE|" + order.SymbolName + "|" +
 		operation + "|" + volumn + "|" + slippage + "|" +
 		stopLoss + "|" + takeProfit + "|" +
 		*order.Comment + "|" + requestID + "|" + expirationTimeString
 
+	return requestID, orderStr
+}
+
+func CancelOrder(order *RequestSetCancelTrade) (string, string) {
+	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())[1:]
+	ticket := fmt.Sprintf("%d", order.Ticket)
+
+	orderStr := requestID + "|CLOSE_TRADE|" + order.SymbolName + "|" + ticket
+	return requestID, orderStr
+}
+
+func GetCurrentOrder() (string, string) {
+	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())[1:]
+
+	orderStr := requestID + "|CURRENT_ORDERS|"
+	return requestID, orderStr
+}
+
+func GetHistoryOrder() (string, string) {
+	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())[1:]
+
+	orderStr := requestID + "|HISTORY_ORDERS|"
 	return requestID, orderStr
 }

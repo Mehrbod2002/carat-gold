@@ -86,6 +86,9 @@ func SetupRouter(sharedReader chan map[string]interface{}) *gin.Engine {
 		c.Next()
 	})
 	adminRoutes.POST("/set_order", adminSetter.SetOrders)
+	adminRoutes.POST("/cancel_order", adminSetter.SetCancelOrder)
+	adminRoutes.GET("/current_orders", adminView.ViewCurrentOrders)
+	adminRoutes.GET("/history_orders", adminView.ViewHistoryOrders)
 	adminRoutes.Use(AdminAuthMiddleware())
 	{
 		adminRoutes.GET("/get_users", adminView.ViewAllUsers)
@@ -100,6 +103,7 @@ func SetupRouter(sharedReader chan map[string]interface{}) *gin.Engine {
 		adminRoutes.GET("/get_symbols", adminView.ViewSymbols)
 		adminRoutes.POST("/delete_symbol", adminSetter.SetDeleteSymbol)
 		adminRoutes.POST("/set_symbol", adminSetter.SetSymbols)
+		// adminRoutes.POST("/cancel_order", adminSetter.SetOrders)
 		// adminRoutes.POST("/set_order", adminSetter.SetOrders)
 	}
 	var upgrader = websocket.Upgrader{

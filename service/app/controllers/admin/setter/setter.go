@@ -477,10 +477,8 @@ func SetOrders(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("before")
 	metaTrader, connected := utils.GetSharedSocket(c)
 
-	fmt.Print(connected, metaTrader)
 	if !connected {
 		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
 		return
@@ -488,6 +486,48 @@ func SetOrders(c *gin.Context) {
 
 	requestID, data := models.CreateOrder(&request)
 	fmt.Println("DATA: ", data)
+
+	n, err := metaTrader.Write([]byte(data))
+	if err != nil || n == 0 {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
+
+	response, connected := utils.GetSharedReader(c, requestID)
+
+	if !connected {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
+
+	if response["status"] == "true" {
+		c.JSON(http.StatusOK, gin.H{"success": false, "data": response["data"], "message": response["data"]})
+		return
+	}
+
+	utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+}
+
+func SetCancelOrder(c *gin.Context) {
+	// if !models.AllowedAction(c, models.ActionMetaTrader) {
+	// 	return
+	// }
+
+	var request models.RequestSetCancelTrade
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	metaTrader, connected := utils.GetSharedSocket(c)
+
+	if !connected {
+		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+		return
+	}
+
+	requestID, data := models.CancelOrder(&request)
 
 	n, err := metaTrader.Write([]byte(data))
 	if err != nil || n == 0 {

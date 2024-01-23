@@ -243,12 +243,16 @@ type MetaTraderAdmin struct {
 
 type RequestSetTrade struct {
 	SymbolName string     `json:"name"`
-	Volumn     int        `json:"volumn"`
-	Price      int        `json:"price"`
+	Volumn     float64    `json:"volumn"`
 	Operation  int        `json:"operation"`
-	StopLoss   *int       `json:"stoploss"`
-	TakeProfit *int       `json:"takeprofit"`
+	StopLoss   *float64   `json:"stoploss"`
+	TakeProfit *float64   `json:"takeprofit"`
 	Comment    *string    `json:"comment"`
-	Slippage   *int       `json:"slippage"`
+	Slippage   *float64   `json:"slippage"`
 	Expiration *time.Time `json:"expiration"`
+}
+
+type RequestSetCancelTrade struct {
+	SymbolName string `json:"name"`
+	Ticket     int    `json:"ticket"`
 }

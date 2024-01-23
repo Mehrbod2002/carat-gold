@@ -103,7 +103,9 @@ func handleMetaTrader(completeJSON []byte, dataChannel chan<- interface{}, admin
 	}
 
 	dataMeta["time"] = fmt.Sprintf("%d", time.Now().UTC().Unix())
-	if _, admin := dataMeta["status"]; admin {
+	_, admin := dataMeta["status"]
+	_, optAdmin := dataMeta["lots"]
+	if optAdmin || admin {
 		sharedReader <- dataMeta
 	} else {
 		dataChannel <- dataMeta
