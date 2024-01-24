@@ -18,7 +18,6 @@ import (
 
 func main() {
 	// gin.SetMode(gin.ReleaseMode)
-	sharedReader := make(chan map[string]interface{})
 	currentDir, _ := os.Getwd()
 	envFilePath := filepath.Join(currentDir, ".env")
 	err := godotenv.Load(envFilePath)
@@ -67,8 +66,8 @@ func main() {
 		}
 	}
 
-	go metatrader.InitiateMetatrader(sharedReader)
-	routes := routes.SetupRouter(sharedReader)
+	go metatrader.InitiateMetatrader()
+	routes := routes.SetupRouter()
 	runningErr := routes.Run(":3000")
 	log.Println("start serving ...")
 	if runningErr != nil {

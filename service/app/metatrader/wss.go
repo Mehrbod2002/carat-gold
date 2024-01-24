@@ -7,7 +7,7 @@ import (
 	"syscall"
 )
 
-func InitiateMetatrader(sharedReader chan map[string]interface{}) {
+func InitiateMetatrader() {
 	errors := make(chan error)
 	var wg sync.WaitGroup
 
@@ -23,7 +23,7 @@ func InitiateMetatrader(sharedReader chan map[string]interface{}) {
 
 	wg.Add(2)
 	go startServerWSS(errors, &wg, dataChannel, adminChannel)
-	go startServerMetaTrader(errors, &wg, dataChannel, stop, adminChannel, sharedReader)
+	go startServerMetaTrader(errors, &wg, dataChannel, stop, adminChannel)
 
 	<-stop
 	close(errors)

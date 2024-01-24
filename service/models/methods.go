@@ -423,21 +423,33 @@ func (order *RequestSetCancelTrade) Validate(c *gin.Context) bool {
 }
 
 func CreateOrder(order *RequestSetTrade) (string, string) {
+	slippage := "0"
+	stopLoss := "0"
+	takeProfit := "0"
+	comment := "Default comment"
 	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())[1:]
 	volumn := fmt.Sprintf("%f", order.Volumn)
 	operation := fmt.Sprintf("%d", order.Operation)
-	slippage := fmt.Sprintf("%f", *order.Slippage)
-	stopLoss := fmt.Sprintf("%f", *order.StopLoss)
-	takeProfit := fmt.Sprintf("%f", *order.TakeProfit)
-
-	expirationTime := time.Now().Add(1 * time.Hour)
+	if order.Slippage != nil {
+		slippage = fmt.Sprintf("%f", *order.Slippage)
+	}
+	if order.TakeProfit != nil {
+		takeProfit = fmt.Sprintf("%f", *order.TakeProfit)
+	}
+	if order.StopLoss != nil {
+		stopLoss = fmt.Sprintf("%f", *order.StopLoss)
+	}
+	if order.Comment != nil {
+		comment = *order.Comment
+	}
+	expirationTime := time.Now().Add(24 * time.Hour)
 
 	expirationTimeString := expirationTime.Format("2006.01.02 15:04:00")
 
 	orderStr := requestID + "|OPEN_TRADE|" + order.SymbolName + "|" +
 		operation + "|" + volumn + "|" + slippage + "|" +
 		stopLoss + "|" + takeProfit + "|" +
-		*order.Comment + "|" + requestID + "|" + expirationTimeString
+		comment + "|" + requestID + "|" + expirationTimeString
 
 	return requestID, orderStr
 }

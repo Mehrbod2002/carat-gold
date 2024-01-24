@@ -300,7 +300,7 @@ func ViewCurrentOrders(c *gin.Context) {
 	}
 
 	if response["status"] == "true" {
-		c.JSON(http.StatusOK, gin.H{"success": false, "data": response["data"], "message": response["data"]})
+		c.JSON(http.StatusOK, gin.H{"success": true, "data": response["data"], "message": response["data"]})
 		return
 	}
 
@@ -334,7 +334,7 @@ func ViewHistoryOrders(c *gin.Context) {
 	}
 
 	if response["status"] == "true" {
-		c.JSON(http.StatusOK, gin.H{"success": false, "data": response["data"], "message": response["data"]})
+		c.JSON(http.StatusOK, gin.H{"success": true, "data": response["data"], "message": "done"})
 		return
 	}
 

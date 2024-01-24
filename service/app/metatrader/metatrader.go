@@ -2,24 +2,24 @@ package metatrader
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
 
 var SharedConnection net.Conn
+var SharedReader map[string]interface{} = make(map[string]interface{})
 
 func startServerMetaTrader(
 	errors chan<- error,
 	wg *sync.WaitGroup,
 	dataChannel chan<- interface{},
 	stop chan struct{},
-	adminChannel chan interface{},
-	sharedReader chan map[string]interface{}) {
+	adminChannel chan interface{}) {
 	defer wg.Done()
 
 	for {
@@ -51,7 +51,7 @@ func startServerMetaTrader(
 				}
 
 				SharedConnection = conn
-				go handleClientMetatrader(conn, dataChannel, adminChannel, sharedReader)
+				go handleClientMetatrader(conn, dataChannel, adminChannel)
 			}
 		}()
 	}
@@ -59,8 +59,7 @@ func startServerMetaTrader(
 
 func handleClientMetatrader(conn net.Conn,
 	dataChannel chan<- interface{},
-	adminChannel chan interface{},
-	sharedReader chan map[string]interface{}) {
+	adminChannel chan interface{}) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
@@ -72,21 +71,21 @@ func handleClientMetatrader(conn net.Conn,
 		default:
 		}
 
-		data, err := reader.ReadBytes('}')
+		temp := make([]byte, 1024)
+		_, err := reader.Read(temp)
 		if err != nil {
 			return
 		}
 
-		buffer = append(buffer[:0], data...)
+		buffer = append(buffer, temp...)
+		buffer = []byte(strings.ReplaceAll(string(buffer), "\x00", ""))
 
 		for {
-			start := bytes.Index(buffer, []byte{'{'})
-			end := bytes.Index(buffer, []byte{'}'})
-			if start != -1 && end != -1 && start < end {
-				completeJSON := buffer[start : end+1]
-				go handleMetaTrader(completeJSON, dataChannel, adminChannel, sharedReader)
-
-				buffer = buffer[end+1:]
+			var dataMeta map[string]interface{}
+			err := json.Unmarshal(buffer, &dataMeta)
+			if err == nil {
+				go handleMetaTrader(dataMeta, dataChannel, adminChannel)
+				buffer = buffer[:0]
 			} else {
 				break
 			}
@@ -94,19 +93,11 @@ func handleClientMetatrader(conn net.Conn,
 	}
 }
 
-func handleMetaTrader(completeJSON []byte, dataChannel chan<- interface{}, adminChannel chan<- interface{}, sharedReader chan map[string]interface{}) {
-	var dataMeta map[string]interface{}
-
-	err := json.Unmarshal(completeJSON, &dataMeta)
-	if err != nil {
-		return
-	}
-
+func handleMetaTrader(dataMeta map[string]interface{}, dataChannel chan<- interface{}, adminChannel chan<- interface{}) {
 	dataMeta["time"] = fmt.Sprintf("%d", time.Now().UTC().Unix())
-	_, admin := dataMeta["status"]
-	_, optAdmin := dataMeta["lots"]
-	if optAdmin || admin {
-		sharedReader <- dataMeta
+	id, ok := dataMeta["id"].(string)
+	if ok {
+		SharedReader[id] = dataMeta
 	} else {
 		dataChannel <- dataMeta
 	}

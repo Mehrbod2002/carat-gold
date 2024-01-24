@@ -1,10 +1,10 @@
 package admin
 
 import (
+	"carat-gold/app/metatrader"
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -466,9 +466,9 @@ func SetDeleteSymbol(c *gin.Context) {
 }
 
 func SetOrders(c *gin.Context) {
-	// if !models.AllowedAction(c, models.ActionMetaTrader) {
-	// 	return
-	// }
+	if !models.AllowedAction(c, models.ActionMetaTrader) {
+		return
+	}
 
 	var request models.RequestSetTrade
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -477,17 +477,12 @@ func SetOrders(c *gin.Context) {
 		return
 	}
 
-	metaTrader, connected := utils.GetSharedSocket(c)
-
-	if !connected {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
-		return
-	}
+	metaTrader := metatrader.SharedConnection
 
 	requestID, data := models.CreateOrder(&request)
-	fmt.Println("DATA: ", data)
 
 	n, err := metaTrader.Write([]byte(data))
+
 	if err != nil || n == 0 {
 		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
 		return
@@ -501,17 +496,18 @@ func SetOrders(c *gin.Context) {
 	}
 
 	if response["status"] == "true" {
-		c.JSON(http.StatusOK, gin.H{"success": false, "data": response["data"], "message": response["data"]})
+		c.JSON(http.StatusOK, gin.H{"success": true, "data": response["data"], "message": response["data"]})
 		return
 	}
 
-	utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+	var errMsg string = response["data"].(string)
+	c.JSON(http.StatusInternalServerError, gin.H{"success": false, "data": errMsg, "message": "metatrader connection channel is closed"})
 }
 
 func SetCancelOrder(c *gin.Context) {
-	// if !models.AllowedAction(c, models.ActionMetaTrader) {
-	// 	return
-	// }
+	if !models.AllowedAction(c, models.ActionMetaTrader) {
+		return
+	}
 
 	var request models.RequestSetCancelTrade
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -547,5 +543,6 @@ func SetCancelOrder(c *gin.Context) {
 		return
 	}
 
-	utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+	var errMsg string = response["data"].(string)
+	c.JSON(http.StatusInternalServerError, gin.H{"success": false, "data": errMsg, "message": "metatrader connection channel is closed"})
 }

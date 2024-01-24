@@ -125,37 +125,20 @@ func GetSharedSocket(c *gin.Context) (net.Conn, bool) {
 }
 
 func GetSharedReader(c *gin.Context, id string) (map[string]interface{}, bool) {
-	value, exists := c.Get("sharedReader")
-	id = id[1:]
-	if !exists {
-		InternalErrorMsg(c, "metatrader disconnected")
-		return nil, false
-	}
-
-	channelString, ok := value.(chan map[string]interface{})
-
-	if !ok {
-		InternalErrorMsg(c, "metatrader disconnected")
-		return nil, false
-	}
-
 	var receivedMsg int = 0
 	for {
-		if receivedMsg == 5 {
-			InternalErrorMsg(c, "metatrader connection channel is closed")
-			return nil, false
-		}
-		dataReceived, ok := <-channelString
-		if !ok {
-			InternalErrorMsg(c, "metatrader connection channel is closed")
-			return nil, false
-		}
+		fmt.Println(id, metatrader.SharedReader)
 
-		fmt.Println(dataReceived)
-		if dataReceived["id"] == id {
-			return dataReceived, true
-		} else {
-			receivedMsg += 1
+		if receivedMsg == 5 {
+			metatrader.SharedReader[id[1:]] = 
+			return nil, false
 		}
+		dataReceived, ok := metatrader.SharedReader[id[1:]].(map[string]interface{})
+		if !ok {
+			time.Sleep(1 * time.Second)
+			receivedMsg += 1
+			continue
+		}
+		return dataReceived, true
 	}
 }
