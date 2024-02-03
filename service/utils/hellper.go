@@ -2,7 +2,6 @@ package utils
 
 import (
 	"carat-gold/app/metatrader"
-	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
@@ -127,10 +126,8 @@ func GetSharedSocket(c *gin.Context) (net.Conn, bool) {
 func GetSharedReader(c *gin.Context, id string) (map[string]interface{}, bool) {
 	var receivedMsg int = 0
 	for {
-		fmt.Println(id, metatrader.SharedReader)
-
 		if receivedMsg == 5 {
-			metatrader.SharedReader[id[1:]] = 
+			metatrader.SharedReader[id[1:]] = make(map[string]interface{})
 			return nil, false
 		}
 		dataReceived, ok := metatrader.SharedReader[id[1:]].(map[string]interface{})

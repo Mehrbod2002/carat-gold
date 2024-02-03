@@ -64,9 +64,10 @@ func SetupRouter() *gin.Engine {
 		authRoutes.POST("/user/register", user.Register)
 	}
 
-	// public := apis.Group("/public")
-	// {
-	// }
+	public := apis.Group("/public")
+	{
+		public.GET("/get_products", adminView.ViewProducts)
+	}
 
 	userRoutes := apis.Group("/user")
 	userRoutes.Use(AuthMiddleware())

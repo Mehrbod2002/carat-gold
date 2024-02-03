@@ -190,79 +190,32 @@ string DataHistory(string symbol, string type, MqlRates &rates[], ENUM_TIMEFRAME
     );
 }
 
-void HistoryData(){
-    for (int i = 0; i < ArraySize(cryptoSymbols); i++) {
-        for (int tf = 0; tf < ArraySize(timeframes); tf++) {
-            MqlRates rates[];
-            if (CopyHistoricalData(cryptoSymbols[i], timeframes[tf], rates)) {
-                for (int j = 0; j < ArraySize(rates); j++) {
-                    string jsonData1 = DataHistory(cryptoSymbols[i], "crypto", rates, timeframes[tf], j);
-                    uchar byteArray4[];
-                    StringToCharArray(jsonData1, byteArray4);
-                    int sentBytes = SocketSend(socket, byteArray4, StringLen(jsonData1));
-                }
-            }
-        }
-   }
-    for (int i = 0; i < ArraySize(indexesSymbols); i++) {
-        for (int tf = 0; tf < ArraySize(timeframes); tf++) {
-            MqlRates rates[];
-            if (CopyHistoricalData(indexesSymbols[i], timeframes[tf], rates)) {
-                for (int j = 0; j < ArraySize(rates); j++) {
-                     string jsonData1 = DataHistory(indexesSymbols[i], "index", rates, timeframes[tf], j);
-                     uchar byteArray4[];
-                     StringToCharArray(jsonData1, byteArray4);
-                     int sentBytes = SocketSend(socket, byteArray4, StringLen(jsonData1));
-                }
-            }
-        }
-   }
-    for (int i = 0; i < ArraySize(commoditiesSymbols); i++) {
-          for (int tf = 0; tf < ArraySize(timeframes); tf++) {
-            MqlRates rates[];
-            if (CopyHistoricalData(commoditiesSymbols[i], timeframes[tf], rates)) {
-                for (int j = 0; j < ArraySize(rates); j++) {
-                    string jsonData1 = DataHistory(commoditiesSymbols[i], "commodity", rates, timeframes[tf], j);
-                    uchar byteArray4[];
-                    StringToCharArray(jsonData1, byteArray4);
-                    int sentBytes = SocketSend(socket, byteArray4, StringLen(jsonData1));
-                }
-            }
-        }
-   }
-    for (int i = 0; i < ArraySize(forexSymbols); i++) {
-         for (int tf = 0; tf < ArraySize(timeframes); tf++) {
-            MqlRates rates[];
-            if (CopyHistoricalData(forexSymbols[i], timeframes[tf], rates)) {
-                for (int j = 0; j < ArraySize(rates); j++) {
-                    string jsonData1 = DataHistory(forexSymbols[i], "forex", rates, timeframes[tf], j);
-                    uchar byteArray4[];
-                    StringToCharArray(jsonData1, byteArray4);
-                    int sentBytes = SocketSend(socket, byteArray4, StringLen(jsonData1));
-                }
-            }
-        }
-   }
-}
-
 void ReadFromSocket() {
-   char   rsp[];
+   if (!SocketIsConnected(socket)) {
+        Print("Disconnected from the server");
+        socket = SocketCreate();
+        if (SocketConnect(socket, serverAddress, serverPort, 1000)) {
+            Print("Connected to the server");
+        } else {
+            int error = GetLastError();
+            Print(" error : ", error);
+            Sleep(1000);
+        }
+   }
+   char   rsp[1024];
    string result;
-   uint   timeout_check=GetTickCount()+1000;
+   uint   timeout_check=GetTickCount()+100;
 
    do {
       uint len=SocketIsReadable(socket);
-      if(len) {
+      if(len > 0) {
         int rsp_len;
-        if(ExtTLS)
-            rsp_len=SocketTlsRead(socket,rsp,len);
-        else
-            rsp_len=SocketRead(socket,rsp,len,timeout);
-
+        rsp_len=SocketRead(socket,rsp,len,100);
         if(rsp_len>0) {
             result+=CharArrayToString(rsp,0,rsp_len);
 
             ProcessData(result);
+            return;
         }
       }
    } while(GetTickCount()<timeout_check && !IsStopped());
@@ -319,11 +272,11 @@ void ConnectionAndTick(bool holiday) {
 }
 
 void OnTick() {
-    ConnectionAndTick(false);
+    //ConnectionAndTick(false);
 }
 
 void OnTimer() {
-    ConnectionAndTick(true);
+    //ConnectionAndTick(true);
     ReadFromSocket();
 }
 
@@ -331,44 +284,49 @@ void ProcessData(const string &data) {
     string components[];
     int count = StringSplit(data, '|', components);
 
-    if (count >= 2) {
-        if (components[0] == "OPEN_TRADE") {
-            string symbol = components[1];
-            double price = StringToDouble(components[1]);
+    string requestID = components[0];
+    if (count > 1) {
+        if (components[1] == "OPEN_TRADE") {
+            string symbol = components[2];
+            double price = StringToDouble(components[3]);
             
-            if (count >= 11) {
-                int option = StringToInteger(components[2]);
-                double volume = StringToDouble(components[3]);
-                int slipppage = StringToInteger(components[4]);
-                double stoploss = StringToDouble(components[5]);
-                double takeprofit = StringToDouble(components[6]);
-                string comment = components[8];
-                int magic = StringToInteger(components[9]);
-                datetime expiration = StringToTime(components[10]);
+            if (count >= 12) {
+                int option = StringToInteger(components[4]);
+                double volume = StringToDouble(components[5]);
+                int slipppage = StringToInteger(components[6]);
+                int magic_number = StringToInteger(components[7]);
+                double stoploss = StringToDouble(components[8]);
+                double takeprofit = StringToDouble(components[9]);
+                string comment = components[10];
+                int magic = StringToInteger(components[11]);
+                datetime expiration = StringToTime(components[12]);
 
-                OpenTrade(option, symbol, price, volume, slipppage, stoploss, takeprofit, comment, magic, expiration);
+                OpenTrade(requestID, option, magic_number, symbol, price, volume, slipppage, stoploss, takeprofit, comment, magic, expiration);
             } else {
-                SendError("INVALID");
+                SendError("INVALID", requestID);
                 return;
             }
         } else if (components[0] == "HISTORY_ORDERS") {
-            CreateJsonString();
+            CreateJsonString(requestID);
             return;
         } else if (components[0] == "CLOSE_TRADE") {
             string symbol = components[1];
             int ticket = StringToInteger(components[4]);
-            CloseTrade(symbol, ticket);
+            CloseTrade(requestID, symbol, ticket);
         } else if (components[0] == "CURRENT_ORDERS") {
-            CurrentCreateJsonString();
+            CurrentCreateJsonString(requestID);
+            return;
+        } else {
+            SendError("INVALID", requestID);
             return;
         }
     } else {
-        SendError("INVALID");
+        SendError("INVALID", requestID);
         return;
     }
 }
 
-void OpenTrade(int opt, string symbol, double price, double volume, int slipppage, 
+void OpenTrade(string requestID ,int opt, int magic_number,string symbol, double price, double volume, int slipppage, 
     double stoploss, double takeprofit, string comment, int magic, datetime expiration) {
 
     MqlTradeRequest request={};
@@ -383,13 +341,13 @@ void OpenTrade(int opt, string symbol, double price, double volume, int slipppag
     request.type=opt;
     request.price=price;
     if (OrderSend(request,result) > 0) {
-        SendData("");
+        SendData("", requestID);
     }
 
-    SendError("");
+    SendError("", requestID);
 }
 
-void CloseTrade(string symbol, int ticket) {
+void CloseTrade(string requestID, string symbol, int ticket) {
 
     MqlTradeRequest request={};
     MqlTradeResult result={};
@@ -398,10 +356,10 @@ void CloseTrade(string symbol, int ticket) {
     request.symbol = symbol;
     request.order = ticket;
     if (OrderSend(request,result) > 0) {
-        SendData("");
+        SendData("", requestID);
     }
 
-    SendError("");
+    SendError("", requestID);
 }
 
 bool IsTradeRunning(ulong ticket) {
@@ -416,7 +374,7 @@ bool IsTradeRunning(ulong ticket) {
     }
 }
 
-void CreateJsonString() {
+void CreateJsonString(string requestID) {
     string jsonString = "[";
 
     int totalOrders = HistoryOrdersTotal();
@@ -458,31 +416,45 @@ void CreateJsonString() {
     }
 
     jsonString += "]";
-    SendData(jsonString);
+    SendData(jsonString, requestID);
     return;
 }
 
-void SendData(string data) {
-    data = "TRUE|"+data;
+void SendData(string data, string requestID) {
+    string response = StringFormat(
+      "{\"status\":%s,\"data\":\"%s\",\"id\":\"%s\"}",
+        "\"true\"", data, requestID
+    );
+
     uchar byteArray[];
-    StringToCharArray(data, byteArray);
-    SocketSend(socket, byteArray, StringLen(data));
+    StringToCharArray(response, byteArray);
+    SocketSend(socket, byteArray, StringLen(response));
+    return;
 }
 
-void SendError(string data) {
+void SendError(string data, string requestID) {
     string errorDescription;
+    
     if (data == "") {
         int lastError = GetLastError();
-        errorDescription = "FALSE|"+IntegerToString(lastError);
+        errorDescription = IntegerToString(lastError);
     } else {
         errorDescription = data;
     }
+
+    string response = StringFormat(
+      "{\"status\":%s,\"data\":\"%s\",\"id\":\"%s\"}",
+        "\"false\"", errorDescription, requestID
+    );
+
     uchar byteArray[];
-    StringToCharArray(errorDescription, byteArray);
-    SocketSend(socket, byteArray, StringLen(errorDescription));
+    StringToCharArray(response, byteArray);
+    SocketSend(socket, byteArray, StringLen(response));
+    Print(response);
+    return;
 }
 
-void CurrentCreateJsonString() {
+void CurrentCreateJsonString(string requestID) {
     string jsonString = "[";
 
     int totalOrders = OrdersTotal();
@@ -496,17 +468,17 @@ void CurrentCreateJsonString() {
 
         string tradeType;
         if (type == ORDER_TYPE_BUY) {
-            tradeType = "Buy";
+            tradeType = "ORDER_TYPE_BUY";
         } else if (type == ORDER_TYPE_BUY_LIMIT) {
-            tradeType = "Buy Limit";
+            tradeType = "ORDER_TYPE_BUY_LIMIT";
         } else if (type == ORDER_TYPE_BUY_STOP) {
-            tradeType = "Buy";
+            tradeType = "ORDER_TYPE_BUY_STOP";
         } else if (type == ORDER_TYPE_SELL) {
-            tradeType = "Sell";
+            tradeType = "ORDER_TYPE_SELL";
         } else if (type == ORDER_TYPE_SELL_LIMIT) {
-            tradeType = "Sell limit";
+            tradeType = "ORDER_TYPE_SELL_LIMIT";
         } else if (type == ORDER_TYPE_SELL_STOP) {
-            tradeType = "Sell Stop";
+            tradeType = "ORDER_TYPE_SELL_STOP";
         }
 
         bool isOpen = true;
@@ -524,6 +496,6 @@ void CurrentCreateJsonString() {
     }
 
     jsonString += "]";
-    SendData(jsonString);
+    SendData(jsonString, requestID);
     return;
 }

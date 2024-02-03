@@ -8,3 +8,4 @@ type SymbolSide string
 type MetaTraderActon string
 type OrderOption string
 type OrderOperation int
+type DeliveryStatus string

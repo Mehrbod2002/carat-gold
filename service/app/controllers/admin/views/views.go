@@ -137,23 +137,50 @@ func ViewPaymentMethods(c *gin.Context) {
 		log.Println(err)
 		return
 	}
-	var paymentMethods []models.PaymentMethods
-	cursor, err := db.Collection("payment_methods").Find(context.Background(), bson.M{})
+
+	var googlePlay models.GooglePlay
+	var applePlay models.ApplePlay
+	var payPal models.PayPal
+	var debitCard models.DebitCard
+	var crypto models.Crypto
+	err = db.Collection("google_play").FindOne(context.Background(), bson.M{}).Decode(&googlePlay)
 	if err != nil && err != mongo.ErrNoDocuments {
 		log.Println(err)
 		utils.InternalError(c)
 		return
 	}
-	defer cursor.Close(context.Background())
-	if err := cursor.All(context.Background(), &paymentMethods); err != nil {
+	err = db.Collection("apple_play").FindOne(context.Background(), bson.M{}).Decode(&applePlay)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	err = db.Collection("paypal").FindOne(context.Background(), bson.M{}).Decode(&payPal)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	err = db.Collection("debit_card").FindOne(context.Background(), bson.M{}).Decode(&debitCard)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	err = db.Collection("crypto").FindOne(context.Background(), bson.M{}).Decode(&crypto)
+	if err != nil && err != mongo.ErrNoDocuments {
 		log.Println(err)
 		utils.InternalError(c)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"success":         true,
-		"message":         "done",
-		"payment_methods": paymentMethods,
+		"success":     true,
+		"message":     "done",
+		"crypto":      crypto,
+		"debit_card":  debitCard,
+		"paypal":      payPal,
+		"apple_play":  applePlay,
+		"google_play": googlePlay,
 	})
 }
 
@@ -212,35 +239,6 @@ func ViewGeneralData(c *gin.Context) {
 		"success":       true,
 		"message":       "done",
 		"general_datas": generalData,
-	})
-}
-
-func ViewMetaData(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
-		return
-	}
-	db, err := utils.GetDB(c)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	var metaData []models.MetaData
-	cursor, err := db.Collection("meta_datas").Find(context.Background(), bson.M{})
-	if err != nil && err != mongo.ErrNoDocuments {
-		log.Println(err)
-		utils.InternalError(c)
-		return
-	}
-	defer cursor.Close(context.Background())
-	if err := cursor.All(context.Background(), &metaData); err != nil {
-		log.Println(err)
-		utils.InternalError(c)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"success":    true,
-		"message":    "done",
-		"meta_datas": metaData,
 	})
 }
 
