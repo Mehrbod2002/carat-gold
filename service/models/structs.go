@@ -8,6 +8,57 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type ChatHistories struct{}
+type GeneralData struct{}
+
+type CallCenterDatas struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	WhatsApp string             `bson:"whatsapp" json:"whatsapp"`
+	Telegram string             `bson:"telegram" json:"telegram"`
+	Website  string             `bson:"website" json:"website"`
+	Email    string             `bson:"email" json:"email"`
+}
+
+type DebitCard struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Vat       float64            `bson:"vat" json:"vat"`
+	WhoDefine string             `bson:"who_define" json:"who_define"`
+}
+
+type PayPal struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Vat       float64            `bson:"vat" json:"vat"`
+	WhoDefine string             `bson:"who_define" json:"who_define"`
+}
+
+type GooglePlay struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Vat       float64            `bson:"vat" json:"vat"`
+	WhoDefine string             `bson:"who_define" json:"who_define"`
+}
+
+type ApplePlay struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Vat       float64            `bson:"vat" json:"vat"`
+	WhoDefine string             `bson:"who_define" json:"who_define"`
+}
+
+type Crypto struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Coin      string             `bson:"coin" json:"coin"`
+	Vat       float64            `bson:"vat" json:"vat"`
+	Wallet    string             `bson:"wallet" json:"wallet"`
+	WhoDefine string             `bson:"who_define" json:"who_define"`
+}
+
+type FANDQ struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Question  string             `bson:"question" json:"question"`
+	Answer    string             `bson:"answer" json:"answer"`
+	WhoDefine string             `bson:"who_define" json:"who_define"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+}
+
 type User struct {
 	ID               primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	Avatar           string             `bson:"avatar" json:"avatar"`
@@ -94,10 +145,19 @@ type Currency struct {
 }
 
 type Products struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	Name      string             `bson:"name,omitempty" json:"name"`
-	WhoDefine string             `bson:"who_define" json:"who_define"`
-	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Name        string             `bson:"name,omitempty" json:"name"`
+	Description string             `bson:"description" json:"description"`
+	Images      []string           `bson:"images" json:"images"`
+	Width       float64            `bson:"width" json:"width"`
+	Length      float64            `bson:"length" json:"length"`
+	WeightOZ    float64            `bson:"weight_oz" json:"weight_oz"`
+	WeightGramm float64            `bson:"weight_gramm" json:"weight_gramm"`
+	Purity      float64            `bson:"purity" json:"purity"`
+	PriceGramm  float64            `bson:"price_gramm" json:"price_gramm"`
+	Percentage  float64            `bson:"percentage" json:"percentage"`
+	WhoDefine   string             `bson:"who_define" json:"who_define"`
+	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
 }
 
 type Symbol struct {
@@ -108,38 +168,28 @@ type Symbol struct {
 	CreatedAt  time.Time          `bson:"created_at" json:"created_at"`
 }
 
-type PaymentMethods struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	PaymentName string             `bson:"name,omitempty" json:"name"`
-	Provider    map[string]string  `bson:"provider,omitempty" json:"provider"`
-	Description string             `bson:"description,omitempty" json:"description"`
-	WhoDefine   string             `bson:"who_define" json:"who_define"`
-	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
-}
-
 type DeliveryMethods struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	DeliveryName string             `bson:"name,omitempty" json:"name"`
-	Description  string             `bson:"description,omitempty" json:"description"`
-	WhoDefine    string             `bson:"who_define" json:"who_define"`
-	CreatedAt    time.Time          `bson:"created_at" json:"created_at"`
+	ID            primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Description   string             `bson:"description,omitempty" json:"description"`
+	WhoDefine     string             `bson:"who_define" json:"who_define"`
+	CreatedAt     time.Time          `bson:"created_at" json:"created_at"`
+	Title         string             `bson:"title,omitempty" json:"title"`
+	Fee           float64            `bson:"fee" json:"fee"`
+	SubTitle      string             `bson:"sub_title" json:"sub_title"`
+	EstimatedTime time.Duration      `bson:"estimated_time,omitempty" json:"estimated_time"`
+	TimeProvided  bool               `bson:"time_provided,omitempty" json:"time_provided"`
 }
-
-type GeneralData struct{}
-type HistoryOrders struct{}
-type RealTimeOrders struct{}
-type MetaData struct{}
-type ChatHistories struct{}
 
 type Transctions struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	OrderID       string             `json:"order_id" bson:"order_id,omitempty"`
-	UserID        primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
-	CreatedAt     time.Time          `bson:"created_at" json:"created_at"`
-	Status        UserStatus         `bson:"status" json:"status"`
-	PaymentMethod string             `bson:"payment_method" json:"payment_method"`
-	Symbol        string             `bson:"symbol" json:"symbol"`
-	ExternalData  map[string]string  `bson:"external_data" json:"external_data"`
+	ID             primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	OrderID        string             `json:"order_id" bson:"order_id,omitempty"`
+	UserID         primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
+	CreatedAt      time.Time          `bson:"created_at" json:"created_at"`
+	Status         UserStatus         `bson:"status" json:"status"`
+	StatusDelivery DeliveryStatus     `bson:"status_delivery" json:"status_delivery"`
+	PaymentMethod  string             `bson:"payment_method" json:"payment_method"`
+	Symbol         string             `bson:"symbol" json:"symbol"`
+	ExternalData   map[string]string  `bson:"external_data" json:"external_data"`
 }
 
 type Purchaed struct {
@@ -251,7 +301,35 @@ type RequestSetTrade struct {
 	Slippage   *float64 `json:"slippage"`
 }
 
+type RequestSetProduct struct {
+	ProductID   *string  `json:"product_id"`
+	Name        string   `bson:"name,omitempty" json:"name"`
+	Description string   `bson:"description" json:"description"`
+	Images      []string `bson:"images" json:"images"`
+	Width       float64  `bson:"width" json:"width"`
+	Length      float64  `bson:"length" json:"length"`
+	WeightOZ    float64  `bson:"weight_oz" json:"weight_oz"`
+	WeightGramm float64  `bson:"weight_gramm" json:"weight_gramm"`
+	Purity      float64  `bson:"purity" json:"purity"`
+	PriceGramm  float64  `bson:"price_gramm" json:"price_gramm"`
+	Percentage  float64  `bson:"percentage" json:"percentage"`
+}
+
+type RequestSetDeliveryMethod struct {
+	DeliveryID    *string       `json:"delivery_id"`
+	Title         string        `bson:"title,omitempty" json:"title"`
+	Fee           float64       `bson:"fee" json:"fee"`
+	Description   string        `bson:"description" json:"description"`
+	EstimatedTime time.Duration `bson:"estimated_time" json:"estimated_time"`
+	TimeProvided  bool          `bson:"time_provided" json:"time_provided"`
+}
+
 type RequestSetCancelTrade struct {
 	SymbolName string `json:"name"`
 	Ticket     int    `json:"ticket"`
+}
+
+type RequestSetFANDQ struct {
+	Question  string             `bson:"question" json:"question"`
+	Answer    string             `bson:"answer" json:"answer"`
 }

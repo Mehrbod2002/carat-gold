@@ -74,6 +74,12 @@ const (
 	OpSellStop  OrderOperation = 5
 )
 
+const (
+	Deliveried DeliveryStatus = "DELIVERED"
+	OnShipment DeliveryStatus = "ON SHIPMENT"
+	Hold       DeliveryStatus = "HOLD"
+)
+
 var AllActions = []Action{
 	ActionRead,
 	ActionDocument,

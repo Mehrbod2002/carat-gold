@@ -422,6 +422,59 @@ func (order *RequestSetCancelTrade) Validate(c *gin.Context) bool {
 	return true
 }
 
+func (product *RequestSetProduct) Validate(c *gin.Context) bool {
+	for _, i := range product.Images {
+		decodedFile, err := base64.StdEncoding.DecodeString(i)
+		if err != nil {
+			utils.Method(c, "invalid front file format")
+			return false
+		}
+		fileSizeMB := float64(len(decodedFile)) / (1024 * 1024)
+		if fileSizeMB > 30 {
+			utils.Method(c, "front shot size exceeds 30 MB")
+			return false
+		}
+	}
+
+	if len(product.Name) == 0 {
+		utils.Method(c, "invalid name")
+		return false
+	}
+	if len(product.Description) == 0 {
+		utils.Method(c, "invalid description")
+		return false
+	}
+	if product.Width <= 0 {
+		utils.Method(c, "invalid width")
+		return false
+	}
+	if product.Length <= 0 {
+		utils.Method(c, "invalid length")
+		return false
+	}
+	if product.WeightOZ <= 0 {
+		utils.Method(c, "invalid weight oz")
+		return false
+	}
+	if product.WeightGramm <= 0 {
+		utils.Method(c, "invalid weight gramm")
+		return false
+	}
+	if product.Purity <= 0 {
+		utils.Method(c, "invalid name")
+		return false
+	}
+	if product.PriceGramm <= 0 {
+		utils.Method(c, "invalid price")
+		return false
+	}
+	if product.Percentage <= 0 {
+		utils.Method(c, "invalid percentage")
+		return false
+	}
+	return true
+}
+
 func CreateOrder(order *RequestSetTrade) (string, string) {
 	slippage := "0"
 	stopLoss := "0"
@@ -474,4 +527,38 @@ func GetHistoryOrder() (string, string) {
 
 	orderStr := requestID + "|HISTORY_ORDERS|"
 	return requestID, orderStr
+}
+
+func (delivery *RequestSetDeliveryMethod) Validate(c *gin.Context) bool {
+	if len(delivery.Title) == 0 {
+		utils.Method(c, "invalid title")
+		return false
+	}
+	if len(delivery.Description) == 0 {
+		utils.Method(c, "invalid description")
+		return false
+	}
+	if delivery.TimeProvided {
+		if delivery.EstimatedTime == 0 {
+			utils.Method(c, "invalid time")
+			return false
+		}
+	}
+	if delivery.Fee == 0 {
+		utils.Method(c, "invalid time")
+		return false
+	}
+	return true
+}
+
+func (delivery *RequestSetFANDQ) Validate(c *gin.Context) bool {
+	if len(delivery.Question) == 0 {
+		utils.Method(c, "invalid question")
+		return false
+	}
+	if len(delivery.Answer) == 0 {
+		utils.Method(c, "invalid answer")
+		return false
+	}
+	return true
 }
