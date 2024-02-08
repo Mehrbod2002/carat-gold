@@ -8,7 +8,7 @@ app = Flask(__name__)
 login = 51981488
 password = "bogxs0lz"
 server = "Alpari-MT5-Demo"
-secret = "secret"
+secret = "MysticalDragon$7392&WhisperingWinds&SunsetHaven$AuroraBorealis"
 
 def initialize_mt5():
     if not mt5.initialize():
