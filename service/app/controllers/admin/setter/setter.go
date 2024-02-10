@@ -4,6 +4,7 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -16,12 +17,197 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func SetDeletePayment(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+		return
+	}
+	var request struct {
+		ID   string `json:"id"`
+		Side string `json:"side"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	paymentID, err := primitive.ObjectIDFromHex(request.ID)
+	if err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	var payment models.DefaultPayment
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if err := db.Collection(request.Side).FindOne(context.Background(), bson.M{
+		"_id": paymentID,
+	}).Decode(&payment); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	if _, err := db.Collection(request.ID).DeleteOne(context.Background(), bson.M{
+		"_id": payment.ID,
+	}); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "done"})
+}
+
+func SetEditPayment(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+		return
+	}
+
+	var request models.RequestSetPayment
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.BadBinding(c)
+		return
+	}
+
+	valid := request.Validate(c)
+	if !valid {
+		return
+	}
+
+	paymentID, valid := utils.ValidateID(*request.ID, c)
+	if !valid {
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return
+	}
+
+	editPayment := models.DefaultPayment{
+		Token:   request.Token,
+		Address: request.Address,
+		Access:  request.Access,
+		Vat:     request.Vat,
+	}
+
+	_, err := db.Collection(request.Side).UpdateOne(context.Background(), bson.M{
+		"_id": paymentID,
+	}, bson.M{"$set": editPayment})
+
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+}
+
+func SetPayment(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+		return
+	}
+	user, _ := models.ValidateSession(c)
+	var request *models.RequestSetPayment
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	valid := request.Validate(c)
+	if !valid {
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return
+	}
+
+	_, err := db.Collection(request.Side).InsertOne(context.Background(),
+		models.DefaultPayment{
+			Vat:       request.Vat,
+			Address:   request.Address,
+			Access:    request.Access,
+			Token:     request.Token,
+			WhoDefine: user.Email,
+		})
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+}
+
+func SetEditFANDQ(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+		return
+	}
+
+	var request models.RequestSetFANDQ
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	fandqID, valid := utils.ValidateID(*request.ID, c)
+	if !valid {
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return
+	}
+
+	var fandq models.FANDQ
+	err := db.Collection("f&q").FindOne(context.Background(),
+		bson.M{"_id": fandqID},
+	).Decode(&fandq)
+
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	_, err = db.Collection("f&q").UpdateOne(context.Background(), bson.M{
+		"_id": fandqID,
+	}, bson.M{"$set": request})
+
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+}
+
 func SetFANDQ(c *gin.Context) {
 	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
 		return
 	}
 	user, _ := models.ValidateSession(c)
-	var request *models.RequestSetFANDQ
+	var request models.RequestSetFANDQ
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
 
 	db, DBerr := utils.GetDB(c)
 	if DBerr != nil {
@@ -32,7 +218,7 @@ func SetFANDQ(c *gin.Context) {
 		models.FANDQ{
 			Question:  request.Question,
 			Answer:    request.Answer,
-			WhoDefine: user.Name,
+			WhoDefine: user.Email,
 			CreatedAt: time.Now(),
 		})
 	if err != nil {
@@ -88,23 +274,91 @@ func SetDeleteFANDQ(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "done"})
 }
 
-func SetCrypto(c *gin.Context) {
-}
-
-func SetBankMetas(c *gin.Context) {
-
-}
-
 func SetCallCenterDatas(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+		return
+	}
 
+	var request models.RequestSetCallCenter
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	result, err := db.Collection("call_center").UpdateOne(context.Background(), bson.M{}, bson.M{
+		"$set": request,
+	}, options.Update().SetUpsert(true))
+	if err != nil {
+		fmt.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	if result.UpsertedCount > 0 {
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Document inserted"})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "Document updated"})
+	}
 }
 
 func SetGeneralData(c *gin.Context) {
 
 }
 
-func SetCurrencies(c *gin.Context) {
+func SetEditCurrency(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+		return
+	}
 
+	var request struct {
+		ID string `json:"currency_id"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	currencyID, valid := utils.ValidateID(request.ID, c)
+	if !valid {
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return
+	}
+
+	var currency models.Currency
+	err := db.Collection("currencies").FindOne(context.Background(),
+		bson.M{"_id": currencyID},
+	).Decode(&currency)
+
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	_, err = db.Collection("currencies").UpdateOne(context.Background(), bson.M{
+		"_id": currencyID,
+	}, bson.M{"$set": bson.M{"active": !currency.Active}})
+
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
 }
 
 func SetEditProduct(c *gin.Context) {
@@ -191,7 +445,7 @@ func SetProduct(c *gin.Context) {
 			Width:       request.Width,
 			Percentage:  request.Percentage,
 			Images:      request.Images,
-			WhoDefine:   user.Name,
+			WhoDefine:   user.Email,
 			CreatedAt:   time.Now(),
 		})
 	if err != nil {
@@ -619,7 +873,11 @@ func SetEditDeliveryMethods(c *gin.Context) {
 	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
 		return
 	}
-	var request *models.RequestSetDeliveryMethod
+	var request models.RequestSetDeliveryMethod
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.BadBinding(c)
+		return
+	}
 
 	valid := request.Validate(c)
 	if !valid {
@@ -637,12 +895,15 @@ func SetEditDeliveryMethods(c *gin.Context) {
 		return
 	}
 
+	user, _ := models.ValidateSession(c)
 	editedDelivery := models.DeliveryMethods{
 		Title:         request.Title,
 		EstimatedTime: request.EstimatedTime,
 		TimeProvided:  request.TimeProvided,
 		Description:   request.Description,
 		Fee:           request.Fee,
+		WhoDefine:     user.Email,
+		CreatedAt:     time.Now(),
 	}
 
 	_, err := db.Collection("delivery_methods").UpdateOne(context.Background(), bson.M{
@@ -663,6 +924,10 @@ func SetDeliveryMethods(c *gin.Context) {
 	}
 	user, _ := models.ValidateSession(c)
 	var request *models.RequestSetDeliveryMethod
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.BadBinding(c)
+		return
+	}
 
 	valid := request.Validate(c)
 	if !valid {
@@ -682,7 +947,7 @@ func SetDeliveryMethods(c *gin.Context) {
 			TimeProvided:  request.TimeProvided,
 			Description:   request.Description,
 			Fee:           request.Fee,
-			WhoDefine:     user.Name,
+			WhoDefine:     user.Email,
 			CreatedAt:     time.Now(),
 		})
 
@@ -731,6 +996,51 @@ func SetDeleteSymbol(c *gin.Context) {
 
 	if _, err := db.Collection("symbols").DeleteOne(context.Background(), bson.M{
 		"_id": symbol.ID,
+	}); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "done"})
+}
+
+func SetDeleteDeliveryMethodl(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+		return
+	}
+	var request struct {
+		ID string `json:"delivery_id"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	deliveryID, err := primitive.ObjectIDFromHex(request.ID)
+	if err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	var delivery models.DeliveryMethods
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if err := db.Collection("delivery_methods").FindOne(context.Background(), bson.M{
+		"_id": deliveryID,
+	}).Decode(&delivery); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	if _, err := db.Collection("delivery_methods").DeleteOne(context.Background(), bson.M{
+		"_id": delivery.ID,
 	}); err != nil {
 		log.Println(err)
 		utils.InternalError(c)

@@ -271,6 +271,60 @@ func ViewChatsHistories(c *gin.Context) {
 	})
 }
 
+func ViewFANDQ(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+		return
+	}
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	var fandq []models.FANDQ
+	cursor, err := db.Collection("f&q").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &fandq); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+		"fandq":   fandq,
+	})
+}
+
+func ViewCallCenter(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+		return
+	}
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	var callCenter models.CallCenterDatas
+	err = db.Collection("call_center").FindOne(context.Background(), bson.M{}).Decode(&callCenter)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":     true,
+		"message":     "done",
+		"call_center": callCenter,
+	})
+}
+
 func ViewCurrentOrders(c *gin.Context) {
 	if !models.AllowedAction(c, models.ActionMetaTrader) {
 		return

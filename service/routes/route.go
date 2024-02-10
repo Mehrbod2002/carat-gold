@@ -102,7 +102,23 @@ func SetupRouter() *gin.Engine {
 		adminRoutes.GET("/current_orders", adminView.ViewCurrentOrders)
 		adminRoutes.GET("/history_orders", adminView.ViewHistoryOrders)
 		adminRoutes.POST("/edit_product", adminSetter.SetProduct)
+		adminRoutes.POST("/edit_currency", adminSetter.SetEditCurrency)
 		adminRoutes.POST("/set_product", adminSetter.SetProduct)
+		adminRoutes.GET("/get_currencies", adminView.ViewCurrencies)
+		adminRoutes.GET("/get_delivery_methods", adminView.ViewDeliveryMethods)
+		adminRoutes.GET("/get_payment_methods", adminView.ViewPaymentMethods)
+		adminRoutes.POST("/set_delivery_methods", adminSetter.SetDeliveryMethods)
+		adminRoutes.POST("/edit_delivery_methods", adminSetter.SetEditDeliveryMethods)
+		adminRoutes.POST("/delete_delivery_method", adminSetter.SetDeleteDeliveryMethodl)
+		adminRoutes.POST("/set_payment_method", adminSetter.SetPayment)
+		adminRoutes.POST("/edit_payment_method", adminSetter.SetEditPayment)
+		adminRoutes.POST("/delete_paymnet_method", adminSetter.SetDeletePayment)
+		adminRoutes.POST("/set_call_center", adminSetter.SetCallCenterDatas)
+		adminRoutes.GET("/get_call_center", adminView.ViewCallCenter)
+		adminRoutes.POST("/set_fandq", adminSetter.SetFANDQ)
+		adminRoutes.POST("/edit_fandq", adminSetter.SetEditFANDQ)
+		adminRoutes.POST("/delete_fandq", adminSetter.SetDeleteFANDQ)
+		adminRoutes.GET("/get_fandq", adminView.ViewFANDQ)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {

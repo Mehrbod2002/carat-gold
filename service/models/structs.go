@@ -11,17 +11,29 @@ import (
 type ChatHistories struct{}
 type GeneralData struct{}
 
+type RequestSetCallCenter struct {
+	WhatsApp         *string `bson:"whatsapp" json:"whatsapp"`
+	Telegram         *string `bson:"telegram" json:"telegram"`
+	WebsiteReference *string `bson:"website_reference" json:"website_reference"`
+	Email            *string `bson:"email" json:"email"`
+	PhoneComapny     *string `bson:"phone" json:"phone"`
+}
+
 type CallCenterDatas struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	WhatsApp string             `bson:"whatsapp" json:"whatsapp"`
-	Telegram string             `bson:"telegram" json:"telegram"`
-	Website  string             `bson:"website" json:"website"`
-	Email    string             `bson:"email" json:"email"`
+	ID               primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	WhatsApp         string             `bson:"whatsapp" json:"whatsapp"`
+	Telegram         string             `bson:"telegram" json:"telegram"`
+	WebsiteReference string             `bson:"website_reference" json:"website_reference"`
+	Email            string             `bson:"email" json:"email"`
+	PhoneComapny     string             `bson:"phone" json:"phone"`
 }
 
 type DebitCard struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	Vat       float64            `bson:"vat" json:"vat"`
+	Address   string             `bson:"address" json:"address"`
+	Access    string             `bson:"access" json:"access"`
+	Token     string             `bson:"token" json:"token"`
 	WhoDefine string             `bson:"who_define" json:"who_define"`
 }
 
@@ -29,18 +41,46 @@ type PayPal struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	Vat       float64            `bson:"vat" json:"vat"`
 	WhoDefine string             `bson:"who_define" json:"who_define"`
+	Address   string             `bson:"address" json:"address"`
+	Access    string             `bson:"access" json:"access"`
+	Token     string             `bson:"token" json:"token"`
+}
+
+type DefaultPayment struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Vat       float64            `bson:"vat" json:"vat"`
+	WhoDefine string             `bson:"who_define" json:"who_define"`
+	Address   string             `bson:"address" json:"address"`
+	Access    string             `bson:"access" json:"access"`
+	Token     string             `bson:"token" json:"token"`
+}
+
+type RequestSetPayment struct {
+	ID        *string `bson:"_id,omitempty" json:"_id"`
+	Side      string  `bson:"side" json:"side"`
+	Vat       float64 `bson:"vat" json:"vat"`
+	WhoDefine string  `bson:"who_define" json:"who_define"`
+	Address   string  `bson:"address" json:"address"`
+	Access    string  `bson:"access" json:"access"`
+	Token     string  `bson:"token" json:"token"`
 }
 
 type GooglePlay struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	Vat       float64            `bson:"vat" json:"vat"`
 	WhoDefine string             `bson:"who_define" json:"who_define"`
+	Address   string             `bson:"address" json:"address"`
+	Access    string             `bson:"access" json:"access"`
+	Token     string             `bson:"token" json:"token"`
 }
 
 type ApplePlay struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	Vat       float64            `bson:"vat" json:"vat"`
 	WhoDefine string             `bson:"who_define" json:"who_define"`
+	Address   string             `bson:"address" json:"address"`
+	Access    string             `bson:"access" json:"access"`
+	Token     string             `bson:"token" json:"token"`
 }
 
 type Crypto struct {
@@ -49,6 +89,9 @@ type Crypto struct {
 	Vat       float64            `bson:"vat" json:"vat"`
 	Wallet    string             `bson:"wallet" json:"wallet"`
 	WhoDefine string             `bson:"who_define" json:"who_define"`
+	Address   string             `bson:"address" json:"address"`
+	Access    string             `bson:"access" json:"access"`
+	Token     string             `bson:"token" json:"token"`
 }
 
 type FANDQ struct {
@@ -140,8 +183,11 @@ type UserMessage struct {
 }
 
 type Currency struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	Currency string             `bson:"currency,omitempty" json:"currency"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Currency  string             `bson:"currency,omitempty" json:"currency"`
+	WhoDefine string             `bson:"who_define" json:"who_define"`
+	Active    bool               `bson:"active" json:"active"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 }
 
 type Products struct {
@@ -177,7 +223,7 @@ type DeliveryMethods struct {
 	Title         string             `bson:"title,omitempty" json:"title"`
 	Fee           float64            `bson:"fee" json:"fee"`
 	SubTitle      string             `bson:"sub_title" json:"sub_title"`
-	EstimatedTime time.Duration      `bson:"estimated_time,omitempty" json:"estimated_time"`
+	EstimatedTime string             `bson:"estimated_time,omitempty" json:"estimated_time"`
 	TimeProvided  bool               `bson:"time_provided,omitempty" json:"time_provided"`
 }
 
@@ -320,12 +366,13 @@ type RequestSetProduct struct {
 }
 
 type RequestSetDeliveryMethod struct {
-	DeliveryID    *string       `json:"delivery_id"`
-	Title         string        `bson:"title,omitempty" json:"title"`
-	Fee           float64       `bson:"fee" json:"fee"`
-	Description   string        `bson:"description" json:"description"`
-	EstimatedTime time.Duration `bson:"estimated_time" json:"estimated_time"`
-	TimeProvided  bool          `bson:"time_provided" json:"time_provided"`
+	DeliveryID    *string `json:"delivery_id"`
+	Title         string  `bson:"title,omitempty" json:"title"`
+	Fee           float64 `bson:"fee" json:"fee"`
+	Description   string  `bson:"description" json:"description"`
+	EstimatedTime string  `bson:"estimated_time" json:"estimated_time"`
+	TimeProvided  bool    `bson:"time_provided" json:"time_provided"`
+	SubTitle      string  `bson:"sub_title" json:"sub_title"`
 }
 
 type RequestSetCancelTrade struct {
@@ -333,6 +380,7 @@ type RequestSetCancelTrade struct {
 }
 
 type RequestSetFANDQ struct {
-	Question string `bson:"question" json:"question"`
-	Answer   string `bson:"answer" json:"answer"`
+	ID       *string `json:"_id"`
+	Question string  `bson:"question" json:"question"`
+	Answer   string  `bson:"answer" json:"answer"`
 }

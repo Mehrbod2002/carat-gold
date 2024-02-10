@@ -553,13 +553,13 @@ func (delivery *RequestSetDeliveryMethod) Validate(c *gin.Context) bool {
 		return false
 	}
 	if delivery.TimeProvided {
-		if delivery.EstimatedTime == 0 {
+		if delivery.EstimatedTime == "" {
 			utils.Method(c, "invalid time")
 			return false
 		}
 	}
 	if delivery.Fee == 0 {
-		utils.Method(c, "invalid time")
+		utils.Method(c, "invalid Fee")
 		return false
 	}
 	return true
@@ -573,6 +573,42 @@ func (delivery *RequestSetFANDQ) Validate(c *gin.Context) bool {
 	if len(delivery.Answer) == 0 {
 		utils.Method(c, "invalid answer")
 		return false
+	}
+	return true
+}
+
+func (req *RequestSetPayment) Validate(c *gin.Context) bool {
+	if len(req.Access) == 0 {
+		utils.Method(c, "access is missed")
+		return false
+	}
+	if len(req.Address) == 0 {
+		utils.Method(c, "address is missed")
+		return false
+	}
+	if len(req.Token) == 0 {
+		utils.Method(c, "token is missed")
+		return false
+	}
+	if req.Vat == 0 {
+		utils.Method(c, "vat is missed")
+		return false
+	}
+	return true
+}
+
+func (req *RequestSetCallCenter) Validate(c *gin.Context) bool {
+	if len(*req.Email) != 0 {
+		if !IsValidEmail(*req.Email) {
+			utils.Method(c, "invalid email")
+			return false
+		}
+	}
+	if len(*req.PhoneComapny) == 0 {
+		if !IsValidPhoneNumber(*req.PhoneComapny) {
+			utils.Method(c, "invalid phone")
+			return false
+		}
 	}
 	return true
 }
