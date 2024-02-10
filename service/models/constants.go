@@ -4,6 +4,8 @@ import "net"
 
 var MetaTraderSocket *net.Conn
 
+var SecretMetaTrader = map[string]string{"X-Secret-Header": "MysticalDragon$7392&WhisperingWinds&SunsetHaven$AuroraBorealis"}
+
 const (
 	ActionRead               Action = "personal_access_data"
 	ActionDocument           Action = "review_document"

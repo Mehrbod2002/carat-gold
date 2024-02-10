@@ -154,8 +154,9 @@ type Products struct {
 	WeightOZ    float64            `bson:"weight_oz" json:"weight_oz"`
 	WeightGramm float64            `bson:"weight_gramm" json:"weight_gramm"`
 	Purity      float64            `bson:"purity" json:"purity"`
-	PriceGramm  float64            `bson:"price_gramm" json:"price_gramm"`
 	Percentage  float64            `bson:"percentage" json:"percentage"`
+	Hide        bool               `bson:"hide" json:"hide"`
+	Limited     bool               `bson:"limited" json:"limited"`
 	WhoDefine   string             `bson:"who_define" json:"who_define"`
 	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
 }
@@ -298,21 +299,24 @@ type RequestSetTrade struct {
 	StopLoss   *float64 `json:"stoploss"`
 	TakeProfit *float64 `json:"takeprofit"`
 	Comment    *string  `json:"comment"`
-	Slippage   *float64 `json:"slippage"`
+	Deviation  *float64 `json:"deviation"`
+	Stoplimit  *float64 `json:"stop_limit"`
 }
 
 type RequestSetProduct struct {
 	ProductID   *string  `json:"product_id"`
-	Name        string   `bson:"name,omitempty" json:"name"`
-	Description string   `bson:"description" json:"description"`
-	Images      []string `bson:"images" json:"images"`
-	Width       float64  `bson:"width" json:"width"`
-	Length      float64  `bson:"length" json:"length"`
-	WeightOZ    float64  `bson:"weight_oz" json:"weight_oz"`
-	WeightGramm float64  `bson:"weight_gramm" json:"weight_gramm"`
-	Purity      float64  `bson:"purity" json:"purity"`
-	PriceGramm  float64  `bson:"price_gramm" json:"price_gramm"`
-	Percentage  float64  `bson:"percentage" json:"percentage"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Images      []string `json:"images"`
+	Width       float64  `json:"width"`
+	Length      float64  `json:"length"`
+	WeightOZ    float64  `json:"weight_oz"`
+	WeightGramm float64  `json:"weight_gramm"`
+	Purity      float64  `json:"purity"`
+	PriceGramm  float64  `json:"price_gramm"`
+	Percentage  float64  `json:"percentage"`
+	Hide        bool     `bson:"hide" json:"hide"`
+	Limited     bool     `bson:"limited" json:"limited"`
 }
 
 type RequestSetDeliveryMethod struct {
@@ -325,11 +329,10 @@ type RequestSetDeliveryMethod struct {
 }
 
 type RequestSetCancelTrade struct {
-	SymbolName string `json:"name"`
-	Ticket     int    `json:"ticket"`
+	Ticket int64 `json:"ticket_id"`
 }
 
 type RequestSetFANDQ struct {
-	Question  string             `bson:"question" json:"question"`
-	Answer    string             `bson:"answer" json:"answer"`
+	Question string `bson:"question" json:"question"`
+	Answer   string `bson:"answer" json:"answer"`
 }

@@ -47,6 +47,7 @@ func IsValidPassowrd(password string, c *gin.Context) bool {
 }
 
 func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
+	fmt.Println(req.Name)
 	if len(*req.Name) > 20 || len(*req.Name) < 4 {
 		utils.Method(c, "invalid name length")
 		return false
@@ -411,14 +412,30 @@ func (order *RequestSetTrade) Validate(c *gin.Context) bool {
 		utils.Method(c, "volumn is missed")
 		return false
 	}
+	if order.Comment == nil {
+		defaultComment := ""
+		order.Comment = &defaultComment
+	}
+	if order.TakeProfit == nil {
+		defaultTakeProfit := 0.0
+		order.TakeProfit = &defaultTakeProfit
+	}
+	if order.StopLoss == nil {
+		defaultStopLoss := 0.0
+		order.StopLoss = &defaultStopLoss
+	}
+	if order.Deviation == nil {
+		defaultDeviation := 0.0
+		order.Deviation = &defaultDeviation
+	}
+	if order.Stoplimit == nil {
+		defaultStoplimit := 0.0
+		order.Stoplimit = &defaultStoplimit
+	}
 	return true
 }
 
 func (order *RequestSetCancelTrade) Validate(c *gin.Context) bool {
-	if len(order.SymbolName) == 0 {
-		utils.Method(c, "symbol is missed")
-		return false
-	}
 	return true
 }
 
@@ -426,7 +443,8 @@ func (product *RequestSetProduct) Validate(c *gin.Context) bool {
 	for _, i := range product.Images {
 		decodedFile, err := base64.StdEncoding.DecodeString(i)
 		if err != nil {
-			utils.Method(c, "invalid front file format")
+			fmt.Println(err, i)
+			utils.Method(c, "invalid file format")
 			return false
 		}
 		fileSizeMB := float64(len(decodedFile)) / (1024 * 1024)
@@ -464,10 +482,6 @@ func (product *RequestSetProduct) Validate(c *gin.Context) bool {
 		utils.Method(c, "invalid name")
 		return false
 	}
-	if product.PriceGramm <= 0 {
-		utils.Method(c, "invalid price")
-		return false
-	}
 	if product.Percentage <= 0 {
 		utils.Method(c, "invalid percentage")
 		return false
@@ -483,8 +497,8 @@ func CreateOrder(order *RequestSetTrade) (string, string) {
 	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())[1:]
 	volumn := fmt.Sprintf("%f", order.Volumn)
 	operation := fmt.Sprintf("%d", order.Operation)
-	if order.Slippage != nil {
-		slippage = fmt.Sprintf("%f", *order.Slippage)
+	if order.Deviation != nil {
+		slippage = fmt.Sprintf("%f", *order.Deviation)
 	}
 	if order.TakeProfit != nil {
 		takeProfit = fmt.Sprintf("%f", *order.TakeProfit)
@@ -511,7 +525,7 @@ func CancelOrder(order *RequestSetCancelTrade) (string, string) {
 	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())[1:]
 	ticket := fmt.Sprintf("%d", order.Ticket)
 
-	orderStr := requestID + "|CLOSE_TRADE|" + order.SymbolName + "|" + ticket
+	orderStr := requestID + "|CLOSE_TRADE|" + "|" + ticket
 	return requestID, orderStr
 }
 

@@ -272,69 +272,31 @@ func ViewChatsHistories(c *gin.Context) {
 }
 
 func ViewCurrentOrders(c *gin.Context) {
-	// if !models.AllowedAction(c, models.ActionMetaTrader) {
-	// 	return
-	// }
-	metaTrader, connected := utils.GetSharedSocket(c)
-
-	if !connected {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+	if !models.AllowedAction(c, models.ActionMetaTrader) {
 		return
 	}
 
-	requestID, data := models.GetCurrentOrder()
+	response, valid := utils.GetRequest("positions")
 
-	n, err := metaTrader.Write([]byte(data))
-	if err != nil || n == 0 {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+	if !valid {
+		utils.InternalError(c)
 		return
 	}
 
-	response, connected := utils.GetSharedReader(c, requestID)
-
-	if !connected {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
-		return
-	}
-
-	if response["status"] == "true" {
-		c.JSON(http.StatusOK, gin.H{"success": true, "data": response["data"], "message": response["data"]})
-		return
-	}
-
-	utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": response["data"], "message": "done"})
 }
 
 func ViewHistoryOrders(c *gin.Context) {
-	// if !models.AllowedAction(c, models.ActionMetaTrader) {
-	// 	return
-	// }
-	metaTrader, connected := utils.GetSharedSocket(c)
-
-	if !connected {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+	if !models.AllowedAction(c, models.ActionMetaTrader) {
 		return
 	}
 
-	requestID, data := models.GetHistoryOrder()
+	response, valid := utils.GetRequest("get_history")
 
-	n, err := metaTrader.Write([]byte(data))
-	if err != nil || n == 0 {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+	if !valid {
+		utils.InternalError(c)
 		return
 	}
 
-	response, connected := utils.GetSharedReader(c, requestID)
-
-	if !connected {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
-		return
-	}
-
-	if response["status"] == "true" {
-		c.JSON(http.StatusOK, gin.H{"success": true, "data": response["data"], "message": "done"})
-		return
-	}
-
-	utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": response["data"], "message": "done"})
 }

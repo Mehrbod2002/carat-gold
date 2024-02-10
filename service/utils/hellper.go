@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"bytes"
 	"carat-gold/app/metatrader"
+	"encoding/json"
+	"io"
 	"math/rand"
 	"net"
 	"net/http"
@@ -138,4 +141,66 @@ func GetSharedReader(c *gin.Context, id string) (map[string]interface{}, bool) {
 		}
 		return dataReceived, true
 	}
+}
+
+func PostRequest(data map[string]interface{}, endPoint string) (map[string]interface{}, bool) {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return nil, false
+	}
+
+	url := "http://54.163.221.86/" + endPoint
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, false
+	}
+	defer req.Body.Close()
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Secret-Header", "MysticalDragon$7392&WhisperingWinds&SunsetHaven$AuroraBorealis")
+	resp, err := client.Do(req)
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, false
+	}
+
+	result := make(map[string]interface{})
+	err = json.Unmarshal(responseBody, &result)
+	if err != nil {
+		return nil, false
+	}
+
+	return result, true
+}
+
+func GetRequest(endPoint string) (map[string]interface{}, bool) {
+	url := "http://54.163.221.86/" + endPoint
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, bytes.NewBuffer(nil))
+	if err != nil {
+		return nil, false
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Secret-Header", "MysticalDragon$7392&WhisperingWinds&SunsetHaven$AuroraBorealis")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, false
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, false
+	}
+
+	result := make(map[string]interface{})
+	err = json.Unmarshal(responseBody, &result)
+	if err != nil {
+		return nil, false
+	}
+	return result, true
 }

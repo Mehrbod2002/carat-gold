@@ -86,6 +86,7 @@ func SetupRouter() *gin.Engine {
 	{
 		adminRoutes.GET("/get_users", adminView.ViewAllUsers)
 		adminRoutes.POST("/delete_user", adminSetter.SetDeleteUser)
+		adminRoutes.POST("/delete_product", adminSetter.SetDeleteProduct)
 		adminRoutes.POST("/logout", adminAuth.AdminLogout)
 		adminRoutes.POST("/freeze_user", adminSetter.SetFreezeUser)
 		adminRoutes.POST("/unfreeze_user", adminSetter.SetUnFreezeUser)
@@ -96,10 +97,12 @@ func SetupRouter() *gin.Engine {
 		adminRoutes.GET("/get_symbols", adminView.ViewSymbols)
 		adminRoutes.POST("/delete_symbol", adminSetter.SetDeleteSymbol)
 		adminRoutes.POST("/set_symbol", adminSetter.SetSymbols)
-		adminRoutes.POST("/cancel_order", adminSetter.SetOrders)
+		adminRoutes.POST("/cancel_order", adminSetter.SetCancelOrder)
 		adminRoutes.POST("/set_order", adminSetter.SetOrders)
 		adminRoutes.GET("/current_orders", adminView.ViewCurrentOrders)
 		adminRoutes.GET("/history_orders", adminView.ViewHistoryOrders)
+		adminRoutes.POST("/edit_product", adminSetter.SetProduct)
+		adminRoutes.POST("/set_product", adminSetter.SetProduct)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {

@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"carat-gold/app/metatrader"
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
@@ -137,7 +136,6 @@ func SetEditProduct(c *gin.Context) {
 		WeightOZ:    request.WeightOZ,
 		WeightGramm: request.WeightGramm,
 		Purity:      request.Purity,
-		PriceGramm:  request.PriceGramm,
 		Length:      request.Length,
 		Width:       request.Width,
 		Images:      request.Images,
@@ -165,13 +163,23 @@ func SetProduct(c *gin.Context) {
 		return
 	}
 	user, _ := models.ValidateSession(c)
-	var request *models.RequestSetProduct
+	var request models.RequestSetProduct
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.BadBinding(c)
+		return
+	}
+
+	valid := request.Validate(c)
+	if !valid {
+		return
+	}
 
 	db, DBerr := utils.GetDB(c)
 	if DBerr != nil {
 		log.Println(DBerr)
 		return
 	}
+
 	_, err := db.Collection("products").InsertOne(context.Background(),
 		models.Products{
 			Name:        request.Name,
@@ -179,12 +187,11 @@ func SetProduct(c *gin.Context) {
 			WeightOZ:    request.WeightOZ,
 			WeightGramm: request.WeightGramm,
 			Purity:      request.Purity,
-			PriceGramm:  request.PriceGramm,
 			Length:      request.Length,
 			Width:       request.Width,
-			WhoDefine:   user.Name,
 			Percentage:  request.Percentage,
 			Images:      request.Images,
+			WhoDefine:   user.Name,
 			CreatedAt:   time.Now(),
 		})
 	if err != nil {
@@ -350,6 +357,47 @@ func SetUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+}
+
+func SetDeleteProduct(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+		return
+	}
+	var request struct {
+		ID string `json:"product_id"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+	userID, err := primitive.ObjectIDFromHex(request.ID)
+	if err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+	var user models.User
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	if err := db.Collection("products").FindOne(context.Background(), bson.M{
+		"_id": userID,
+	}).Decode(&user); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	if _, err := db.Collection("products").DeleteOne(context.Background(), bson.M{
+		"_id": user.ID,
+	}); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "done"})
 }
 
 func SetDeleteUser(c *gin.Context) {
@@ -703,31 +751,29 @@ func SetOrders(c *gin.Context) {
 		return
 	}
 
-	metaTrader := metatrader.SharedConnection
-
-	requestID, data := models.CreateOrder(&request)
-
-	n, err := metaTrader.Write([]byte(data))
-
-	if err != nil || n == 0 {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+	valid := request.Validate(c)
+	if !valid {
 		return
 	}
 
-	response, connected := utils.GetSharedReader(c, requestID)
+	payload := map[string]interface{}{
+		"comment":   *request.Comment,
+		"symbol":    request.SymbolName,
+		"type":      request.Operation,
+		"volume":    request.Volumn,
+		"deviation": *request.Deviation,
+		"sl":        *request.StopLoss,
+		"tp":        *request.TakeProfit,
+		"stoplimit": *request.Stoplimit,
+	}
+	result, valid := utils.PostRequest(payload, "send_order")
 
-	if !connected {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+	if !valid || result["status"] == false {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": result["data"], "data": result["data"]})
 		return
 	}
 
-	if response["status"] == "true" {
-		c.JSON(http.StatusOK, gin.H{"success": true, "data": response["data"], "message": response["data"]})
-		return
-	}
-
-	var errMsg string = response["data"].(string)
-	c.JSON(http.StatusInternalServerError, gin.H{"success": false, "data": errMsg, "message": "metatrader connection channel is closed"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "done"})
 }
 
 func SetCancelOrder(c *gin.Context) {
@@ -742,33 +788,15 @@ func SetCancelOrder(c *gin.Context) {
 		return
 	}
 
-	metaTrader, connected := utils.GetSharedSocket(c)
+	payload := map[string]interface{}{
+		"ticket_id": request.Ticket,
+	}
+	result, valid := utils.PostRequest(payload, "cancel_order")
 
-	if !connected {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
+	if !valid || result["status"] == false {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": result["data"], "data": result["data"]})
 		return
 	}
 
-	requestID, data := models.CancelOrder(&request)
-
-	n, err := metaTrader.Write([]byte(data))
-	if err != nil || n == 0 {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
-		return
-	}
-
-	response, connected := utils.GetSharedReader(c, requestID)
-
-	if !connected {
-		utils.InternalErrorMsg(c, "metatrader connection channel is closed")
-		return
-	}
-
-	if response["status"] == "true" {
-		c.JSON(http.StatusOK, gin.H{"success": false, "data": response["data"], "message": response["data"]})
-		return
-	}
-
-	var errMsg string = response["data"].(string)
-	c.JSON(http.StatusInternalServerError, gin.H{"success": false, "data": errMsg, "message": "metatrader connection channel is closed"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "done"})
 }
