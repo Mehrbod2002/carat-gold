@@ -47,8 +47,7 @@ func IsValidPassowrd(password string, c *gin.Context) bool {
 }
 
 func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
-	fmt.Println(req.Name)
-	if len(*req.Name) > 20 || len(*req.Name) < 4 {
+	if len(*req.Name) > 20 || len(*req.Name) < 2 {
 		utils.Method(c, "invalid name length")
 		return false
 	}
@@ -443,7 +442,6 @@ func (product *RequestSetProduct) Validate(c *gin.Context) bool {
 	for _, i := range product.Images {
 		decodedFile, err := base64.StdEncoding.DecodeString(i)
 		if err != nil {
-			fmt.Println(err, i)
 			utils.Method(c, "invalid file format")
 			return false
 		}
