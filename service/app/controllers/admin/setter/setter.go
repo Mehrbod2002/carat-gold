@@ -308,6 +308,39 @@ func SetCallCenterDatas(c *gin.Context) {
 	}
 }
 
+func SetMetaData(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionMetaTrader) {
+		return
+	}
+
+	var request models.RequestMetaTraderAccounts
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.BadBinding(c)
+		return
+	}
+
+	valid := request.Validate(c)
+	if !valid {
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return
+	}
+
+	_, err := db.Collection("metatrader_accounts").UpdateOne(context.Background(), bson.M{}, bson.M{
+		"$set": request,
+	}, options.Update().SetUpsert(true))
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+}
+
 func SetGeneralData(c *gin.Context) {
 
 }

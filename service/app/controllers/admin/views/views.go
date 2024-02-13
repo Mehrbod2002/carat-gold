@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func ViewAllUsers(c *gin.Context) {
@@ -38,6 +39,49 @@ func ViewAllUsers(c *gin.Context) {
 		"success": true,
 		"message": "done",
 		"users":   users,
+	})
+}
+
+func ViewPurchase(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+		return
+	}
+
+	var request struct {
+		ID string `json:"user_id"`
+	}
+
+	purchaseID, valid := utils.ValidateID(request.ID, c)
+	if !valid {
+		return
+	}
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	var purchases []models.Purchaed
+	cursor, err := db.Collection("purchases").Find(context.Background(), bson.M{
+		"user_id": purchaseID,
+	})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &purchases); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success":   true,
+		"message":   "done",
+		"purchases": purchases,
 	})
 }
 
@@ -298,6 +342,32 @@ func ViewFANDQ(c *gin.Context) {
 		"success": true,
 		"message": "done",
 		"fandq":   fandq,
+	})
+}
+
+func ViewMetaTrader(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionMetaTrader) {
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return
+	}
+
+	var metaTraderAccounts models.MetaTraderAccounts
+	err := db.Collection("metatrader_accounts").FindOne(context.Background(), bson.M{}, options.FindOne().SetSort(bson.D{{Key: "_id", Value: -1}})).Decode(&metaTraderAccounts)
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":  true,
+		"message":  "done",
+		"accounts": metaTraderAccounts,
 	})
 }
 

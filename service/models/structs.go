@@ -11,6 +11,19 @@ import (
 type ChatHistories struct{}
 type GeneralData struct{}
 
+type MetaTraderAccounts struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Server   string             `bson:"server" json:"server"`
+	Login    string             `bson:"login" json:"login"`
+	Passowrd string             `bson:"password" json:"password"`
+}
+
+type RequestMetaTraderAccounts struct {
+	Server   string `bson:"server" json:"server"`
+	Login    string `bson:"login" json:"login"`
+	Passowrd string `bson:"password" json:"password"`
+}
+
 type RequestSetCallCenter struct {
 	WhatsApp         *string `bson:"whatsapp" json:"whatsapp"`
 	Telegram         *string `bson:"telegram" json:"telegram"`
@@ -240,10 +253,12 @@ type Transctions struct {
 }
 
 type Purchaed struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	UserID    primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
-	ProductID primitive.ObjectID `bson:"product_id,omitempty" json:"product_id"`
-	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	ID           primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	UserID       primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
+	TransctionID primitive.ObjectID `json:"transaction" bson:"transaction,omitempty"`
+	ProductID    primitive.ObjectID `bson:"product_id,omitempty" json:"product_id"`
+	Status       UserStatus         `bson:"status" json:"status"`
+	CreatedAt    time.Time          `bson:"created_at" json:"created_at"`
 }
 
 type RequestSetDefineUser struct {

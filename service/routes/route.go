@@ -119,6 +119,9 @@ func SetupRouter() *gin.Engine {
 		adminRoutes.POST("/edit_fandq", adminSetter.SetEditFANDQ)
 		adminRoutes.POST("/delete_fandq", adminSetter.SetDeleteFANDQ)
 		adminRoutes.GET("/get_fandq", adminView.ViewFANDQ)
+		adminRoutes.GET("/get_metatrader_account", adminView.ViewMetaTrader)
+		adminRoutes.POST("/set_metatrader_account", adminSetter.SetMetaData)
+		adminRoutes.GET("/get_user_purchases", adminView.ViewPurchase)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {

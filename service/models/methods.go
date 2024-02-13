@@ -610,3 +610,19 @@ func (req *RequestSetCallCenter) Validate(c *gin.Context) bool {
 	}
 	return true
 }
+
+func (meta *RequestMetaTraderAccounts) Validate(c *gin.Context) bool {
+	if len(meta.Server) == 0 {
+		utils.Method(c, "invalid server")
+		return false
+	}
+	if len(meta.Login) == 0 {
+		utils.Method(c, "invalid login")
+		return false
+	}
+	if len(meta.Passowrd) == 0 {
+		utils.Method(c, "invalid passowrd")
+		return false
+	}
+	return true
+}
