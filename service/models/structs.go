@@ -286,19 +286,17 @@ type LoginDataStep2 struct {
 }
 
 type SendOTP struct {
-	Name        string `json:"name"`
 	PhoneNumber string `json:"phone" binding:"required"`
 }
 
 type RegisterRequest struct {
-	Name        string `json:"name"`
 	PhoneNumber string `json:"phone" binding:"required"`
 	OtpCode     *int   `json:"otp_code" binding:"required"`
 }
 
 type Documents struct {
-	FrontShot string `json:"front_shot" bson:"front_shot"`
-	BackShot  string `json:"back_shot" bson:"back_shot"`
+	Shot string `json:"shot" bson:"shot"`
+	Side string `json:"side" bson:"side"`
 }
 
 type DataMeta struct {

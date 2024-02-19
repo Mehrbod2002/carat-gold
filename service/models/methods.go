@@ -333,7 +333,7 @@ func ActionChecker(actions []Action) bool {
 }
 
 func (loginData *LoginDataStep1) Validate(c *gin.Context) bool {
-	if IsValidPhoneNumber(loginData.Phone) {
+	if !IsValidPhoneNumber(loginData.Phone) {
 		utils.Method(c, "invalid phone number")
 		return false
 	}
@@ -341,7 +341,7 @@ func (loginData *LoginDataStep1) Validate(c *gin.Context) bool {
 }
 
 func (loginData *LoginDataStep2) Validate(c *gin.Context) bool {
-	if IsValidPhoneNumber(loginData.Phone) {
+	if !IsValidPhoneNumber(loginData.Phone) {
 		utils.Method(c, "invalid phone number")
 		return false
 	}
@@ -349,7 +349,7 @@ func (loginData *LoginDataStep2) Validate(c *gin.Context) bool {
 }
 
 func (sendOTPData *SendOTP) Validate(c *gin.Context) bool {
-	if IsValidPhoneNumber(sendOTPData.PhoneNumber) {
+	if !IsValidPhoneNumber("+" + sendOTPData.PhoneNumber) {
 		utils.Method(c, "invalid phone number")
 		return false
 	}
@@ -357,11 +357,7 @@ func (sendOTPData *SendOTP) Validate(c *gin.Context) bool {
 }
 
 func (registerRequest *RegisterRequest) Validate(c *gin.Context) bool {
-	if len(registerRequest.Name) < 3 {
-		utils.Method(c, "name is short")
-		return false
-	}
-	if !IsValidPhoneNumber(registerRequest.PhoneNumber) {
+	if !IsValidPhoneNumber("+" + registerRequest.PhoneNumber) {
 		utils.Method(c, "invalid phone number")
 		return false
 	}
@@ -369,33 +365,34 @@ func (registerRequest *RegisterRequest) Validate(c *gin.Context) bool {
 }
 
 func (body *Documents) Validate(c *gin.Context) bool {
-	decodedFile, err := base64.StdEncoding.DecodeString(body.FrontShot)
-	if err != nil {
+	if body.Side != "back" && body.Side != "front" {
 		utils.Method(c, "invalid front file format")
 		return false
 	}
-	fileSizeMB := float64(len(decodedFile)) / (1024 * 1024)
-	if fileSizeMB > 30 {
-		utils.Method(c, "front shot size exceeds 30 MB")
+
+	if body.Shot == "" {
+		utils.Method(c, "upload your documents")
 		return false
 	}
 
-	decodedFile, err = base64.StdEncoding.DecodeString(body.BackShot)
-	if err != nil {
-		utils.Method(c, "invalid back file format")
-		return false
-	}
-	fileSizeMB = float64(len(decodedFile)) / (1024 * 1024)
-	if fileSizeMB > 30 {
-		utils.Method(c, "back shot size exceeds 30 MB")
-		return false
-	}
+	// decodedFile, err := base64.StdEncoding.DecodeString(body.Shot)
+	// if err != nil {
+	// 	fmt.Println(1, err)
+	// 	utils.Method(c, "invalid front file format")
+	// 	return false
+	// }
+	// fileSizeMB := float64(len(decodedFile)) / (1024 * 1024)
+	// if fileSizeMB > 8 {
+	// 	fmt.Println(2, err)
+	// 	utils.Method(c, "front shot size exceeds 8 MB")
+	// 	return false
+	// }
 
 	return true
 }
 
-func (registerRequest *RequestSetSymbol) Validate(c *gin.Context) bool {
-	if len(*registerRequest.SymbolName) < 3 {
+func (requestSymbol *RequestSetSymbol) Validate(c *gin.Context) bool {
+	if len(*requestSymbol.SymbolName) < 3 {
 		utils.Method(c, "symbol name is short")
 		return false
 	}

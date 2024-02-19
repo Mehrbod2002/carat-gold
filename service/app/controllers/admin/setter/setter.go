@@ -4,7 +4,6 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -296,7 +295,6 @@ func SetCallCenterDatas(c *gin.Context) {
 		"$set": request,
 	}, options.Update().SetUpsert(true))
 	if err != nil {
-		fmt.Println(err)
 		utils.InternalError(c)
 		return
 	}

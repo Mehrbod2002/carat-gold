@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -71,15 +70,15 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 		})
 		return
 	}
-	// if user.ReTryOtp == 5 && time.Since(user.OtpValid) < time.Hour { // Test
-	// 	c.JSON(406, gin.H{
-	// 		"success": false,
-	// 		"message": "otp freezed for 1 hour",
-	// 		"data":    "otp_freezed_for_1_hour",
-	// 	})
-	// 	return
-	// }
-	otp_code := utils.GenerateRandomCode()
+	if user.ReTryOtp == 5 && time.Since(user.OtpValid) < time.Hour { // Test
+		c.JSON(406, gin.H{
+			"success": false,
+			"message": "otp freezed for 1 hour",
+			"data":    "otp_freezed_for_1_hour",
+		})
+		return
+	}
+	otp_code := 12345 // utils.GenerateRandomCode()
 	sent, errMessage := utils.Sendotp(user.PhoneNumber, fmt.Sprint(otp_code))
 	if !sent {
 		log.Println("otp : ", errMessage)
@@ -167,14 +166,14 @@ func LoginOneTimeLoginStep2(c *gin.Context) {
 		return
 	}
 
-	// if time.Since(user.OtpValid) > time.Minute*2 { // Test
-	// 	c.JSON(400, gin.H{
-	// 		"success": false,
-	// 		"message": "request for otp first",
-	// 		"data":    "otp_expired",
-	// 	})
-	// 	return
-	// }
+	if time.Since(user.OtpValid) > time.Minute*2 { // Test
+		c.JSON(400, gin.H{
+			"success": false,
+			"message": "request for otp first",
+			"data":    "otp_expired",
+		})
+		return
+	}
 	if *user.OtpCode != *loginData.Otp {
 		c.JSON(406, gin.H{
 			"success": false,
@@ -240,7 +239,7 @@ func SendOTP(c *gin.Context) {
 	}}).Decode(&existingUser)
 	if exist != nil {
 		if exist == mongo.ErrNoDocuments {
-			otp_code := utils.GenerateRandomCode()
+			otp_code := 12345 // utils.GenerateRandomCode()
 			sent, errMessage := utils.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
 			if !sent {
 				log.Println("otp : ", errMessage)
@@ -252,7 +251,6 @@ func SendOTP(c *gin.Context) {
 				return
 			}
 			var user models.User
-			user.Name = strings.ToLower(sendOTPData.Name)
 			user.PhoneNumber = sendOTPData.PhoneNumber
 			user.OtpCode = &otp_code
 			user.ReTryOtp = 0
@@ -274,18 +272,18 @@ func SendOTP(c *gin.Context) {
 		utils.InternalError(c)
 		return
 	}
-	if !existingUser.PhoneVerified {
-		// allowToSend := time.Since(existingUser.OtpValid) > time.Minute*2
-		// if allowToSend {
-		// if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) < time.Hour { // Test
-		// 	c.JSON(406, gin.H{
-		// 		"success": false,
-		// 		"message": "otp freezed for 1 hour",
-		// 		"data":    "otp_freezed_for_1_hour",
-		// 	})
-		// 	return
-		// }
-		otp_code := utils.GenerateRandomCode()
+	// if !existingUser.PhoneVerified {
+	allowToSend := time.Since(existingUser.OtpValid) > time.Minute*2
+	if allowToSend {
+		if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) < time.Hour { // Test
+			c.JSON(406, gin.H{
+				"success": false,
+				"message": "otp freezed for 1 hour",
+				"data":    "otp_freezed_for_1_hour",
+			})
+			return
+		}
+		otp_code := 12345 // utils.GenerateRandomCode()
 		sent, errMessage := utils.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
 		if !sent {
 			log.Println("otp : ", errMessage)
@@ -317,20 +315,20 @@ func SendOTP(c *gin.Context) {
 			"message": "done",
 			"data":    "otp_sent",
 		})
-		// } else {
-		// 	c.JSON(406, gin.H{
-		// 		"success": false,
-		// 		"message": "2 minutes should pass to send sms",
-		// 		"data":    "not_allowed_to_send_sms",
-		// 	})
-		// }
 	} else {
-		c.JSON(400, gin.H{
+		c.JSON(406, gin.H{
 			"success": false,
-			"message": "phone already registered",
-			"data":    "phone_already_exist",
+			"message": "2 minutes should pass to send sms",
+			"data":    "not_allowed_to_send_sms",
 		})
 	}
+	// } else {
+	// 	c.JSON(400, gin.H{
+	// 		"success": false,
+	// 		"message": "phone already registered",
+	// 		"data":    "phone_already_exist",
+	// 	})
+	// }
 }
 
 func Register(c *gin.Context) {
@@ -377,22 +375,22 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
-	if existingUser.PhoneVerified {
-		c.JSON(400, gin.H{
-			"success": false,
-			"message": "already registered with this phone number",
-			"data":    "phone_already_registered",
-		})
-		return
-	}
-	// if time.Since(existingUser.OtpValid) > time.Minute*5 { // Test
+	// if existingUser.PhoneVerified {
 	// 	c.JSON(400, gin.H{
 	// 		"success": false,
-	// 		"message": "request for otp first",
-	// 		"data":    "otp_expired",
+	// 		"message": "already registered with this phone number",
+	// 		"data":    "phone_already_registered",
 	// 	})
 	// 	return
 	// }
+	if time.Since(existingUser.OtpValid) > time.Minute*5 { // Test
+		c.JSON(400, gin.H{
+			"success": false,
+			"message": "request for otp first",
+			"data":    "otp_expired",
+		})
+		return
+	}
 	if *existingUser.OtpCode != *registerData.OtpCode {
 		c.JSON(400, gin.H{
 			"success": false,
@@ -403,7 +401,6 @@ func Register(c *gin.Context) {
 	}
 
 	newUser := models.User{
-		Name:          registerData.Name,
 		PhoneNumber:   registerData.PhoneNumber,
 		CreatedAt:     time.Now(),
 		PhoneVerified: true,

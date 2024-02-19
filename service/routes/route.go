@@ -58,6 +58,7 @@ func SetupRouter() *gin.Engine {
 	apis := r.Group("/api")
 	authRoutes := apis.Group("/auth")
 	{
+		authRoutes.POST("/user/send_otp", user.SendOTP)
 		authRoutes.POST("/admin/login", adminAuth.AdminLogin)
 		authRoutes.POST("/user/login_step_1", user.LoginOneTimeLoginStep1)
 		authRoutes.POST("/user/login_step_2", user.LoginOneTimeLoginStep2)
@@ -72,8 +73,8 @@ func SetupRouter() *gin.Engine {
 	userRoutes := apis.Group("/user")
 	userRoutes.Use(AuthMiddleware())
 	{
+		userRoutes.GET("/me", user.GetUser)
 		userRoutes.POST("/upload_documents", user.SendDocuments)
-		userRoutes.POST("/send_otp", user.SendOTP)
 	}
 
 	supportRoutes := apis.Group("/support")
