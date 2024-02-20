@@ -67,13 +67,15 @@ func SetupRouter() *gin.Engine {
 
 	public := apis.Group("/public")
 	{
-		public.GET("/get_products", adminView.ViewProducts)
+		public.GET("/get_products", user.ViewProducts)
 	}
 
 	userRoutes := apis.Group("/user")
 	userRoutes.Use(AuthMiddleware())
 	{
+		userRoutes.POST("/edit_user", user.EditUser)
 		userRoutes.GET("/me", user.GetUser)
+		userRoutes.POST("/update_currency", user.SetCurrency)
 		userRoutes.POST("/upload_documents", user.SendDocuments)
 	}
 
@@ -102,7 +104,7 @@ func SetupRouter() *gin.Engine {
 		adminRoutes.POST("/set_order", adminSetter.SetOrders)
 		adminRoutes.GET("/current_orders", adminView.ViewCurrentOrders)
 		adminRoutes.GET("/history_orders", adminView.ViewHistoryOrders)
-		adminRoutes.POST("/edit_product", adminSetter.SetProduct)
+		adminRoutes.POST("/edit_product", adminSetter.SetEditProduct)
 		adminRoutes.POST("/edit_currency", adminSetter.SetEditCurrency)
 		adminRoutes.POST("/set_product", adminSetter.SetProduct)
 		adminRoutes.GET("/get_currencies", adminView.ViewCurrencies)

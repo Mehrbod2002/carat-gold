@@ -130,7 +130,7 @@ type User struct {
 	ChangePhone      bool               `bson:"change_phone" json:"change_phone"`
 	ExchangeMobile   string             `bson:"exchange_phone" json:"exchange_phone"`
 	Freeze           bool               `bson:"freeze" json:"freeze"`
-	Documents        Documents          `bson:"documents" json:"documents"`
+	Currency         string             `bson:"currency" json:"currency"`
 	ChatList         []string           `bson:"chat_list" json:"chat_list"`
 	Permissions      Permission         `bson:"permissions" json:"permissions"`
 	OtpValid         time.Time          `bson:"otp_valid" json:"otp_valid"`
@@ -140,6 +140,13 @@ type User struct {
 	StatusString     UserStatus         `bson:"user_status" json:"user_status"`
 	Reason           string             `bson:"reason" json:"reason"`
 	IsSupportOrAdmin bool               `bson:"support_or_admin" json:"support_or_admin"`
+}
+
+type RequestEdit struct {
+	Name    string  `json:"name"`
+	Address *string `json:"address"`
+	Email   *string `json:"email"`
+	Phone   string `json:"phone"`
 }
 
 type Permission struct {
@@ -295,8 +302,14 @@ type RegisterRequest struct {
 }
 
 type Documents struct {
-	Shot string `json:"shot" bson:"shot"`
-	Side string `json:"side" bson:"side"`
+	UserID primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
+	ID     primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Back   struct {
+		Shot string `json:"shot" bson:"shot"`
+	} `json:"back" bson:"back"`
+	Front struct {
+		Shot string `json:"shot" bson:"shot"`
+	} `json:"front" bson:"front"`
 }
 
 type DataMeta struct {

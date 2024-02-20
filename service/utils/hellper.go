@@ -161,6 +161,10 @@ func PostRequest(data map[string]interface{}, endPoint string) (map[string]inter
 	req.Header.Set("X-Secret-Header", "MysticalDragon$7392&WhisperingWinds&SunsetHaven$AuroraBorealis")
 	resp, err := client.Do(req)
 
+	if err != nil {
+		return nil, false
+	}
+
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, false
@@ -203,4 +207,25 @@ func GetRequest(endPoint string) (map[string]interface{}, bool) {
 		return nil, false
 	}
 	return result, true
+}
+
+func DerefStringPtr(ptr *string) string {
+	if ptr != nil {
+		return *ptr
+	}
+	return ""
+}
+
+func DerefBoolPtr(ptr *bool) bool {
+	if ptr != nil {
+		return *ptr
+	}
+	return false
+}
+
+func DerefIntPtr(ptr *int) int {
+	if ptr != nil {
+		return *ptr
+	}
+	return 0
 }

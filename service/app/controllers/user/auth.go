@@ -322,13 +322,6 @@ func SendOTP(c *gin.Context) {
 			"data":    "not_allowed_to_send_sms",
 		})
 	}
-	// } else {
-	// 	c.JSON(400, gin.H{
-	// 		"success": false,
-	// 		"message": "phone already registered",
-	// 		"data":    "phone_already_exist",
-	// 	})
-	// }
 }
 
 func Register(c *gin.Context) {
@@ -375,14 +368,14 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
-	// if existingUser.PhoneVerified {
-	// 	c.JSON(400, gin.H{
-	// 		"success": false,
-	// 		"message": "already registered with this phone number",
-	// 		"data":    "phone_already_registered",
-	// 	})
-	// 	return
-	// }
+	if existingUser.PhoneVerified {
+		c.JSON(400, gin.H{
+			"success": false,
+			"message": "already registered with this phone number",
+			"data":    "phone_already_registered",
+		})
+		return
+	}
 	if time.Since(existingUser.OtpValid) > time.Minute*5 { // Test
 		c.JSON(400, gin.H{
 			"success": false,
@@ -403,6 +396,7 @@ func Register(c *gin.Context) {
 	newUser := models.User{
 		PhoneNumber:   registerData.PhoneNumber,
 		CreatedAt:     time.Now(),
+		Currency:      "USD",
 		PhoneVerified: true,
 		OtpCode:       nil,
 	}

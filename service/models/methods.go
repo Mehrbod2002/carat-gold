@@ -31,7 +31,7 @@ func IsValidPhoneNumber(phoneNumber string) bool {
 	phoneRegex := `^\+\d{1,4}\d{6,14}$`
 	re := regexp.MustCompile(phoneRegex)
 
-	return re.MatchString(phoneNumber)
+	return re.MatchString("+" + phoneNumber)
 }
 
 func IsValidPassowrd(password string, c *gin.Context) bool {
@@ -46,10 +46,36 @@ func IsValidPassowrd(password string, c *gin.Context) bool {
 	return true
 }
 
-func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
-	if len(*req.Name) > 20 || len(*req.Name) < 2 {
-		utils.Method(c, "invalid name length")
+func (req *RequestEdit) Validate(c *gin.Context) bool {
+	if len(req.Name) > 20 || len(req.Name) < 4 {
+		utils.Method(c, "invalid name ")
 		return false
+	}
+	if req.Email != nil && *req.Email != "" {
+		if !IsValidEmail(*req.Email) {
+			utils.Method(c, "invalid email")
+			return false
+		}
+	}
+	if !IsValidPhoneNumber(req.Phone) {
+		utils.Method(c, "invalid phone")
+		return false
+	}
+	if req.Address != nil && *req.Address != "" {
+		if len(*req.Address) > 100 || len(*req.Address) < 5 {
+			utils.Method(c, "invalid address ")
+			return false
+		}
+	}
+	return true
+}
+
+func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
+	if req.Name != nil {
+		if len(*req.Name) > 20 || len(*req.Name) < 2 {
+			utils.Method(c, "invalid name length")
+			return false
+		}
 	}
 	if !IsValidPhoneNumber(*req.Phone) {
 		utils.Method(c, "invalid phone")
@@ -349,7 +375,7 @@ func (loginData *LoginDataStep2) Validate(c *gin.Context) bool {
 }
 
 func (sendOTPData *SendOTP) Validate(c *gin.Context) bool {
-	if !IsValidPhoneNumber("+" + sendOTPData.PhoneNumber) {
+	if !IsValidPhoneNumber(sendOTPData.PhoneNumber) {
 		utils.Method(c, "invalid phone number")
 		return false
 	}
@@ -357,7 +383,7 @@ func (sendOTPData *SendOTP) Validate(c *gin.Context) bool {
 }
 
 func (registerRequest *RegisterRequest) Validate(c *gin.Context) bool {
-	if !IsValidPhoneNumber("+" + registerRequest.PhoneNumber) {
+	if !IsValidPhoneNumber(registerRequest.PhoneNumber) {
 		utils.Method(c, "invalid phone number")
 		return false
 	}
@@ -365,28 +391,27 @@ func (registerRequest *RegisterRequest) Validate(c *gin.Context) bool {
 }
 
 func (body *Documents) Validate(c *gin.Context) bool {
-	if body.Side != "back" && body.Side != "front" {
+	decodedFileFront, err := base64.StdEncoding.DecodeString(body.Front.Shot)
+	if err != nil {
 		utils.Method(c, "invalid front file format")
 		return false
 	}
-
-	if body.Shot == "" {
-		utils.Method(c, "upload your documents")
+	fileSizeMBFront := float64(len(decodedFileFront)) / (1024 * 1024)
+	if fileSizeMBFront > 10 {
+		utils.Method(c, "front shot size exceeds 10 MB")
 		return false
 	}
 
-	// decodedFile, err := base64.StdEncoding.DecodeString(body.Shot)
-	// if err != nil {
-	// 	fmt.Println(1, err)
-	// 	utils.Method(c, "invalid front file format")
-	// 	return false
-	// }
-	// fileSizeMB := float64(len(decodedFile)) / (1024 * 1024)
-	// if fileSizeMB > 8 {
-	// 	fmt.Println(2, err)
-	// 	utils.Method(c, "front shot size exceeds 8 MB")
-	// 	return false
-	// }
+	decodedFile, err := base64.StdEncoding.DecodeString(body.Back.Shot)
+	if err != nil {
+		utils.Method(c, "invalid front file format")
+		return false
+	}
+	fileSizeMB := float64(len(decodedFile)) / (1024 * 1024)
+	if fileSizeMB > 8 {
+		utils.Method(c, "front shot size exceeds 8 MB")
+		return false
+	}
 
 	return true
 }
@@ -437,7 +462,7 @@ func (order *RequestSetCancelTrade) Validate(c *gin.Context) bool {
 
 func (product *RequestSetProduct) Validate(c *gin.Context) bool {
 	for _, i := range product.Images {
-		decodedFile, err := base64.StdEncoding.DecodeString(i)
+		decodedFile, err := base64.StdEncoding.DecodeString(strings.Split(i, ",")[1])
 		if err != nil {
 			utils.Method(c, "invalid file format")
 			return false

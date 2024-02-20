@@ -611,17 +611,17 @@ func SetUser(c *gin.Context) {
 	}
 
 	editedUser := models.User{
-		Email:            *request.Email,
-		PhoneNumber:      *request.Phone,
-		Name:             *request.Name,
+		Email:            utils.DerefStringPtr(request.Email),
+		PhoneNumber:      utils.DerefStringPtr(request.Phone),
+		Name:             utils.DerefStringPtr(request.Name),
 		UserVerified:     UserVerified,
-		Freeze:           *request.Freeze,
+		Freeze:           utils.DerefBoolPtr(request.Freeze),
 		Permissions:      *request.Permissions,
-		IsSupportOrAdmin: *request.IsSupport,
-		PhoneVerified:    *request.PhoneVerify,
+		IsSupportOrAdmin: utils.DerefBoolPtr(request.IsSupport),
+		PhoneVerified:    utils.DerefBoolPtr(request.PhoneVerify),
 		StatusString:     *request.Status,
-		Reason:           *request.Reason,
-		Address:          *request.Address,
+		Reason:           utils.DerefStringPtr(request.Reason),
+		Address:          utils.DerefStringPtr(request.Address),
 	}
 
 	userID, valid := utils.ValidateID(*request.UserID, c)
@@ -846,10 +846,10 @@ func SetDefineUser(c *gin.Context) {
 	}
 
 	filter := bson.M{}
-	if *request.Phone != "" {
+	if request.Phone != nil {
 		filter["phone"] = *request.Phone
 	}
-	if *request.Email != "" {
+	if request.Email != nil {
 		filter["email"] = *request.Email
 	}
 
@@ -880,6 +880,7 @@ func SetDefineUser(c *gin.Context) {
 			UserVerified:     UserVerified,
 			Password:         string(hashedPassword),
 			Freeze:           *request.Freeze,
+			Currency:         "USD",
 			Permissions:      *request.Permissions,
 			IsSupportOrAdmin: *request.IsSupport,
 			PhoneVerified:    *request.PhoneVerify,
