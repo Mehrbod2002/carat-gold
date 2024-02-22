@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,7 +18,7 @@ import (
 )
 
 func main() {
-	// gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	currentDir, _ := os.Getwd()
 	envFilePath := filepath.Join(currentDir, ".env")
 	err := godotenv.Load(envFilePath)
@@ -48,7 +49,7 @@ func main() {
 	var user models.User
 	var adminUsername = os.Getenv("ADMIN_USERNAME")
 	var adminPassword = os.Getenv("ADMIN_PASSWORD")
-
+	var dataChannel chan interface{}
 	if exist := db.Collection("admin").FindOne(context.Background(), bson.M{
 		"email": adminUsername,
 	}).Decode(&user); exist != nil && exist == mongo.ErrNoDocuments {
@@ -66,8 +67,8 @@ func main() {
 		}
 	}
 
-	go metatrader.InitiateMetatrader()
-	routes := routes.SetupRouter()
+	go metatrader.InitiateMetatrader(dataChannel)
+	routes := routes.SetupRouter(dataChannel)
 	runningErr := routes.Run(":3000")
 	log.Println("start serving ...")
 	if runningErr != nil {

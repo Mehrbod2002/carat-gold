@@ -7,12 +7,10 @@ import (
 	"syscall"
 )
 
-func InitiateMetatrader() {
+func InitiateMetatrader(dataChannel chan interface{}) {
 	errors := make(chan error)
 	var wg sync.WaitGroup
 
-	dataChannel := make(chan interface{}, 200)
-	adminChannel := make(chan interface{}, 200)
 	stop := make(chan struct{})
 	go func() {
 		sig := make(chan os.Signal, 1)
@@ -21,9 +19,8 @@ func InitiateMetatrader() {
 		close(stop)
 	}()
 
-	wg.Add(2)
-	go startServerWSS(errors, &wg, dataChannel, adminChannel)
-	go startServerMetaTrader(errors, &wg, dataChannel, stop, adminChannel)
+	wg.Add(1)
+	go startServerMetaTrader(errors, &wg, dataChannel, stop)
 
 	<-stop
 	close(errors)

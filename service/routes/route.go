@@ -5,6 +5,7 @@ import (
 	adminSetter "carat-gold/app/controllers/admin/setter"
 	adminView "carat-gold/app/controllers/admin/views"
 	user "carat-gold/app/controllers/user"
+	"carat-gold/app/metatrader"
 
 	"carat-gold/models"
 	"carat-gold/utils"
@@ -30,7 +31,7 @@ var (
 	OnlineClients = make(map[*websocket.Conn]*models.Client)
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	r := gin.Default()
 
 	store := cookie.NewStore([]byte("session-secret"))
@@ -54,6 +55,10 @@ func SetupRouter() *gin.Engine {
 			return origin == "http://0.0.0.0:3001" || origin == "http://localhost:3001" || origin == "http://127.0.0.1:5173" || origin == "https://goldshop24.co" || origin == "https://admin.goldshop24.co"
 		},
 	}))
+
+	r.GET("/feed", func(c *gin.Context) {
+		metatrader.HandleWebSocket(c.Writer, c.Request, dataChannel)
+	})
 
 	apis := r.Group("/api")
 	authRoutes := apis.Group("/auth")

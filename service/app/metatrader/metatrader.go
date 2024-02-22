@@ -2,24 +2,20 @@ package metatrader
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
 	"os"
-	"strings"
 	"sync"
 	"time"
 )
-
-var SharedConnection net.Conn
-var SharedReader map[string]interface{} = make(map[string]interface{})
 
 func startServerMetaTrader(
 	errors chan<- error,
 	wg *sync.WaitGroup,
 	dataChannel chan<- interface{},
-	stop chan struct{},
-	adminChannel chan interface{}) {
+	stop chan struct{}) {
 	defer wg.Done()
 
 	for {
@@ -50,42 +46,38 @@ func startServerMetaTrader(
 					return
 				}
 
-				SharedConnection = conn
-				go handleClientMetatrader(conn, dataChannel, adminChannel)
+				go handleClientMetatrader(conn, dataChannel)
 			}
 		}()
 	}
 }
 
 func handleClientMetatrader(conn net.Conn,
-	dataChannel chan<- interface{},
-	adminChannel chan interface{}) {
+	dataChannel chan<- interface{}) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
 	buffer := make([]byte, 0, 1024)
-
 	for {
-		select {
-		case <-adminChannel:
-		default:
-		}
-
-		temp := make([]byte, 1024)
-		_, err := reader.Read(temp)
+		data, err := reader.ReadBytes('}')
 		if err != nil {
+			fmt.Println(865, err)
 			return
 		}
 
-		buffer = append(buffer, temp...)
-		buffer = []byte(strings.ReplaceAll(string(buffer), "\x00", ""))
+		buffer = append(buffer[:0], data...)
 
 		for {
-			var dataMeta map[string]interface{}
-			err := json.Unmarshal(buffer, &dataMeta)
-			if err == nil {
-				go handleMetaTrader(dataMeta, dataChannel, adminChannel)
-				buffer = buffer[:0]
+			start := bytes.Index(buffer, []byte{'{'})
+			end := bytes.Index(buffer, []byte{'}'})
+			if start != -1 && end != -1 && start < end {
+				completeJSON := buffer[start : end+1]
+				var dataMeta map[string]interface{}
+				err := json.Unmarshal(completeJSON, &dataMeta)
+				if err == nil {
+					go handleMetaTrader(dataMeta, dataChannel)
+					buffer = buffer[end+1:]
+				}
 			} else {
 				break
 			}
@@ -93,12 +85,7 @@ func handleClientMetatrader(conn net.Conn,
 	}
 }
 
-func handleMetaTrader(dataMeta map[string]interface{}, dataChannel chan<- interface{}, adminChannel chan<- interface{}) {
+func handleMetaTrader(dataMeta map[string]interface{}, dataChannel chan<- interface{}) {
 	dataMeta["time"] = fmt.Sprintf("%d", time.Now().UTC().Unix())
-	id, ok := dataMeta["id"].(string)
-	if ok {
-		SharedReader[id] = dataMeta
-	} else {
-		dataChannel <- dataMeta
-	}
+	dataChannel <- dataMeta
 }

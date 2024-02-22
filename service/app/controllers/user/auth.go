@@ -398,6 +398,8 @@ func Register(c *gin.Context) {
 		CreatedAt:     time.Now(),
 		Currency:      "USD",
 		PhoneVerified: true,
+		UserVerified:  true,
+		StatusString:  models.ApprovedStatus,
 		OtpCode:       nil,
 	}
 	_, errs := db.Collection("users").UpdateOne(context.Background(), bson.M{

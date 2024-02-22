@@ -2,11 +2,9 @@ package utils
 
 import (
 	"bytes"
-	"carat-gold/app/metatrader"
 	"encoding/json"
 	"io"
 	"math/rand"
-	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -120,27 +118,6 @@ func ValidateAdmin(token string) bool {
 	}
 
 	return false
-}
-
-func GetSharedSocket(c *gin.Context) (net.Conn, bool) {
-	return metatrader.SharedConnection, true
-}
-
-func GetSharedReader(c *gin.Context, id string) (map[string]interface{}, bool) {
-	var receivedMsg int = 0
-	for {
-		if receivedMsg == 5 {
-			metatrader.SharedReader[id[1:]] = make(map[string]interface{})
-			return nil, false
-		}
-		dataReceived, ok := metatrader.SharedReader[id[1:]].(map[string]interface{})
-		if !ok {
-			time.Sleep(1 * time.Second)
-			receivedMsg += 1
-			continue
-		}
-		return dataReceived, true
-	}
 }
 
 func PostRequest(data map[string]interface{}, endPoint string) (map[string]interface{}, bool) {

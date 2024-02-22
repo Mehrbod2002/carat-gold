@@ -3,7 +3,6 @@ package metatrader
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -19,30 +18,11 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func startServerWSS(errors chan<- error,
-	wg *sync.WaitGroup,
-	dataChannel <-chan interface{},
-	adminChannel chan interface{}) {
-	defer wg.Done()
-
-	http.HandleFunc("/feed", func(w http.ResponseWriter, r *http.Request) {
-		handleWebSocket(w, r, dataChannel, adminChannel)
-	})
-
-	server := &http.Server{Addr: fmt.Sprintf(":%s", os.Getenv("FEED_REALTIME"))}
-	err := server.ListenAndServe()
-	if err != nil {
-		errors <- fmt.Errorf("WebSocket server error: %v", err)
-	}
-}
-
-func handleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan interface{}, adminChannel chan interface{}) {
+func HandleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan interface{}) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
-
-	// isAdmin := utils.ValidateAdmin(r.URL.Query().Get("Authorization"))
 
 	wssClientsLock.Lock()
 	wssClients[conn] = struct{}{}
@@ -61,6 +41,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan 
 		for {
 			select {
 			case data := <-dataChannel:
+				fmt.Println(data)
 				err := conn.WriteJSON(data)
 				if err != nil {
 					return
@@ -78,10 +59,6 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan 
 			if err != nil {
 				return
 			}
-
-			// if isAdmin {
-			// 	adminChannel <- receivedData
-			// }
 		}
 	}()
 
