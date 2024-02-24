@@ -343,6 +343,7 @@ func Register(c *gin.Context) {
 		return
 	}
 	var existingUser models.User
+	var newRegister bool = false
 	exist := db.Collection("users").
 		FindOne(context.Background(), bson.M{
 			"phone": registerData.PhoneNumber,
@@ -369,12 +370,13 @@ func Register(c *gin.Context) {
 		return
 	}
 	if existingUser.PhoneVerified {
-		c.JSON(400, gin.H{
-			"success": false,
-			"message": "already registered with this phone number",
-			"data":    "phone_already_registered",
-		})
-		return
+		newRegister = true
+		// c.JSON(400, gin.H{
+		// 	"success": false,
+		// 	"message": "already registered with this phone number",
+		// 	"data":    "phone_already_registered",
+		// })
+		// return
 	}
 	if time.Since(existingUser.OtpValid) > time.Minute*5 { // Test
 		c.JSON(400, gin.H{
@@ -393,54 +395,90 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	newUser := models.User{
-		PhoneNumber:   registerData.PhoneNumber,
-		CreatedAt:     time.Now(),
-		Currency:      "USD",
-		PhoneVerified: true,
-		UserVerified:  true,
-		StatusString:  models.ApprovedStatus,
-		OtpCode:       nil,
-	}
-	_, errs := db.Collection("users").UpdateOne(context.Background(), bson.M{
-		"phone": registerData.PhoneNumber,
-	}, bson.M{"$set": newUser})
-	if errs != nil {
-		log.Println(errs)
-		utils.InternalError(c)
-		return
-	}
-	errs = db.Collection("users").
-		FindOne(context.Background(), bson.M{
+	if newRegister {
+		newUser := models.User{
+			PhoneNumber:   registerData.PhoneNumber,
+			CreatedAt:     time.Now(),
+			Currency:      "USD",
+			PhoneVerified: true,
+			UserVerified:  true,
+			StatusString:  models.ApprovedStatus,
+			OtpCode:       nil,
+		}
+		_, errs := db.Collection("users").UpdateOne(context.Background(), bson.M{
 			"phone": registerData.PhoneNumber,
-		}).Decode(&existingUser)
-	if errs != nil {
-		log.Println(errs)
-		utils.InternalError(c)
-		return
-	}
-	newUser.ID = existingUser.ID
-	token, er := newUser.GenerateToken()
-	if er != nil {
-		log.Println(errs)
-		utils.InternalError(c)
-		return
-	}
+		}, bson.M{"$set": newUser})
+		if errs != nil {
+			log.Println(errs)
+			utils.InternalError(c)
+			return
+		}
+		errs = db.Collection("users").
+			FindOne(context.Background(), bson.M{
+				"phone": registerData.PhoneNumber,
+			}).Decode(&existingUser)
+		if errs != nil {
+			log.Println(errs)
+			utils.InternalError(c)
+			return
+		}
+		newUser.ID = existingUser.ID
 
-	session.Set("token", token)
-	save_err := session.Save()
-	if save_err != nil {
-		log.Println(save_err)
-		utils.InternalError(c)
-		return
+		token, er := newUser.GenerateToken()
+		if er != nil {
+			log.Println(errs)
+			utils.InternalError(c)
+			return
+		}
+		session.Set("token", token)
+		save_err := session.Save()
+		if save_err != nil {
+			log.Println(save_err)
+			utils.InternalError(c)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "registered",
+			"data": map[string]string{
+				"token": token,
+			},
+		})
+	} else {
+		_, errs := db.Collection("users").UpdateOne(context.Background(), bson.M{
+			"_id": existingUser.ID,
+		}, bson.M{"$set": bson.M{
+			"otp_code":  nil,
+			"otp_valid": time.Now().UTC(),
+		}})
+		if errs != nil {
+			log.Println(errs)
+			utils.InternalError(c)
+			return
+		}
+		token, errs := existingUser.GenerateToken()
+		if errs != nil {
+			log.Println(errs)
+			utils.InternalError(c)
+			return
+		}
+
+		session.Set("token", token)
+		errs = session.Save()
+		if errs != nil {
+			log.Println(errs)
+			utils.InternalError(c)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "logged in",
+			"data": map[string]string{
+				"token": token,
+			},
+		})
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "registered",
-		"data": map[string]string{
-			"token": token,
-		},
-	})
 }
 
 func ValidateSession(c *gin.Context) {
