@@ -154,7 +154,7 @@ async def start_server_wss():
 
 
 async def start_server_8080():
-    server = await asyncio.start_server(handle_client_8080, server_address, 8081)
+    server = await asyncio.start_server(handle_client_8080, server_address, 5741)
 
     async with server:
         await server.serve_forever()

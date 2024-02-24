@@ -221,8 +221,8 @@ void ReadFromSocket() {
    } while(GetTickCount()<timeout_check && !IsStopped());
 }
 
-string serverAddress = "185.202.113.18";
-int serverPort = 8081;
+string serverAddress = "34.228.52.205";
+int serverPort = 5741;
 
 int OnInit() {
     int maxRetries = 5000;
