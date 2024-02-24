@@ -49,7 +49,7 @@ func main() {
 	var user models.User
 	var adminUsername = os.Getenv("ADMIN_USERNAME")
 	var adminPassword = os.Getenv("ADMIN_PASSWORD")
-	var dataChannel chan interface{}
+	var dataChannel = make(chan interface{}, 50)
 	if exist := db.Collection("admin").FindOne(context.Background(), bson.M{
 		"email": adminUsername,
 	}).Decode(&user); exist != nil && exist == mongo.ErrNoDocuments {

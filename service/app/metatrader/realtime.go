@@ -1,7 +1,6 @@
 package metatrader
 
 import (
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -41,7 +40,6 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan 
 		for {
 			select {
 			case data := <-dataChannel:
-				fmt.Println(data)
 				err := conn.WriteJSON(data)
 				if err != nil {
 					return

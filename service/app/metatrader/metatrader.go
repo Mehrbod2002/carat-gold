@@ -61,7 +61,6 @@ func handleClientMetatrader(conn net.Conn,
 	for {
 		data, err := reader.ReadBytes('}')
 		if err != nil {
-			fmt.Println(865, err)
 			return
 		}
 

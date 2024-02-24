@@ -379,7 +379,7 @@ func Register(c *gin.Context) {
 	if time.Since(existingUser.OtpValid) > time.Minute*5 { // Test
 		c.JSON(400, gin.H{
 			"success": false,
-			"message": "request for otp first",
+			"message": utils.Cap("otp expired"),
 			"data":    "otp_expired",
 		})
 		return
