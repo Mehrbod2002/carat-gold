@@ -115,6 +115,23 @@ type FANDQ struct {
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 }
 
+type Purchased struct {
+	Product        Products           `bson:"product" json:"product"`
+	StatusDelivery DeliveryStatus     `bson:"status_delivery" json:"status_delivery"`
+	PaymentStatus  bool               `bson:"payment_status" json:"payment_status"`
+	PaymentMethd   PaymentStatus      `bson:"payment_method" json:"payment_method"`
+	CreatedAt      time.Time          `bson:"created_at" json:"created_at"`
+	CreatePayment  time.Time          `bson:"created_payment" json:"created_payment"`
+	OrderID        primitive.ObjectID `bson:"order_id" json:"order_id"`
+}
+
+type Wallet struct {
+	ID         primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	UserID     primitive.ObjectID `bson:"user_id,omitempty" json:"user_id"`
+	BalanceUSD float64            `bson:"balance" json:"balance"`
+	Purchased  []Purchased        `bson:"purchased" json:"purchased"`
+}
+
 type User struct {
 	ID               primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	Avatar           string             `bson:"avatar" json:"avatar"`
@@ -146,7 +163,7 @@ type RequestEdit struct {
 	Name    string  `json:"name"`
 	Address *string `json:"address"`
 	Email   *string `json:"email"`
-	Phone   string `json:"phone"`
+	Phone   string  `json:"phone"`
 }
 
 type Permission struct {
@@ -257,15 +274,6 @@ type Transctions struct {
 	PaymentMethod  string             `bson:"payment_method" json:"payment_method"`
 	Symbol         string             `bson:"symbol" json:"symbol"`
 	ExternalData   map[string]string  `bson:"external_data" json:"external_data"`
-}
-
-type Purchaed struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	UserID       primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
-	TransctionID primitive.ObjectID `json:"transaction" bson:"transaction,omitempty"`
-	ProductID    primitive.ObjectID `bson:"product_id,omitempty" json:"product_id"`
-	Status       UserStatus         `bson:"status" json:"status"`
-	CreatedAt    time.Time          `bson:"created_at" json:"created_at"`
 }
 
 type RequestSetDefineUser struct {

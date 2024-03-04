@@ -15,6 +15,53 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func GetProducts(c *gin.Context) {
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	var products []models.Products
+	cursor, err := db.Collection("products").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &products); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success":  true,
+		"message":  "done",
+		"products": products,
+	})
+}
+
+func CallCenter(c *gin.Context) {
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	var callCenter models.CallCenterDatas
+	err = db.Collection("call_center").FindOne(context.Background(), bson.M{}).Decode(&callCenter)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":     true,
+		"message":     "done",
+		"call_center": callCenter,
+	})
+}
+
 func SetCurrency(c *gin.Context) {
 	authUser, _ := models.ValidateSession(c)
 

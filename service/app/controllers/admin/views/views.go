@@ -62,7 +62,7 @@ func ViewPurchase(c *gin.Context) {
 		return
 	}
 
-	var purchases []models.Purchaed
+	var purchases []models.Purchased
 	cursor, err := db.Collection("purchases").Find(context.Background(), bson.M{
 		"user_id": purchaseID,
 	})

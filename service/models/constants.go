@@ -82,6 +82,12 @@ const (
 	Hold       DeliveryStatus = "HOLD"
 )
 
+const (
+	CryptoPayment PaymentStatus = "CRYPTO"
+	DebitPayment  PaymentStatus = "DEBIT"
+	PayPalPayment PaymentStatus = "PayPal"
+)
+
 var AllActions = []Action{
 	ActionRead,
 	ActionDocument,

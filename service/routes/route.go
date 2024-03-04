@@ -81,6 +81,8 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		userRoutes.POST("/edit_user", user.EditUser)
 		userRoutes.GET("/me", user.GetUser)
 		userRoutes.POST("/update_currency", user.SetCurrency)
+		userRoutes.GET("/call_center", user.CallCenter)
+		userRoutes.GET("/products", user.GetProducts)
 		userRoutes.POST("/upload_documents", user.SendDocuments)
 	}
 
