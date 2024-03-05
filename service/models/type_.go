@@ -10,3 +10,4 @@ type OrderOption string
 type OrderOperation int
 type DeliveryStatus string
 type PaymentStatus string
+type PaymentCompletion bool

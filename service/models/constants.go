@@ -85,7 +85,13 @@ const (
 const (
 	CryptoPayment PaymentStatus = "CRYPTO"
 	DebitPayment  PaymentStatus = "DEBIT"
-	PayPalPayment PaymentStatus = "PayPal"
+	PayPalPayment PaymentStatus = "PAYPAL"
+)
+
+const (
+	PaymentDone    PaymentCompletion = true
+	PaymentPending PaymentCompletion = false
+	PaymentReject  PaymentCompletion = false
 )
 
 var AllActions = []Action{

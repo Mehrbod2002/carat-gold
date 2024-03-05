@@ -8,8 +8,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type ChatHistories struct{}
-type GeneralData struct{}
+type GeneralData struct {
+	AedUsd float64 `bson:"aedusd" json:"aedusd"`
+}
 
 type MetaTraderAccounts struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
@@ -26,6 +27,7 @@ type RequestMetaTraderAccounts struct {
 
 type RequestSetCallCenter struct {
 	WhatsApp         *string `bson:"whatsapp" json:"whatsapp"`
+	LiveChat         *string `bson:"live" json:"live"`
 	Telegram         *string `bson:"telegram" json:"telegram"`
 	WebsiteReference *string `bson:"website_reference" json:"website_reference"`
 	Email            *string `bson:"email" json:"email"`
@@ -35,6 +37,7 @@ type RequestSetCallCenter struct {
 type CallCenterDatas struct {
 	ID               primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	WhatsApp         string             `bson:"whatsapp" json:"whatsapp"`
+	LiveChat         *string            `bson:"live" json:"live"`
 	Telegram         string             `bson:"telegram" json:"telegram"`
 	WebsiteReference string             `bson:"website_reference" json:"website_reference"`
 	Email            string             `bson:"email" json:"email"`
@@ -157,6 +160,7 @@ type User struct {
 	StatusString     UserStatus         `bson:"user_status" json:"user_status"`
 	Reason           string             `bson:"reason" json:"reason"`
 	IsSupportOrAdmin bool               `bson:"support_or_admin" json:"support_or_admin"`
+	Wallet           Wallet             `bson:"wallet" json:"wallet"`
 }
 
 type RequestEdit struct {
@@ -231,7 +235,7 @@ type Products struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	Name        string             `bson:"name,omitempty" json:"name"`
 	Description string             `bson:"description" json:"description"`
-	Images      []string           `bson:"images" json:"images"`
+	Images      []Image            `bson:"images" json:"images"`
 	Width       float64            `bson:"width" json:"width"`
 	Length      float64            `bson:"length" json:"length"`
 	WeightOZ    float64            `bson:"weight_oz" json:"weight_oz"`
@@ -265,15 +269,16 @@ type DeliveryMethods struct {
 }
 
 type Transctions struct {
-	ID             primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	OrderID        string             `json:"order_id" bson:"order_id,omitempty"`
-	UserID         primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
-	CreatedAt      time.Time          `bson:"created_at" json:"created_at"`
-	Status         UserStatus         `bson:"status" json:"status"`
-	StatusDelivery DeliveryStatus     `bson:"status_delivery" json:"status_delivery"`
-	PaymentMethod  string             `bson:"payment_method" json:"payment_method"`
-	Symbol         string             `bson:"symbol" json:"symbol"`
-	ExternalData   map[string]string  `bson:"external_data" json:"external_data"`
+	ID                primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	OrderID           string             `json:"order_id" bson:"order_id,omitempty"`
+	UserID            primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
+	CreatedAt         time.Time          `bson:"created_at" json:"created_at"`
+	PaymentStatus     PaymentStatus      `bson:"payment_method" json:"payment_method"`
+	PaymentCompletion PaymentCompletion  `bson:"payment_status" json:"payment_status"`
+	StatusDelivery    DeliveryStatus     `bson:"status_delivery" json:"status_delivery"`
+	PaymentMethod     string             `bson:"payment_method" json:"payment_method"`
+	Symbol            string             `bson:"symbol" json:"symbol"`
+	ExternalData      map[string]string  `bson:"external_data" json:"external_data"`
 }
 
 type RequestSetDefineUser struct {
@@ -365,6 +370,10 @@ type RequestSetSymbol struct {
 	SymbolSide *SymbolSide `json:"symbol_side"`
 }
 
+type RequestSetGeneralData struct {
+	AedUsd float64 `json:"aed_usd"`
+}
+
 type MetaTraderAdmin struct {
 	Data   string    `json:"data"`
 	ID     int       `json:"id"`
@@ -381,6 +390,10 @@ type RequestSetTrade struct {
 	Comment    *string  `json:"comment"`
 	Deviation  *float64 `json:"deviation"`
 	Stoplimit  *float64 `json:"stop_limit"`
+}
+
+type Image struct {
+	PhotoID primitive.ObjectID `bson:"image" json:"image"`
 }
 
 type RequestSetProduct struct {

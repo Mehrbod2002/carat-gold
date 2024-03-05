@@ -41,13 +41,15 @@ func GetProducts(c *gin.Context) {
 	})
 }
 
-func CallCenter(c *gin.Context) {
+func GeneralData(c *gin.Context) {
 	db, err := utils.GetDB(c)
 	if err != nil {
 		log.Println(err)
 		return
 	}
+
 	var callCenter models.CallCenterDatas
+	var generalData models.GeneralData
 	err = db.Collection("call_center").FindOne(context.Background(), bson.M{}).Decode(&callCenter)
 	if err != nil && err != mongo.ErrNoDocuments {
 		log.Println(err)
@@ -55,10 +57,18 @@ func CallCenter(c *gin.Context) {
 		return
 	}
 
+	err = db.Collection("general_data").FindOne(context.Background(), bson.M{}).Decode(&generalData)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"success":     true,
-		"message":     "done",
-		"call_center": callCenter,
+		"success":      true,
+		"message":      "done",
+		"call_center":  callCenter,
+		"general_data": generalData,
 	})
 }
 
@@ -337,4 +347,10 @@ func SendDocuments(c *gin.Context) {
 		"message": utils.Cap("document uploaded"),
 		"data":    "document_uploaded",
 	})
+}
+
+func Pay(c *gin.Context) {
+	// payment method name , payment id , delivery id , delivery method name , payment status ,
+	// current currency as symbol  , create time
+	// create order id => models.Transctions
 }

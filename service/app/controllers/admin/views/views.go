@@ -286,35 +286,6 @@ func ViewGeneralData(c *gin.Context) {
 	})
 }
 
-func ViewChatsHistories(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
-		return
-	}
-	db, err := utils.GetDB(c)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	var chatHistories []models.ChatHistories
-	cursor, err := db.Collection("chat_histories").Find(context.Background(), bson.M{})
-	if err != nil && err != mongo.ErrNoDocuments {
-		log.Println(err)
-		utils.InternalError(c)
-		return
-	}
-	defer cursor.Close(context.Background())
-	if err := cursor.All(context.Background(), &chatHistories); err != nil {
-		log.Println(err)
-		utils.InternalError(c)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"success":        true,
-		"message":        "done",
-		"chat_histories": chatHistories,
-	})
-}
-
 func ViewFANDQ(c *gin.Context) {
 	if !models.AllowedAction(c, models.ActionGeneralDataView) {
 		return

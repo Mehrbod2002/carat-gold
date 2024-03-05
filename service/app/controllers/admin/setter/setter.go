@@ -273,6 +273,39 @@ func SetDeleteFANDQ(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "done"})
 }
 
+func SetAedExchange(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+		return
+	}
+
+	var request models.RequestSetGeneralData
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	result, err := db.Collection("general_data").UpdateOne(context.Background(), bson.M{}, bson.M{
+		"$set": request,
+	}, options.Update().SetUpsert(true))
+	if err != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	if result.UpsertedCount > 0 {
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "General data inserted"})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": "General data updated"})
+	}
+}
+
 func SetCallCenterDatas(c *gin.Context) {
 	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
 		return
@@ -397,6 +430,7 @@ func SetEditProduct(c *gin.Context) {
 		return
 	}
 
+	var images []models.Image
 	var request models.RequestSetProduct
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.BadBinding(c)
@@ -414,6 +448,16 @@ func SetEditProduct(c *gin.Context) {
 		return
 	}
 
+	for _, photo := range request.Images {
+		photoID := primitive.NewObjectID()
+		valid := utils.UploadPhoto(c, photoID.Hex(), photo)
+		if !valid {
+			return
+		}
+
+		images = append(images, models.Image{PhotoID: photoID})
+	}
+
 	editedUser := models.Products{
 		Percentage:  request.Percentage,
 		Name:        request.Name,
@@ -423,7 +467,7 @@ func SetEditProduct(c *gin.Context) {
 		Purity:      request.Purity,
 		Length:      request.Length,
 		Width:       request.Width,
-		Images:      request.Images,
+		Images:      images,
 	}
 
 	productId, valid := utils.ValidateID(*request.ProductID, c)
@@ -465,6 +509,17 @@ func SetProduct(c *gin.Context) {
 		return
 	}
 
+	var images []models.Image
+	for _, photo := range request.Images {
+		photoID := primitive.NewObjectID()
+		valid := utils.UploadPhoto(c, photoID.Hex(), photo)
+		if !valid {
+			return
+		}
+
+		images = append(images, models.Image{PhotoID: photoID})
+	}
+
 	_, err := db.Collection("products").InsertOne(context.Background(),
 		models.Products{
 			Name:        request.Name,
@@ -475,7 +530,7 @@ func SetProduct(c *gin.Context) {
 			Length:      request.Length,
 			Width:       request.Width,
 			Percentage:  request.Percentage,
-			Images:      request.Images,
+			Images:      images,
 			WhoDefine:   user.Email,
 			CreatedAt:   time.Now(),
 		})

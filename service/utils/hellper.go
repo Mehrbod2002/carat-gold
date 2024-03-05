@@ -2,11 +2,14 @@ package utils
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -205,4 +208,41 @@ func DerefIntPtr(ptr *int) int {
 		return *ptr
 	}
 	return 0
+}
+
+func UploadPhoto(c *gin.Context, id string, photo string) bool {
+	path, err := os.Getwd()
+	if err != nil {
+		return false
+	}
+
+	path = filepath.Join(path, "CDN/"+id+".svg")
+
+	realData := photo
+	if strings.Contains(photo, "base64") {
+		photo = strings.Split(photo, ",")[1]
+	}
+	_, err = base64.StdEncoding.DecodeString(photo)
+	if err != nil {
+		InternalError(c)
+		return false
+	}
+
+	photoData := fmt.Sprintf(`<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+		<image xlink:href="%s" x="0" y="0" width="100" height="100"/>
+	</svg>`, realData)
+
+	file, err := os.Create(path)
+	if err != nil {
+		InternalError(c)
+		return false
+	}
+	defer file.Close()
+
+	_, err = file.Write([]byte(photoData))
+	if err != nil {
+		InternalError(c)
+		return false
+	}
+	return true
 }

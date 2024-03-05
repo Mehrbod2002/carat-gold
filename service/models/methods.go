@@ -213,10 +213,6 @@ func ValidateSession(c *gin.Context) (*User, bool) {
 					log.Println(err)
 					return nil, false
 				}
-				if err != nil {
-					log.Println(err)
-					return nil, false
-				}
 				user := &User{
 					ID:        userID,
 					Email:     email,
