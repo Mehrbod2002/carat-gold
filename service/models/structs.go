@@ -461,3 +461,32 @@ type RequestSetFANDQ struct {
 	Question string  `bson:"question" json:"question"`
 	Answer   string  `bson:"answer" json:"answer"`
 }
+
+type PaymentCallBack struct {
+	PaymentID          int64       `json:"payment_id"`
+	ParentPaymentID    int64       `json:"parent_payment_id"`
+	InvoiceID          interface{} `json:"invoice_id"`
+	PaymentStatus      string      `json:"payment_status"`
+	PayAddress         string      `json:"pay_address"`
+	PayinExtraID       interface{} `json:"payin_extra_id"`
+	PriceAmount        float64     `json:"price_amount"`
+	PriceCurrency      string      `json:"price_currency"`
+	PayAmount          float64     `json:"pay_amount"`
+	ActuallyPaid       float64     `json:"actually_paid"`
+	ActuallyPaidAtFiat float64     `json:"actually_paid_at_fiat"`
+	PayCurrency        string      `json:"pay_currency"`
+	OrderID            interface{} `json:"order_id"`
+	OrderDescription   interface{} `json:"order_description"`
+	PurchaseID         string      `json:"purchase_id"`
+	OutcomeAmount      float64     `json:"outcome_amount"`
+	OutcomeCurrency    string      `json:"outcome_currency"`
+	PaymentExtraIDs    interface{} `json:"payment_extra_ids"`
+	Fee                Fee         `json:"fee"`
+}
+
+type Fee struct {
+	Currency      string  `json:"currency"`
+	DepositFee    float64 `json:"depositFee"`
+	WithdrawalFee float64 `json:"withdrawalFee"`
+	ServiceFee    float64 `json:"serviceFee"`
+}

@@ -4,13 +4,17 @@ import (
 	"bytes"
 	"carat-gold/utils"
 	"context"
+	"crypto/hmac"
+	"crypto/sha512"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -38,7 +42,7 @@ func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentRespon
 		PriceAmount:      price,
 		PriceCurrency:    "usd",
 		PayCurrency:      "usdt",
-		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/callback_payment",
+		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
 		OrderID:          orderID,
 		OrderDescription: "Fasih Products",
 	}
@@ -760,4 +764,50 @@ func (meta *RequestMetaTraderAccounts) Validate(c *gin.Context) bool {
 		return false
 	}
 	return true
+}
+
+func HandleIPN(c *gin.Context) {
+	body, err := io.ReadAll(c.Request.Body)
+    if err != nil {
+        return
+    }
+
+    signature := c.GetHeader("x-nowpayments-sig")
+    if !VerifyIPN(, signature) {
+        return
+    }
+
+    var payment Payment
+    if err := json.Unmarshal(body, &payment); err != nil {
+		utils.InternalError(c)
+        return
+    }
+
+	// payment.orderid
+
+}
+
+func VerifyIPN(signature string) bool {
+	var params map[string]interface{}
+	sortedString := SortedParamsToString(params)
+
+	hash := hmac.New(sha512.New, []byte(os.Getenv("CRYPTO_HOOK")))
+	hash.Write([]byte(sortedString))
+	signatureCalculated := hex.EncodeToString(hash.Sum(nil))
+
+	return signature == signatureCalculated
+}
+
+func SortedParamsToString(params map[string]interface{}) string {
+	keys := make([]string, 0, len(params))
+	for key := range params {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	var sortedString string
+	for _, key := range keys {
+		sortedString += fmt.Sprintf(`"%s":"%v",`, key, params[key])
+	}
+	return "{" + sortedString[:len(sortedString)-1] + "}"
 }
