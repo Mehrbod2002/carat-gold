@@ -9,5 +9,5 @@ type MetaTraderActon string
 type OrderOption string
 type OrderOperation int
 type DeliveryStatus string
-type PaymentStatus string
+type PaymentMethod string
 type PaymentCompletion bool

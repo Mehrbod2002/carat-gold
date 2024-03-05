@@ -118,14 +118,38 @@ type FANDQ struct {
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 }
 
+type PaymentResponse struct {
+	PaymentID              string      `json:"payment_id"`
+	PaymentStatus          string      `json:"payment_status"`
+	PayAddress             string      `json:"pay_address"`
+	PriceAmount            float64     `json:"price_amount"`
+	PriceCurrency          string      `json:"price_currency"`
+	PayAmount              float64     `json:"pay_amount"`
+	PayCurrency            string      `json:"pay_currency"`
+	OrderID                string      `json:"order_id"`
+	OrderDescription       string      `json:"order_description"`
+	IPNCallbackURL         string      `json:"ipn_callback_url"`
+	CreatedAt              string      `json:"created_at"`
+	UpdatedAt              string      `json:"updated_at"`
+	PurchaseID             string      `json:"purchase_id"`
+	AmountReceived         *float64    `json:"amount_received"`
+	PayinExtraID           interface{} `json:"payin_extra_id"`
+	SmartContract          string      `json:"smart_contract"`
+	Network                string      `json:"network"`
+	NetworkPrecision       int         `json:"network_precision"`
+	TimeLimit              interface{} `json:"time_limit"`
+	BurningPercent         interface{} `json:"burning_percent"`
+	ExpirationEstimateDate string      `json:"expiration_estimate_date"`
+}
+
 type Purchased struct {
-	Product        Products           `bson:"product" json:"product"`
-	StatusDelivery DeliveryStatus     `bson:"status_delivery" json:"status_delivery"`
-	PaymentStatus  bool               `bson:"payment_status" json:"payment_status"`
-	PaymentMethd   PaymentStatus      `bson:"payment_method" json:"payment_method"`
-	CreatedAt      time.Time          `bson:"created_at" json:"created_at"`
-	CreatePayment  time.Time          `bson:"created_payment" json:"created_payment"`
-	OrderID        primitive.ObjectID `bson:"order_id" json:"order_id"`
+	Product        []primitive.ObjectID `bson:"product" json:"product"`
+	StatusDelivery DeliveryStatus       `bson:"status_delivery" json:"status_delivery"`
+	PaymentStatus  UserStatus           `bson:"payment_status" json:"payment_status"`
+	PaymentMethd   PaymentMethod        `bson:"payment_method" json:"payment_method"`
+	CreatedAt      time.Time            `bson:"created_at" json:"created_at"`
+	CreatePayment  time.Time            `bson:"created_payment" json:"created_payment"`
+	OrderID        string               `bson:"order_id" json:"order_id"`
 }
 
 type Wallet struct {
@@ -161,6 +185,7 @@ type User struct {
 	Reason           string             `bson:"reason" json:"reason"`
 	IsSupportOrAdmin bool               `bson:"support_or_admin" json:"support_or_admin"`
 	Wallet           Wallet             `bson:"wallet" json:"wallet"`
+	FcmToken         string             `bson:"fcm_token" json:"fcm_token"`
 }
 
 type RequestEdit struct {
@@ -245,6 +270,7 @@ type Products struct {
 	Hide        bool               `bson:"hide" json:"hide"`
 	Limited     bool               `bson:"limited" json:"limited"`
 	WhoDefine   string             `bson:"who_define" json:"who_define"`
+	Amount      int                `bson:"amount" json:"amount"`
 	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
 }
 
@@ -269,16 +295,19 @@ type DeliveryMethods struct {
 }
 
 type Transctions struct {
-	ID                primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	OrderID           string             `json:"order_id" bson:"order_id,omitempty"`
-	UserID            primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
-	CreatedAt         time.Time          `bson:"created_at" json:"created_at"`
-	PaymentStatus     PaymentStatus      `bson:"payment_method" json:"payment_method"`
-	PaymentCompletion PaymentCompletion  `bson:"payment_status" json:"payment_status"`
-	StatusDelivery    DeliveryStatus     `bson:"status_delivery" json:"status_delivery"`
-	PaymentMethod     string             `bson:"payment_method" json:"payment_method"`
-	Symbol            string             `bson:"symbol" json:"symbol"`
-	ExternalData      map[string]string  `bson:"external_data" json:"external_data"`
+	ID                primitive.ObjectID   `bson:"_id,omitempty" json:"_id"`
+	OrderID           string               `bson:"order_id" json:"order_id,omitempty"`
+	ProductIDs        []primitive.ObjectID `bson:"product_id" json:"product_id"`
+	UserID            primitive.ObjectID   `bson:"user_id" json:"user_id,omitempty"`
+	CreatedAt         time.Time            `bson:"created_at" json:"created_at"`
+	PaymentMethod     PaymentMethod        `bson:"payment_method" json:"payment_method"`
+	PaymentCompletion PaymentCompletion    `bson:"payment_completion" json:"payment_completion"`
+	StatusDelivery    DeliveryStatus       `bson:"status_delivery" json:"status_delivery"`
+	Symbol            string               `bson:"symbol" json:"symbol"`
+	TotalPrice        float64              `bson:"total_price" json:"total_price"`
+	Vat               float64              `bson:"vat" json:"vat"`
+	PaymentStatus     UserStatus           `bson:"payment_status" json:"payment_status"`
+	ExternalData      map[string]string    `bson:"external_data" json:"external_data"`
 }
 
 type RequestSetDefineUser struct {
@@ -410,6 +439,7 @@ type RequestSetProduct struct {
 	Percentage  float64  `json:"percentage"`
 	Hide        bool     `bson:"hide" json:"hide"`
 	Limited     bool     `bson:"limited" json:"limited"`
+	Amount      int      `bson:"amount" json:"amount"`
 }
 
 type RequestSetDeliveryMethod struct {

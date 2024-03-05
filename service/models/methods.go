@@ -1,9 +1,11 @@
 package models
 
 import (
+	"bytes"
 	"carat-gold/utils"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,13 +14,128 @@ import (
 	"strings"
 	"time"
 
+	"firebase.google.com/go/messaging"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/websocket"
+	"github.com/skip2/go-qrcode"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentResponse, error) {
+	url := "https://api.nowpayments.io/v1/payment"
+
+	payloadData := struct {
+		PriceAmount      float64 `json:"price_amount"`
+		PriceCurrency    string  `json:"price_currency"`
+		PayCurrency      string  `json:"pay_currency"`
+		IPNCallbackURL   string  `json:"ipn_callback_url"`
+		OrderID          string  `json:"order_id"`
+		OrderDescription string  `json:"order_description"`
+	}{
+		PriceAmount:      price,
+		PriceCurrency:    "usd",
+		PayCurrency:      "usdt",
+		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/callback_payment",
+		OrderID:          orderID,
+		OrderDescription: "Fasih Products",
+	}
+
+	payloadBytes, err := json.Marshal(payloadData)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("x-api-key", os.Getenv("CRYPTO_SECRET"))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 201 {
+		return nil, fmt.Errorf("failed to create url")
+	}
+
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var paymentResponse PaymentResponse
+	err = json.Unmarshal(buf.Bytes(), &paymentResponse)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &paymentResponse, nil
+}
+
+func CreateQr(payment PaymentResponse) (*string, error) {
+	jsonData, err := json.Marshal(payment)
+	if err != nil {
+		return nil, err
+	}
+
+	qrCode, err := qrcode.Encode(string(jsonData), qrcode.Medium, 256)
+	if err != nil {
+		return nil, err
+	}
+
+	qrBase64 := base64.StdEncoding.EncodeToString(qrCode)
+	return &qrBase64, nil
+}
+
+func Notification(c *gin.Context, userID primitive.ObjectID, notification string) error {
+	app := utils.GetApp(c)
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		return err
+	}
+
+	var user User
+	exist := db.Collection("users").FindOne(context.Background(), bson.M{"$and": []bson.M{
+		{"_id": userID},
+	}}).Decode(&user)
+	if exist != nil {
+		log.Println(exist)
+		utils.InternalError(c)
+		return exist
+	}
+
+	ctx := context.Background()
+	client, err := app.Messaging(ctx)
+	if err != nil {
+		return err
+	}
+
+	message := &messaging.Message{
+		Notification: &messaging.Notification{
+			Title: "Fasih",
+			Body:  notification,
+		},
+		Token: user.FcmToken,
+	}
+
+	_, err = client.Send(ctx, message)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func IsValidEmail(email string) bool {
 	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`

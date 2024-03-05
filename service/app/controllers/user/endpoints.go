@@ -8,9 +8,11 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -349,8 +351,201 @@ func SendDocuments(c *gin.Context) {
 	})
 }
 
+func UpdateFcm(c *gin.Context) {
+	authUser, _ := models.ValidateSession(c)
+
+	var request struct {
+		FcmToken string `json:"fcm_token"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return
+	}
+
+	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
+		"_id": authUser.ID,
+	}, bson.M{
+		"$set": bson.M{
+			"fcm_token": request.FcmToken,
+		},
+	}); err != nil {
+		utils.BadBinding(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+	})
+}
+
+func CreateTranscations(c *gin.Context) {
+	authUser, _ := models.ValidateSession(c)
+
+	var request models.Transctions
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return
+	}
+
+	if request.PaymentMethod != models.CryptoPayment {
+		c.JSON(http.StatusNotImplemented, gin.H{
+			"success": false,
+			"message": utils.Cap("not implement just yet."),
+		})
+		return
+	}
+
+	var products []models.Products
+	cursor, err := db.Collection("products").Find(context.Background(), bson.M{
+		"_id": request,
+	})
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	if err := cursor.All(context.Background(), &products); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	for _, product := range products {
+		if product.Amount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"message": utils.Cap("there is no more product left"),
+			})
+		}
+
+		if !product.Hide {
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"message": utils.Cap("invalid product"),
+			})
+		}
+	}
+
+	var orderID = primitive.NewObjectID().Hex()
+	_, err = db.Collection("transactions").InsertOne(context.Background(),
+		models.Transctions{
+			OrderID:           orderID,
+			UserID:            authUser.ID,
+			CreatedAt:         time.Now(),
+			StatusDelivery:    request.StatusDelivery,
+			PaymentMethod:     request.PaymentMethod,
+			ProductIDs:        request.ProductIDs,
+			TotalPrice:        request.TotalPrice,
+			Vat:               request.Vat,
+			PaymentCompletion: false,
+		})
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	pay, err := models.CreateCrypto(c, request.TotalPrice, orderID)
+	if err != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	qr, err := models.CreateQr(*pay)
+	if err != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+		"data":    orderID,
+		"url":     pay.PaymentID,
+		"qr":      qr,
+	})
+}
+
 func Pay(c *gin.Context) {
-	// payment method name , payment id , delivery id , delivery method name , payment status ,
-	// current currency as symbol  , create time
-	// create order id => models.Transctions
+	authUser, _ := models.ValidateSession(c)
+
+	var request struct {
+		OrderID string `json:"order_id"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	var transction models.Transctions
+	if err = db.Collection("transactions").FindOne(context.Background(), bson.M{
+		"$and": bson.M{
+			"order_id": request.OrderID,
+			"user_id":  authUser.ID,
+		},
+	}).Decode(&transction); err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"$push": bson.M{
+				"wallet.purchased": models.Purchased{
+					PaymentStatus:  transction.PaymentStatus,
+					PaymentMethd:   transction.PaymentMethod,
+					CreatePayment:  time.Now(),
+					CreatedAt:      transction.CreatedAt,
+					StatusDelivery: transction.StatusDelivery,
+					Product:        transction.ProductIDs,
+					OrderID:        transction.OrderID,
+				},
+			},
+		},
+	}
+
+	if transction.StatusDelivery == models.Hold {
+		update["$inc"] = bson.M{
+			"wallet.balance": transction.TotalPrice - transction.Vat,
+		}
+	}
+
+	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
+		"_id": authUser.ID,
+	}, update); err != nil {
+		utils.BadBinding(c)
+		return
+	}
+
+	utils.AutoOrder(c, 0)
+	models.Notification(c, authUser.ID, "Payments set with #"+transction.OrderID)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+	})
 }

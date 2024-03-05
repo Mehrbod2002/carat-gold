@@ -83,9 +83,9 @@ const (
 )
 
 const (
-	CryptoPayment PaymentStatus = "CRYPTO"
-	DebitPayment  PaymentStatus = "DEBIT"
-	PayPalPayment PaymentStatus = "PAYPAL"
+	CryptoPayment PaymentMethod = "CRYPTO"
+	DebitPayment  PaymentMethod = "DEBIT"
+	PayPalPayment PaymentMethod = "PAYPAL"
 )
 
 const (

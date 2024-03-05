@@ -84,6 +84,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		userRoutes.GET("/general_data", user.GeneralData)
 		userRoutes.GET("/products", user.GetProducts)
 		userRoutes.POST("/upload_documents", user.SendDocuments)
+		userRoutes.POST("/update_fcm", user.UpdateFcm)
 	}
 
 	supportRoutes := apis.Group("/support")
@@ -390,7 +391,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 						}},
 				})
 				if err != nil {
-					if err != nil && err == mongo.ErrNoDocuments {
+					if err == mongo.ErrNoDocuments {
 						log.Println(err)
 						err = ws.WriteJSON(models.Socket{
 							ResponseTo: *user,

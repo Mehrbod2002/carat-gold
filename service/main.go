@@ -39,6 +39,13 @@ func main() {
 		return
 	}
 	defer utils.CloseDB()
+
+	err = utils.InitializeApp()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	db, DBerr := utils.GetDBWSS()
 	if DBerr != nil {
 		log.Println(DBerr)
