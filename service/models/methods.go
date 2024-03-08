@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -24,27 +25,31 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/websocket"
 	"github.com/skip2/go-qrcode"
+	"github.com/twilio/twilio-go"
+	verify "github.com/twilio/twilio-go/rest/verify/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentResponse, error) {
-	url := "https://api.nowpayments.io/v1/payment"
+	url := "https://api.nowpayments.io/v1/invoice"
 
 	payloadData := struct {
-		PriceAmount      float64 `json:"price_amount"`
-		PriceCurrency    string  `json:"price_currency"`
-		PayCurrency      string  `json:"pay_currency"`
-		IPNCallbackURL   string  `json:"ipn_callback_url"`
-		OrderID          string  `json:"order_id"`
-		OrderDescription string  `json:"order_description"`
+		PriceAmount    float64 `json:"price_amount"`
+		PriceCurrency  string  `json:"price_currency"`
+		PayCurrency    string  `json:"pay_currency"`
+		IPNCallbackURL string  `json:"ipn_callback_url"`
+		OrderID        string  `json:"order_id"`
+		SuccessUrl     string  `json:"success_url"`
+		CancelUrl      string  `json:"cancel_url"`
 	}{
-		PriceAmount:      price,
-		PriceCurrency:    "usd",
-		PayCurrency:      "usdt",
-		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
-		OrderID:          orderID,
-		OrderDescription: "Fasih Products",
+		PriceAmount:    price,
+		PriceCurrency:  "usd",
+		PayCurrency:    "btc",
+		IPNCallbackURL: os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
+		OrderID:        orderID,
+		SuccessUrl:     "https://nowasd.com",
+		CancelUrl:      "https://nw.com",
 	}
 
 	payloadBytes, err := json.Marshal(payloadData)
@@ -66,7 +71,7 @@ func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentRespon
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 201 {
+	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("failed to create url")
 	}
 
@@ -86,13 +91,8 @@ func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentRespon
 	return &paymentResponse, nil
 }
 
-func CreateQr(payment PaymentResponse) (*string, error) {
-	jsonData, err := json.Marshal(payment)
-	if err != nil {
-		return nil, err
-	}
-
-	qrCode, err := qrcode.Encode(string(jsonData), qrcode.Medium, 256)
+func CreateQr(payment string) (*string, error) {
+	qrCode, err := qrcode.Encode(string(payment), qrcode.Medium, 256)
 	if err != nil {
 		return nil, err
 	}
@@ -768,20 +768,20 @@ func (meta *RequestMetaTraderAccounts) Validate(c *gin.Context) bool {
 
 func HandleIPN(c *gin.Context) {
 	body, err := io.ReadAll(c.Request.Body)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
-    signature := c.GetHeader("x-nowpayments-sig")
-    if !VerifyIPN(, signature) {
-        return
-    }
+	signature := c.GetHeader("x-nowpayments-sig")
+	if !VerifyIPN(signature) {
+		return
+	}
 
-    var payment Payment
-    if err := json.Unmarshal(body, &payment); err != nil {
+	var payment PaymentCallBack
+	if err := json.Unmarshal(body, &payment); err != nil {
 		utils.InternalError(c)
-        return
-    }
+		return
+	}
 
 	// payment.orderid
 
@@ -810,4 +810,31 @@ func SortedParamsToString(params map[string]interface{}) string {
 		sortedString += fmt.Sprintf(`"%s":"%v",`, key, params[key])
 	}
 	return "{" + sortedString[:len(sortedString)-1] + "}"
+}
+
+func Sendotp(mobileNumber string, otp string) (bool, string) {
+	accountSID := os.Getenv("SID")
+	authToken := os.Getenv("SMS_TOKEN")
+	verifyServiceSID := os.Getenv("VERIFY")
+
+	client := twilio.NewRestClientWithParams(twilio.ClientParams{
+		Username: accountSID,
+		Password: authToken,
+	})
+
+	params := &verify.CreateVerificationParams{}
+	params.SetTo(mobileNumber)
+	params.SetCustomCode(otp)
+	params.SetChannel("sms")
+
+	resp, err := client.VerifyV2.CreateVerification(verifyServiceSID, params)
+	if err != nil {
+		return false, "Internal error"
+	} else {
+		if resp.Status != nil && (*resp.Status == "pending" || *resp.Status == "approved") {
+			return true, ""
+		} else {
+			return false, "Internal error"
+		}
+	}
 }

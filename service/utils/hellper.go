@@ -72,25 +72,7 @@ func ValidateID(Id string, c *gin.Context) (primitive.ObjectID, bool) {
 
 func GenerateRandomCode() int {
 	rander := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return rander.Intn(999999-100000+1) + 100000
-}
-
-func Sendotp(mobileNumber string, otp string) (bool, *string) {
-	// otpSecret := os.Getenv("OTP_SECRET")
-	// template := os.Getenv("OTP_TEMPLATE_ID")
-	// api := kavenegar.New(otpSecret)
-	// receptor := mobileNumber
-	// params := &kavenegar.VerifyLookupParam{}
-	// if _, err := api.Verify.Lookup(receptor, template, otp, params); err != nil {
-	// 	errMsg := err.Error()
-	// 	if strings.Contains(errMsg, ":") {
-	// 		message := strings.TrimSpace(strings.Split(errMsg, ":")[1])
-	// 		return false, &message
-	// 	}
-	// 	return false, nil
-	// } else {
-	return true, nil
-	// }
+	return rander.Intn(90000) + 10000
 }
 
 func ValidateAdmin(token string) bool {

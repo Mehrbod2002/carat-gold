@@ -5,6 +5,7 @@ import (
 	"carat-gold/utils"
 	"context"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -467,7 +468,10 @@ func CreateTranscations(c *gin.Context) {
 		return
 	}
 
-	qr, err := models.CreateQr(*pay)
+	url := fmt.Sprintf("https://nowpayments.io/payment?address=%s&amount=%f&currency=%s&order_id=%s&description=%s",
+		pay.PayAddress, pay.PayAmount, pay.PayCurrency, pay.OrderID, pay.OrderDescription)
+
+	qr, err := models.CreateQr(url)
 	if err != nil {
 		utils.InternalError(c)
 		return
@@ -477,9 +481,63 @@ func CreateTranscations(c *gin.Context) {
 		"success": true,
 		"message": "done",
 		"data":    orderID,
-		"url":     pay.PaymentID,
+		"url":     url,
 		"qr":      qr,
 	})
+}
+
+func MakeDepositTransaction(c *gin.Context) {
+	authUser, _ := models.ValidateSession(c)
+
+	var request struct {
+		PaymentMethod models.PaymentMethod `bson:"payment_method" json:"payment_method"`
+		TotalPrice    float64              `bson:"total_price" json:"total_price"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	if request.PaymentMethod != models.CryptoPayment {
+		c.JSON(http.StatusNotImplemented, gin.H{
+			"success": false,
+			"message": utils.Cap("not implement just yet."),
+		})
+		return
+	}
+
+	if request.TotalPrice < 100 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": utils.Cap("Deposit price should be greater than 99$"),
+			"data":    "invalid_price",
+		})
+		return
+	}
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	var orderID = primitive.NewObjectID().Hex()
+	_, err = db.Collection("transactions").InsertOne(context.Background(),
+		models.Transctions{
+			OrderID:           orderID,
+			UserID:            authUser.ID,
+			CreatedAt:         time.Now(),
+			PaymentMethod:     request.PaymentMethod,
+			TotalPrice:        request.TotalPrice,
+			IsDebit:           true,
+			PaymentCompletion: false,
+		})
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
 }
 
 func Pay(c *gin.Context) {
@@ -509,6 +567,15 @@ func Pay(c *gin.Context) {
 	}).Decode(&transction); err != nil && err != mongo.ErrNoDocuments {
 		log.Println(err)
 		utils.InternalError(c)
+		return
+	}
+
+	if transction.IsDebit {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": utils.Cap("This is debit operation"),
+			"data":    "invalid_operation",
+		})
 		return
 	}
 

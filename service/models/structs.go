@@ -307,6 +307,7 @@ type Transctions struct {
 	TotalPrice        float64              `bson:"total_price" json:"total_price"`
 	Vat               float64              `bson:"vat" json:"vat"`
 	PaymentStatus     UserStatus           `bson:"payment_status" json:"payment_status"`
+	IsDebit           bool                 `bson:"is_debit" json:"is_debit"`
 	ExternalData      map[string]string    `bson:"external_data" json:"external_data"`
 }
 
@@ -489,4 +490,14 @@ type Fee struct {
 	DepositFee    float64 `json:"depositFee"`
 	WithdrawalFee float64 `json:"withdrawalFee"`
 	ServiceFee    float64 `json:"serviceFee"`
+}
+
+type TwilioVerifyVerification struct {
+	To      string `json:"to"`
+	Channel string `json:"channel"`
+}
+
+type TwilioVerifyVerificationCheck struct {
+	To   string `json:"to"`
+	Code string `json:"code"`
 }

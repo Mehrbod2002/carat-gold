@@ -6,6 +6,7 @@ import (
 	"carat-gold/routes"
 	"carat-gold/utils"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -26,6 +27,12 @@ func main() {
 		log.Println("failed to load env file")
 		return
 	}
+
+	pay, erra := models.CreateCrypto(&gin.Context{}, 100, "123123")
+	fmt.Println(pay, erra)
+	url := fmt.Sprintf("https://nowpayments.io/payment?address=%s&amount=%f&currency=%s&order_id=%s&description=%s",
+		pay.PayAddress, pay.PayAmount, pay.PayCurrency, pay.OrderID, pay.OrderDescription)
+	fmt.Println(url)
 	logFile, err := os.OpenFile("application.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal("Failed to open log file:", err)

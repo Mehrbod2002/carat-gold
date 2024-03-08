@@ -78,8 +78,8 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 		})
 		return
 	}
-	otp_code := 12345 // utils.GenerateRandomCode()
-	sent, errMessage := utils.Sendotp(user.PhoneNumber, fmt.Sprint(otp_code))
+	otp_code := utils.GenerateRandomCode()
+	sent, errMessage := models.Sendotp(user.PhoneNumber, fmt.Sprint(otp_code))
 	if !sent {
 		log.Println("otp : ", errMessage)
 		c.JSON(500, gin.H{
@@ -239,8 +239,8 @@ func SendOTP(c *gin.Context) {
 	}}).Decode(&existingUser)
 	if exist != nil {
 		if exist == mongo.ErrNoDocuments {
-			otp_code := 12345 // utils.GenerateRandomCode()
-			sent, errMessage := utils.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
+			otp_code := utils.GenerateRandomCode()
+			sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
 			if !sent {
 				log.Println("otp : ", errMessage)
 				c.JSON(500, gin.H{
@@ -283,8 +283,8 @@ func SendOTP(c *gin.Context) {
 			})
 			return
 		}
-		otp_code := 12345 // utils.GenerateRandomCode()
-		sent, errMessage := utils.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
+		otp_code := utils.GenerateRandomCode()
+		sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
 		if !sent {
 			log.Println("otp : ", errMessage)
 			c.JSON(500, gin.H{
