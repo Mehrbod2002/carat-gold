@@ -468,10 +468,9 @@ func CreateTranscations(c *gin.Context) {
 		return
 	}
 
-	url := fmt.Sprintf("https://nowpayments.io/payment?address=%s&amount=%f&currency=%s&order_id=%s&description=%s",
-		pay.PayAddress, pay.PayAmount, pay.PayCurrency, pay.OrderID, pay.OrderDescription)
-
-	qr, err := models.CreateQr(url)
+	qrCode := fmt.Sprintf("ethereum:%s?value=%f&token=usdt", pay.PayAddress, pay.PayAmount)
+	url := fmt.Sprintf("https://nowpayments.io/payment/?iid=%s", pay.PaymentID)
+	qr, err := models.CreateQr(qrCode)
 	if err != nil {
 		utils.InternalError(c)
 		return

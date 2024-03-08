@@ -32,24 +32,22 @@ import (
 )
 
 func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentResponse, error) {
-	url := "https://api.nowpayments.io/v1/invoice"
+	url := "https://api.nowpayments.io/v1/payment"
 
 	payloadData := struct {
-		PriceAmount    float64 `json:"price_amount"`
-		PriceCurrency  string  `json:"price_currency"`
-		PayCurrency    string  `json:"pay_currency"`
-		IPNCallbackURL string  `json:"ipn_callback_url"`
-		OrderID        string  `json:"order_id"`
-		SuccessUrl     string  `json:"success_url"`
-		CancelUrl      string  `json:"cancel_url"`
+		PriceAmount      float64 `json:"price_amount"`
+		PriceCurrency    string  `json:"price_currency"`
+		PayCurrency      string  `json:"pay_currency"`
+		IPNCallbackURL   string  `json:"ipn_callback_url"`
+		OrderID          string  `json:"order_id"`
+		OrderDescription string  `json:"order_description"`
 	}{
-		PriceAmount:    price,
-		PriceCurrency:  "usd",
-		PayCurrency:    "btc",
-		IPNCallbackURL: os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
-		OrderID:        orderID,
-		SuccessUrl:     "https://nowasd.com",
-		CancelUrl:      "https://nw.com",
+		PriceAmount:      price,
+		PriceCurrency:    "usd",
+		PayCurrency:      "btc",
+		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
+		OrderID:          orderID,
+		OrderDescription: "Fasih Products",
 	}
 
 	payloadBytes, err := json.Marshal(payloadData)
@@ -61,6 +59,7 @@ func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentRespon
 	if err != nil {
 		return nil, err
 	}
+
 	req.Header.Set("x-api-key", os.Getenv("CRYPTO_SECRET"))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -71,7 +70,7 @@ func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentRespon
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != 201 {
 		return nil, fmt.Errorf("failed to create url")
 	}
 

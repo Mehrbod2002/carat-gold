@@ -118,6 +118,21 @@ type FANDQ struct {
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 }
 
+type Invoice struct {
+	ID               string    `json:"id"`
+	OrderID          string    `json:"order_id"`
+	OrderDescription string    `json:"order_description"`
+	PriceAmount      string    `json:"price_amount"`
+	PriceCurrency    string    `json:"price_currency"`
+	PayCurrency      string    `json:"pay_currency"`
+	IPNCallbackURL   string    `json:"ipn_callback_url"`
+	InvoiceURL       string    `json:"invoice_url"`
+	SuccessURL       string    `json:"success_url"`
+	CancelURL        string    `json:"cancel_url"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
 type PaymentResponse struct {
 	PaymentID              string      `json:"payment_id"`
 	PaymentStatus          string      `json:"payment_status"`
