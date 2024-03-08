@@ -391,7 +391,7 @@ func UpdateFcm(c *gin.Context) {
 func CreateTranscations(c *gin.Context) {
 	authUser, _ := models.ValidateSession(c)
 
-	var request models.Transctions
+	var request models.Transaction
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Println(err)
 		utils.BadBinding(c)
@@ -408,6 +408,22 @@ func CreateTranscations(c *gin.Context) {
 		c.JSON(http.StatusNotImplemented, gin.H{
 			"success": false,
 			"message": utils.Cap("not implement just yet."),
+		})
+		return
+	}
+
+	var crypto models.Crypto
+	err := db.Collection("crypto").FindOne(context.Background(), bson.M{}).Decode(&crypto)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	if !crypto.Disable {
+		c.JSON(http.StatusNotImplemented, gin.H{
+			"success": false,
+			"message": utils.Cap("payment method disabled"),
 		})
 		return
 	}
@@ -445,7 +461,7 @@ func CreateTranscations(c *gin.Context) {
 
 	var orderID = primitive.NewObjectID().Hex()
 	_, err = db.Collection("transactions").InsertOne(context.Background(),
-		models.Transctions{
+		models.Transaction{
 			OrderID:           orderID,
 			UserID:            authUser.ID,
 			CreatedAt:         time.Now(),
@@ -469,7 +485,7 @@ func CreateTranscations(c *gin.Context) {
 	}
 
 	qrCode := fmt.Sprintf("ethereum:%s?value=%f&token=usdt", pay.PayAddress, pay.PayAmount)
-	url := fmt.Sprintf("https://nowpayments.io/payment/?iid=%s", pay.PaymentID)
+	url := fmt.Sprintf("https://nowpayments.io/payment/?iid=%s&paymentId=%s", pay.PurchaseID, pay.PaymentID)
 	qr, err := models.CreateQr(qrCode)
 	if err != nil {
 		utils.InternalError(c)
@@ -523,7 +539,7 @@ func MakeDepositTransaction(c *gin.Context) {
 
 	var orderID = primitive.NewObjectID().Hex()
 	_, err = db.Collection("transactions").InsertOne(context.Background(),
-		models.Transctions{
+		models.Transaction{
 			OrderID:           orderID,
 			UserID:            authUser.ID,
 			CreatedAt:         time.Now(),
@@ -557,7 +573,7 @@ func Pay(c *gin.Context) {
 		return
 	}
 
-	var transction models.Transctions
+	var transction models.Transaction
 	if err = db.Collection("transactions").FindOne(context.Background(), bson.M{
 		"$and": bson.M{
 			"order_id": request.OrderID,
@@ -598,6 +614,21 @@ func Pay(c *gin.Context) {
 		update["$inc"] = bson.M{
 			"wallet.balance": transction.TotalPrice - transction.Vat,
 		}
+	}
+
+	if _, err := db.Collection("transactions").UpdateOne(context.Background(), bson.M{
+		"$and": bson.M{
+			"order_id": request.OrderID,
+			"user_id":  authUser.ID,
+		},
+	}, bson.M{
+		"$set": bson.M{
+			"payment_status":     models.ApprovedStatus,
+			"payment_completion": true,
+		},
+	}); err != nil {
+		utils.BadBinding(c)
+		return
 	}
 
 	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{

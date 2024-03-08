@@ -6,7 +6,6 @@ import (
 	"carat-gold/routes"
 	"carat-gold/utils"
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -28,12 +27,6 @@ func main() {
 		return
 	}
 
-	pay, erra := models.CreateCrypto(&gin.Context{}, 100, "123123")
-	fmt.Println(pay, erra)
-	qrCode := fmt.Sprintf("ethereum:%s?value=%f&token=usdt", pay.PayAddress, pay.PayAmount)
-	url := fmt.Sprintf("https://nowpayments.io/payment/?iid=%s", pay.PaymentID)
-	qr, _ := models.CreateQr(qrCode)
-	fmt.Println(*qr, url)
 	logFile, err := os.OpenFile("application.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal("Failed to open log file:", err)

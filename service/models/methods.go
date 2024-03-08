@@ -31,6 +31,69 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoice, error) {
+	url := "https://api.nowpayments.io/v1/invoice"
+
+	payloadData := struct {
+		PriceAmount      float64 `json:"price_amount"`
+		PriceCurrency    string  `json:"price_currency"`
+		PayCurrency      string  `json:"pay_currency"`
+		IPNCallbackURL   string  `json:"ipn_callback_url"`
+		OrderID          string  `json:"order_id"`
+		OrderDescription string  `json:"order_description"`
+		SuccessURL       string  `json:"success_url"`
+		CancelURL        string  `json:"cancel_url"`
+	}{
+		PriceAmount:      price,
+		PriceCurrency:    "usd",
+		PayCurrency:      "usdt",
+		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
+		OrderID:          orderID,
+		OrderDescription: "Fasih Products",
+		SuccessURL:       "https://nwer.com",
+		CancelURL:        "https://nwer.com",
+	}
+
+	payloadBytes, err := json.Marshal(payloadData)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("x-api-key", os.Getenv("CRYPTO_SECRET"))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("failed to create url")
+	}
+
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var paymentResponse Invoice
+	err = json.Unmarshal(buf.Bytes(), &paymentResponse)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &paymentResponse, nil
+}
+
 func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentResponse, error) {
 	url := "https://api.nowpayments.io/v1/payment"
 
@@ -44,7 +107,7 @@ func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentRespon
 	}{
 		PriceAmount:      price,
 		PriceCurrency:    "usd",
-		PayCurrency:      "btc",
+		PayCurrency:      "usdt",
 		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
 		OrderID:          orderID,
 		OrderDescription: "Fasih Products",
@@ -71,6 +134,21 @@ func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentRespon
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 201 {
+		var serialized map[string]interface{}
+		response, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create url")
+		}
+
+		err = json.Unmarshal(response, &serialized)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create url: %v", err)
+		}
+
+		if message, ok := serialized["message"].(string); ok {
+			return nil, fmt.Errorf(message)
+		}
+
 		return nil, fmt.Errorf("failed to create url")
 	}
 

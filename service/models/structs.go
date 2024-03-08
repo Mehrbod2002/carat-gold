@@ -51,6 +51,7 @@ type DebitCard struct {
 	Access    string             `bson:"access" json:"access"`
 	Token     string             `bson:"token" json:"token"`
 	WhoDefine string             `bson:"who_define" json:"who_define"`
+	Disable   bool               `bson:"disable" json:"disable"`
 }
 
 type PayPal struct {
@@ -60,6 +61,7 @@ type PayPal struct {
 	Address   string             `bson:"address" json:"address"`
 	Access    string             `bson:"access" json:"access"`
 	Token     string             `bson:"token" json:"token"`
+	Disable   bool               `bson:"disable" json:"disable"`
 }
 
 type DefaultPayment struct {
@@ -69,6 +71,7 @@ type DefaultPayment struct {
 	Address   string             `bson:"address" json:"address"`
 	Access    string             `bson:"access" json:"access"`
 	Token     string             `bson:"token" json:"token"`
+	Disable   bool               `bson:"disable" json:"disable"`
 }
 
 type RequestSetPayment struct {
@@ -88,6 +91,7 @@ type GooglePlay struct {
 	Address   string             `bson:"address" json:"address"`
 	Access    string             `bson:"access" json:"access"`
 	Token     string             `bson:"token" json:"token"`
+	Disable   bool               `bson:"disable" json:"disable"`
 }
 
 type ApplePlay struct {
@@ -97,6 +101,7 @@ type ApplePlay struct {
 	Address   string             `bson:"address" json:"address"`
 	Access    string             `bson:"access" json:"access"`
 	Token     string             `bson:"token" json:"token"`
+	Disable   bool               `bson:"disable" json:"disable"`
 }
 
 type Crypto struct {
@@ -108,6 +113,7 @@ type Crypto struct {
 	Address   string             `bson:"address" json:"address"`
 	Access    string             `bson:"access" json:"access"`
 	Token     string             `bson:"token" json:"token"`
+	Disable   bool               `bson:"disable" json:"disable"`
 }
 
 type FANDQ struct {
@@ -309,7 +315,7 @@ type DeliveryMethods struct {
 	TimeProvided  bool               `bson:"time_provided,omitempty" json:"time_provided"`
 }
 
-type Transctions struct {
+type Transaction struct {
 	ID                primitive.ObjectID   `bson:"_id,omitempty" json:"_id"`
 	OrderID           string               `bson:"order_id" json:"order_id,omitempty"`
 	ProductIDs        []primitive.ObjectID `bson:"product_id" json:"product_id"`

@@ -50,6 +50,11 @@ func ViewPurchase(c *gin.Context) {
 	var request struct {
 		ID string `json:"user_id"`
 	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
 
 	purchaseID, valid := utils.ValidateID(request.ID, c)
 	if !valid {
@@ -283,6 +288,101 @@ func ViewGeneralData(c *gin.Context) {
 		"success":       true,
 		"message":       "done",
 		"general_datas": generalData,
+	})
+}
+
+func ViewMetric(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+		return
+	}
+
+	var request struct {
+		RangeTime int
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if request.RangeTime <= 0 {
+		utils.BadBinding(c)
+		return
+	}
+
+	var generalData models.GeneralData
+	if err := db.Collection("general_data").FindOne(context.Background(), bson.M{}); err != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	var users []models.User
+	cursor, err := db.Collection("users").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &users); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	var rangedUsers []models.User
+	var totalBars int = 0
+	for _, u := range users {
+		if u.CreatedAt.Hour() <= request.RangeTime {
+			rangedUsers = append(rangedUsers, u)
+		}
+
+		for _, p := range u.Wallet.Purchased {
+			totalBars += len(p.Product)
+		}
+	}
+
+	var transactions []models.Transaction
+	cursor, err = db.Collection("transactions").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &transactions); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	var aed float64 = 0
+	var usd float64 = 0
+	for _, t := range transactions {
+		if t.CreatedAt.Hour() <= request.RangeTime && t.PaymentCompletion {
+			if !t.IsDebit {
+				aed += t.TotalPrice * generalData.AedUsd
+
+				if t.PaymentMethod == models.CryptoPayment {
+					usd += t.TotalPrice
+				}
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":   true,
+		"message":   "done",
+		"users":     rangedUsers,
+		"gold_bars": totalBars,
+		"aed":       aed,
+		"usd":       usd,
 	})
 }
 

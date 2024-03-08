@@ -96,6 +96,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	adminRoutes := apis.Group("/admin")
 	adminRoutes.Use(AdminAuthMiddleware())
 	{
+		adminRoutes.POST("/metric", adminView.ViewMetric)
 		adminRoutes.GET("/get_users", adminView.ViewAllUsers)
 		adminRoutes.POST("/delete_user", adminSetter.SetDeleteUser)
 		adminRoutes.POST("/delete_product", adminSetter.SetDeleteProduct)
