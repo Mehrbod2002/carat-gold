@@ -369,7 +369,14 @@ func SetMetaData(c *gin.Context) {
 		utils.InternalError(c)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+
+	result, valid := utils.PostRequest(make(map[string]interface{}), "reinitialize")
+	if !valid || result["status"] == false {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": result["data"], "data": result["data"]})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "done"})
 }
 
 func SetEditCurrency(c *gin.Context) {
