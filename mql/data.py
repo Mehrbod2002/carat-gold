@@ -1,20 +1,32 @@
 from flask import Flask, request, jsonify
 from datetime import datetime
 import MetaTrader5 as mt5
+import requests
+
+url = 'https://goldshop24.co/api/window/get_account'
+secret = "MysticalDragon$7392&WhisperingWinds&SunsetHaven$AuroraBorealis"
+
+headers = {
+    'Content-Type': 'application/json',
+    'Authorization': secret,
+}
 
 app = Flask(__name__)
 
-
-login = 51981488
-password = "bogxs0lz"
-server = "Alpari-MT5-Demo"
-secret = "MysticalDragon$7392&WhisperingWinds&SunsetHaven$AuroraBorealis"
+path = "c:\\Program Files\\MetaTrader 5\\terminal64.exe"
 
 def initialize_mt5():
-    if not mt5.initialize():
-        if mt5.login(login, password=password, server=server):
-            return False
-    return True
+    try:
+        account = requests.get(url, headers=headers).json()["accounts"]
+        if not mt5.initialize():
+            return
+
+        if mt5.login(account["login"], password=account["password"], server=account["server"]):
+            return True
+ 
+        return False
+    except:
+        pass
 
 @app.before_request
 def before_request():
@@ -35,32 +47,43 @@ def get_history():
     for order in history_orders:
         formatted_order = {
             "ticket": order[0],
-            "magic_number": order[1],
-            "order_type": order[2],
-            "position_id": order[3],
-            "position_by_id": order[4],
-            "volume": order[5],
-            "time_setup": order[6],
-            "time_done": order[7],
-            "time_expiration": order[8],
-            "type_time": order[9],
+            "time_setup": order[1],
+            "time_setup_msc": order[2],
+            "time_done": order[3],
+            "time_done_msc": order[4],
+            "time_expiration": order[5],
+            "type": order[6],
+            "type_time": order[7],
+            "type_filling": order[8],
+            "state": order[9],
             "magic": order[10],
-            "position": order[11],
-            "reason": order[12],
-            "type": order[13],
+            "position_id": order[11],
+            "position_by_id": order[12],
+            "reason": order[13],
             "volume_initial": order[14],
-            "sl": order[15],
-            "tp": order[16],
-            "price_open": order[17],
-            "price_current": order[18],
+            "volume_current": order[15],
+            "price_open": order[16],
+            "sl": order[17],
+            "tp": order[18],
+            "price_current": order[19],
             "price_stoplimit": order[19],
-            "symbol": order[20],
-            "comment": order[21],
-            "external_id": order[22]
+            "symbol": order[21],
+            "comment": order[22]
         }
         formatted_orders.append(formatted_order)
 
     return jsonify({"data": formatted_orders, "status": True}), 200
+
+@app.route('/reinitialize', methods=['POST'])
+def trigger_reinitialize():
+    if request.method == 'POST':
+        if initialize_mt5():
+            return jsonify({"status": True, "message": "MetaTrader 5 reinitialized successfully"}), 200
+        else:
+            return jsonify({"status": False, "message": "Failed to reinitialize MetaTrader 5"}), 500
+    else:
+        return jsonify({"status": False, "message": "Invalid request method"}), 405
+
 
 @app.route('/positions', methods=['GET'])
 def positions():
@@ -85,31 +108,36 @@ def positions():
 @app.route('/send_order', methods=['POST'])
 def send_order():
     symbol = request.json.get('symbol')
-    lot = request.json.get('lot', 0.1)
+    lot = request.json.get('volume')
     deviation = request.json.get('deviation', 20)
     type = request.json.get('type')
 
+    if mt5.symbol_info_tick(symbol) == None:
+        return jsonify({"status":False,"message": "Invalid symbol", "data": "invalid symbol"}), 400
     request_data = {
         "action": mt5.TRADE_ACTION_DEAL,
         "symbol": symbol,
-        "volume": lot,
+        "volume": float(lot),
         "type": type,
         "price": mt5.symbol_info_tick(symbol).ask,
         "deviation": deviation,
-        "magic": "magic carat",
+        "magic": 12345,
         "comment": "carat",
         "type_time": mt5.ORDER_TIME_GTC,
         "type_filling": mt5.ORDER_FILLING_FOK,
     }
 
     result = mt5.order_send(request_data)
-    if result.retcode != mt5.TRADE_RETCODE_DONE:
-        return jsonify({"status":False,"message": "Order send failed", "result": str(result)}), 400
+    if result == None:
+        return jsonify({"status":False,"message": "Order send failed", "data": str(mt5.last_error()[1])}), 400
     else:
-        return jsonify({"status":True,"message": "Order placed successfully", "order": result.order, "trade_result": str(result)}), 200
+        if result.retcode != 1009 and result.retcode != 1008:
+            return jsonify({"status":False,"message": "Order send failed", "data": result.comment}), 400
+        return jsonify({"status":True,"message": "Order placed successfully", "data": result.order}), 200
 
-@app.route('/cancel_order/<int:ticket_id>', methods=['DELETE'])
-def cancel_order(ticket_id):
+@app.route('/cancel_order', methods=['POST'])
+def cancel_order():
+    ticket_id = request.json.get('ticket_id')
     position = None
     for p in mt5.positions_get():
         if p.ticket == ticket_id:
@@ -117,23 +145,40 @@ def cancel_order(ticket_id):
             break
 
     if position:
-        side = mt5.ORDER_TYPE_BUY if position.type == 0 else mt5.ORDER_TYPE_SELL
-        request = {
+        side = 0
+        if position.type == mt5.ORDER_TYPE_BUY:
+            side = mt5.ORDER_TYPE_SELL
+        elif position.type == mt5.ORDER_TYPE_SELL:
+            side = mt5.ORDER_TYPE_BUY
+        elif position.type == mt5.ORDER_TYPE_BUY_LIMIT:
+            side = mt5.ORDER_TYPE_SELL_LIMIT
+        elif position.type == mt5.ORDER_TYPE_SELL_LIMIT:
+            side = mt5.ORDER_TYPE_BUY_LIMIT
+        elif position.type == mt5.ORDER_TYPE_BUY_STOP:
+            side = mt5.ORDER_TYPE_SELL_STOP
+        elif position.type == mt5.ORDER_TYPE_SELL_STOP:
+            side = mt5.ORDER_TYPE_BUY_STOP
+        elif position.type == mt5.ORDER_TYPE_BUY_STOP_LIMIT:
+            side = mt5.ORDER_TYPE_SELL_STOP_LIMIT
+        elif position.type == mt5.ORDER_TYPE_SELL_STOP_LIMIT:
+            side = mt5.ORDER_TYPE_BUY_STOP_LIMIT
+        requestMt5 = {
             "action": mt5.TRADE_ACTION_CLOSE_BY,
-            "position": ticket_id,
+            "position_by": ticket_id,
             "symbol": position.symbol,
             "volume": position.volume,
             "type": side,
+            "tp": position.tp,
+            "sl": position.sl,
             "price": mt5.symbol_info_tick(position.symbol).bid,
         }
-        result = mt5.order_send(request)
-
+        result = mt5.order_send(requestMt5)
         if result.retcode == mt5.TRADE_RETCODE_DONE:
-            return jsonify({"status":False,"message": "Position closed successfully", "ticket_id": ticket_id}), 200
+            return jsonify({"status":False,"data": "Position closed successfully", "ticket_id": ticket_id}), 200
         else:
-            return jsonify({"status":False,"message": "Failed to close position", "result": str(result)}), 400
+            return jsonify({"status":False,"data": result.comment, "result": str(result)}), 400
     else:
-        return jsonify({"status":False,"message": "Position not found"}), 404
+        return jsonify({"status":False,"data": "Position not found"}), 404
 
 @app.route('/account_info', methods=['GET'])
 def account_info():
@@ -169,6 +214,5 @@ def account_info():
 def successful(data):
     return jsonify({"status": True, "data": data})
 
-if __name__ == '__main__':
-    initialize_mt5()
-    app.run(debug=True ,port=80, host="172.31.24.144")
+initialize_mt5()
+app.run(debug=True ,port=80, host="172.31.24.144")
