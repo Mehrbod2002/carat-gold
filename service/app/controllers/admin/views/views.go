@@ -297,7 +297,7 @@ func ViewMetric(c *gin.Context) {
 	}
 
 	var request struct {
-		RangeTime int
+		RangeTime int `json:"time"`
 	}
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Println(err)

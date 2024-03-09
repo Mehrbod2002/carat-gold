@@ -313,6 +313,7 @@ type DeliveryMethods struct {
 	SubTitle      string             `bson:"sub_title" json:"sub_title"`
 	EstimatedTime string             `bson:"estimated_time,omitempty" json:"estimated_time"`
 	TimeProvided  bool               `bson:"time_provided,omitempty" json:"time_provided"`
+	Disable       bool               `bson:"disable" json:"disable"`
 }
 
 type Transaction struct {
@@ -472,6 +473,7 @@ type RequestSetDeliveryMethod struct {
 	EstimatedTime string  `bson:"estimated_time" json:"estimated_time"`
 	TimeProvided  bool    `bson:"time_provided" json:"time_provided"`
 	SubTitle      string  `bson:"sub_title" json:"sub_title"`
+	Disable       bool    `bson:"disable" json:"disable"`
 }
 
 type RequestSetCancelTrade struct {

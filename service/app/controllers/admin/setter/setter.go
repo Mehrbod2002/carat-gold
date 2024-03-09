@@ -991,6 +991,7 @@ func SetEditDeliveryMethods(c *gin.Context) {
 		Fee:           request.Fee,
 		WhoDefine:     user.Email,
 		CreatedAt:     time.Now(),
+		Disable:       request.Disable,
 	}
 
 	_, err := db.Collection("delivery_methods").UpdateOne(context.Background(), bson.M{
@@ -1036,6 +1037,7 @@ func SetDeliveryMethods(c *gin.Context) {
 			Fee:           request.Fee,
 			WhoDefine:     user.Email,
 			CreatedAt:     time.Now(),
+			Disable:       request.Disable,
 		})
 
 	if err != nil {
