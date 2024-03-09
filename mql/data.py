@@ -14,29 +14,36 @@ headers = {
 app = Flask(__name__)
 
 path = "c:\\Program Files\\MetaTrader 5\\terminal64.exe"
+mt5_initialized = False
+
 
 def initialize_mt5():
-    try:
-        account = requests.get(url, headers=headers).json()["accounts"]
-        if not mt5.initialize():
-            return
+    global mt5_initialized
+    if mt5_initialized:
+        return
 
-        if mt5.login(account["login"], password=account["password"], server=account["server"]):
-            return True
- 
-        return False
-    except:
-        pass
+    if not mt5.initialize():
+        return
+
+    account = requests.get(url, headers=headers).json()["accounts"]
+    if mt5.login(int(account["login"]), password=account["password"], server=account["server"]):
+        print("logged")
+        return True
+
+    else:
+        print(mt5.last_error())
+
 
 @app.before_request
 def before_request():
     if 'X-Secret-Header' not in request.headers or request.headers['X-Secret-Header'] != secret:
-        return jsonify({"status":False,"message": "Unauthorized"}), 401
+        return jsonify({"status": False, "message": "Unauthorized"}), 401
 
     if not hasattr(request, 'mt5_initialized'):
         request.mt5_initialized = True
         if not mt5.initialize():
-            return jsonify({"status":False,"message": "Unauthorized"}), 401
+            return jsonify({"status": False, "message": "Unauthorized"}), 401
+
 
 @app.route('/get_history', methods=['GET'])
 def get_history():
@@ -74,10 +81,15 @@ def get_history():
 
     return jsonify({"data": formatted_orders, "status": True}), 200
 
+
 @app.route('/reinitialize', methods=['POST'])
 def trigger_reinitialize():
     if request.method == 'POST':
-        if initialize_mt5():
+        if mt5_initialized == False:
+            if not mt5.initialize():
+                return
+        account = requests.get(url, headers=headers).json()["accounts"]
+        if mt5.login(int(account["login"]), password=account["password"], server=account["server"]):
             return jsonify({"status": True, "message": "MetaTrader 5 reinitialized successfully"}), 200
         else:
             return jsonify({"status": False, "message": "Failed to reinitialize MetaTrader 5"}), 500
@@ -88,9 +100,9 @@ def trigger_reinitialize():
 @app.route('/positions', methods=['GET'])
 def positions():
     orders = mt5.positions_get()
-    
+
     parameter_names = [
-        "ticket", "magic_number", "order_id", "position_id", "position_by_id", 
+        "ticket", "magic_number", "order_id", "position_id", "position_by_id",
         "volume", "position_time", "position_time_msc", "type", "volume_initial",
         "price_open", "sl", "tp", "price_current", "swap", "profit", "symbol",
         "comment", "external_id"
@@ -105,6 +117,7 @@ def positions():
 
     return jsonify({"data": positions_list, "status": True}), 200
 
+
 @app.route('/send_order', methods=['POST'])
 def send_order():
     symbol = request.json.get('symbol')
@@ -113,7 +126,7 @@ def send_order():
     type = request.json.get('type')
 
     if mt5.symbol_info_tick(symbol) == None:
-        return jsonify({"status":False,"message": "Invalid symbol", "data": "invalid symbol"}), 400
+        return jsonify({"status": False, "message": "Invalid symbol", "data": "invalid symbol"}), 400
     request_data = {
         "action": mt5.TRADE_ACTION_DEAL,
         "symbol": symbol,
@@ -129,11 +142,12 @@ def send_order():
 
     result = mt5.order_send(request_data)
     if result == None:
-        return jsonify({"status":False,"message": "Order send failed", "data": str(mt5.last_error()[1])}), 400
+        return jsonify({"status": False, "message": "Order send failed", "data": str(mt5.last_error()[1])}), 400
     else:
         if result.retcode != 1009 and result.retcode != 1008:
-            return jsonify({"status":False,"message": "Order send failed", "data": result.comment}), 400
-        return jsonify({"status":True,"message": "Order placed successfully", "data": result.order}), 200
+            return jsonify({"status": False, "message": "Order send failed", "data": result.comment}), 400
+        return jsonify({"status": True, "message": "Order placed successfully", "data": result.order}), 200
+
 
 @app.route('/cancel_order', methods=['POST'])
 def cancel_order():
@@ -174,11 +188,12 @@ def cancel_order():
         }
         result = mt5.order_send(requestMt5)
         if result.retcode == mt5.TRADE_RETCODE_DONE:
-            return jsonify({"status":False,"data": "Position closed successfully", "ticket_id": ticket_id}), 200
+            return jsonify({"status": False, "data": "Position closed successfully", "ticket_id": ticket_id}), 200
         else:
-            return jsonify({"status":False,"data": result.comment, "result": str(result)}), 400
+            return jsonify({"status": False, "data": result.comment, "result": str(result)}), 400
     else:
-        return jsonify({"status":False,"data": "Position not found"}), 404
+        return jsonify({"status": False, "data": "Position not found"}), 404
+
 
 @app.route('/account_info', methods=['GET'])
 def account_info():
@@ -211,8 +226,10 @@ def account_info():
     else:
         return jsonify({"status": False, "message": "Failed to retrieve account info"}), 500
 
+
 def successful(data):
     return jsonify({"status": True, "data": data})
 
+
 initialize_mt5()
-app.run(debug=True ,port=80, host="172.31.24.144")
+app.run(debug=True, port=80, host="172.31.24.144")
