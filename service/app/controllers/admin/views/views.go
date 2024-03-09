@@ -9,12 +9,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func ViewAllUsers(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 	db, err := utils.GetDB(c)
@@ -43,7 +44,7 @@ func ViewAllUsers(c *gin.Context) {
 }
 
 func ViewPurchase(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 
@@ -91,7 +92,7 @@ func ViewPurchase(c *gin.Context) {
 }
 
 func ViewCurrencies(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 	db, err := utils.GetDB(c)
@@ -120,7 +121,7 @@ func ViewCurrencies(c *gin.Context) {
 }
 
 func ViewProducts(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 	db, err := utils.GetDB(c)
@@ -149,7 +150,7 @@ func ViewProducts(c *gin.Context) {
 }
 
 func ViewSymbols(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 	db, err := utils.GetDB(c)
@@ -178,7 +179,7 @@ func ViewSymbols(c *gin.Context) {
 }
 
 func ViewPaymentMethods(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 	db, err := utils.GetDB(c)
@@ -234,7 +235,7 @@ func ViewPaymentMethods(c *gin.Context) {
 }
 
 func ViewDeliveryMethods(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 	db, err := utils.GetDB(c)
@@ -263,7 +264,7 @@ func ViewDeliveryMethods(c *gin.Context) {
 }
 
 func ViewGeneralData(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 	db, err := utils.GetDB(c)
@@ -272,7 +273,7 @@ func ViewGeneralData(c *gin.Context) {
 		return
 	}
 	var generalData []models.GeneralData
-	cursor, err := db.Collection("general_datas").Find(context.Background(), bson.M{})
+	cursor, err := db.Collection("general_data").Find(context.Background(), bson.M{})
 	if err != nil && err != mongo.ErrNoDocuments {
 		log.Println(err)
 		utils.InternalError(c)
@@ -285,14 +286,14 @@ func ViewGeneralData(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"success":       true,
-		"message":       "done",
-		"general_datas": generalData,
+		"success":      true,
+		"message":      "done",
+		"general_data": generalData,
 	})
 }
 
 func ViewMetric(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 
@@ -387,7 +388,7 @@ func ViewMetric(c *gin.Context) {
 }
 
 func ViewFANDQ(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 	db, err := utils.GetDB(c)
@@ -416,8 +417,76 @@ func ViewFANDQ(c *gin.Context) {
 	})
 }
 
+func ViewUser(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
+		return
+	}
+
+	var request struct {
+		ID string `json:"id"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	userID, err := primitive.ObjectIDFromHex(request.ID)
+	if err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	var user models.User
+	if err := db.Collection("user").FindOne(context.Background(),
+		bson.M{"_id": userID}).Decode(&user); err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	var documents models.Documents
+	if err := db.Collection("documents").FindOne(context.Background(),
+		bson.M{"user_id": userID}).Decode(&documents); err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	var transactions []models.Transaction
+	cursor, err := db.Collection("transactions").Find(context.Background(), bson.M{
+		"user_id": user.ID,
+	})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &transactions); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":      true,
+		"message":      "done",
+		"user":         user,
+		"transactions": transactions,
+		"documents":    documents,
+	})
+}
+
 func ViewMetaTrader(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionMetaTrader) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 
@@ -443,7 +512,7 @@ func ViewMetaTrader(c *gin.Context) {
 }
 
 func ViewCallCenter(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataView) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 	db, err := utils.GetDB(c)
@@ -467,7 +536,7 @@ func ViewCallCenter(c *gin.Context) {
 }
 
 func ViewCurrentOrders(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionMetaTrader) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 
@@ -482,7 +551,7 @@ func ViewCurrentOrders(c *gin.Context) {
 }
 
 func ViewHistoryOrders(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionMetaTrader) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
 	}
 

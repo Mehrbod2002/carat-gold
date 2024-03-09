@@ -300,6 +300,11 @@ func SendDocuments(c *gin.Context) {
 		return
 	}
 	frontBase64 := base64.StdEncoding.EncodeToString(frontData)
+	photoIDFront := primitive.NewObjectID()
+	valid := utils.UploadPhoto(c, photoIDFront.Hex(), frontBase64)
+	if !valid {
+		return
+	}
 
 	backData, err := io.ReadAll(backFile)
 	if err != nil {
@@ -309,17 +314,23 @@ func SendDocuments(c *gin.Context) {
 	}
 	backBase64 := base64.StdEncoding.EncodeToString(backData)
 
+	photoIDBack := primitive.NewObjectID()
+	valid = utils.UploadPhoto(c, photoIDBack.Hex(), backBase64)
+	if !valid {
+		return
+	}
+
 	update := bson.M{
 		"documents": models.Documents{
 			Back: struct {
 				Shot string "json:\"shot\" bson:\"shot\""
 			}{
-				Shot: backBase64,
+				Shot: photoIDBack.Hex(),
 			},
 			Front: struct {
 				Shot string "json:\"shot\" bson:\"shot\""
 			}{
-				Shot: frontBase64,
+				Shot: photoIDFront.Hex(),
 			},
 		},
 	}
@@ -469,7 +480,7 @@ func CreateTranscations(c *gin.Context) {
 			PaymentMethod:     request.PaymentMethod,
 			ProductIDs:        request.ProductIDs,
 			TotalPrice:        request.TotalPrice,
-			Vat:               request.Vat,
+			Vat:               crypto.Vat,
 			PaymentCompletion: false,
 		})
 	if err != nil {
@@ -478,7 +489,7 @@ func CreateTranscations(c *gin.Context) {
 		return
 	}
 
-	pay, err := models.CreateCrypto(c, request.TotalPrice, orderID)
+	pay, err := models.CreateCrypto(c, request.TotalPrice+crypto.Vat, orderID, crypto.Token)
 	if err != nil {
 		utils.InternalError(c)
 		return
@@ -537,6 +548,14 @@ func MakeDepositTransaction(c *gin.Context) {
 		return
 	}
 
+	var cryptoDetail models.Crypto
+	err = db.Collection("crypto").FindOne(context.Background(), bson.M{}).Decode(&cryptoDetail)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
 	var orderID = primitive.NewObjectID().Hex()
 	_, err = db.Collection("transactions").InsertOne(context.Background(),
 		models.Transaction{
@@ -544,6 +563,7 @@ func MakeDepositTransaction(c *gin.Context) {
 			UserID:            authUser.ID,
 			CreatedAt:         time.Now(),
 			PaymentMethod:     request.PaymentMethod,
+			Vat:               cryptoDetail.Vat,
 			TotalPrice:        request.TotalPrice,
 			IsDebit:           true,
 			PaymentCompletion: false,
@@ -553,6 +573,28 @@ func MakeDepositTransaction(c *gin.Context) {
 		utils.InternalError(c)
 		return
 	}
+
+	pay, err := models.CreateCrypto(c, request.TotalPrice+cryptoDetail.Vat, orderID, cryptoDetail.Token)
+	if err != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	qrCode := fmt.Sprintf("ethereum:%s?value=%f&token=usdt", pay.PayAddress, pay.PayAmount)
+	url := fmt.Sprintf("https://nowpayments.io/payment/?iid=%s&paymentId=%s", pay.PurchaseID, pay.PaymentID)
+	qr, err := models.CreateQr(qrCode)
+	if err != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+		"data":    orderID,
+		"url":     url,
+		"qr":      qr,
+	})
 }
 
 func Pay(c *gin.Context) {

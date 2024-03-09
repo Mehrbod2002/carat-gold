@@ -9,7 +9,8 @@ import (
 )
 
 type GeneralData struct {
-	AedUsd float64 `bson:"aedusd" json:"aedusd"`
+	ID     primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	AedUsd float64            `bson:"aedusd" json:"aedusd"`
 }
 
 type MetaTraderAccounts struct {
@@ -300,6 +301,7 @@ type Symbol struct {
 	SymbolName string             `bson:"name" json:"name"`
 	SymbolType SymbolType         `bson:"type" json:"type"`
 	SymbolSide SymbolSide         `bson:"side" json:"side"`
+	Photo      Image              `bson:"photo" json:"photo"`
 	CreatedAt  time.Time          `bson:"created_at" json:"created_at"`
 }
 
@@ -367,8 +369,8 @@ type RegisterRequest struct {
 }
 
 type Documents struct {
-	UserID primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
 	ID     primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	UserID primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
 	Back   struct {
 		Shot string `json:"shot" bson:"shot"`
 	} `json:"back" bson:"back"`
@@ -419,11 +421,12 @@ type OperationMetaTrader struct {
 type RequestSetSymbol struct {
 	SymbolName *string     `json:"symbol_name"`
 	SymbolType *SymbolType `json:"symbol_type"`
+	Image      string      `json:"images"`
 	SymbolSide *SymbolSide `json:"symbol_side"`
 }
 
 type RequestSetGeneralData struct {
-	AedUsd float64 `json:"aed_usd"`
+	AedUsd float64 `json:"aedusd"`
 }
 
 type MetaTraderAdmin struct {

@@ -94,7 +94,7 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 	return &paymentResponse, nil
 }
 
-func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentResponse, error) {
+func CreateCrypto(c *gin.Context, price float64, orderID string, secret string) (*PaymentResponse, error) {
 	url := "https://api.nowpayments.io/v1/payment"
 
 	payloadData := struct {
@@ -123,7 +123,7 @@ func CreateCrypto(c *gin.Context, price float64, orderID string) (*PaymentRespon
 		return nil, err
 	}
 
-	req.Header.Set("x-api-key", os.Getenv("CRYPTO_SECRET"))
+	req.Header.Set("x-api-key", secret)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
@@ -611,6 +611,16 @@ func (body *Documents) Validate(c *gin.Context) bool {
 }
 
 func (requestSymbol *RequestSetSymbol) Validate(c *gin.Context) bool {
+	decodedFile, err := base64.StdEncoding.DecodeString(strings.Split(requestSymbol.Image, ",")[1])
+	if err != nil {
+		utils.Method(c, "invalid file format")
+		return false
+	}
+	fileSizeMB := float64(len(decodedFile)) / (1024 * 1024)
+	if fileSizeMB > 30 {
+		utils.Method(c, "front shot size exceeds 30 MB")
+		return false
+	}
 	if len(*requestSymbol.SymbolName) < 3 {
 		utils.Method(c, "symbol name is short")
 		return false
@@ -868,7 +878,18 @@ func VerifyIPN(signature string) bool {
 	var params map[string]interface{}
 	sortedString := SortedParamsToString(params)
 
-	hash := hmac.New(sha512.New, []byte(os.Getenv("CRYPTO_HOOK")))
+	db, err := utils.GetDB(&gin.Context{})
+	if err != nil {
+		return false
+	}
+
+	var cryptoDetail Crypto
+	err = db.Collection("crypto").FindOne(context.Background(), bson.M{}).Decode(&cryptoDetail)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	hash := hmac.New(sha512.New, []byte(cryptoDetail.Access))
 	hash.Write([]byte(sortedString))
 	signatureCalculated := hex.EncodeToString(hash.Sum(nil))
 

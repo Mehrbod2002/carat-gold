@@ -17,7 +17,7 @@ import (
 )
 
 func SetDeletePayment(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	var request struct {
@@ -63,7 +63,7 @@ func SetDeletePayment(c *gin.Context) {
 }
 
 func SetEditPayment(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 
@@ -110,7 +110,7 @@ func SetEditPayment(c *gin.Context) {
 }
 
 func SetPayment(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	user, _ := models.ValidateSession(c)
@@ -150,7 +150,7 @@ func SetPayment(c *gin.Context) {
 }
 
 func SetEditFANDQ(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionContent) {
 		return
 	}
 
@@ -197,7 +197,7 @@ func SetEditFANDQ(c *gin.Context) {
 }
 
 func SetFANDQ(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	user, _ := models.ValidateSession(c)
@@ -229,7 +229,7 @@ func SetFANDQ(c *gin.Context) {
 }
 
 func SetDeleteFANDQ(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	var request struct {
@@ -274,7 +274,7 @@ func SetDeleteFANDQ(c *gin.Context) {
 }
 
 func SetAedExchange(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 
@@ -307,7 +307,7 @@ func SetAedExchange(c *gin.Context) {
 }
 
 func SetCallCenterDatas(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 
@@ -340,7 +340,7 @@ func SetCallCenterDatas(c *gin.Context) {
 }
 
 func SetMetaData(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionMetaTrader) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 
@@ -372,12 +372,8 @@ func SetMetaData(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
 }
 
-func SetGeneralData(c *gin.Context) {
-
-}
-
 func SetEditCurrency(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 
@@ -426,7 +422,7 @@ func SetEditCurrency(c *gin.Context) {
 }
 
 func SetEditProduct(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 
@@ -488,7 +484,7 @@ func SetEditProduct(c *gin.Context) {
 }
 
 func SetProduct(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	user, _ := models.ValidateSession(c)
@@ -543,7 +539,7 @@ func SetProduct(c *gin.Context) {
 }
 
 func SetSymbols(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 
@@ -559,10 +555,16 @@ func SetSymbols(c *gin.Context) {
 		return
 	}
 
-	filter := bson.M{"name": *request.SymbolName}
+	var image models.Image
+	photoID := primitive.NewObjectID()
+	valid := utils.UploadPhoto(c, photoID.Hex(), request.Image)
+	if !valid {
+		return
+	}
 
 	var symbols []models.Symbol
-	cursor, err := db.Collection("symbols").Find(context.Background(), filter)
+	cursor, err := db.Collection("symbols").Find(context.Background(),
+		bson.M{"name": *request.SymbolName})
 	if err != nil {
 		log.Println(err)
 		utils.InternalError(c)
@@ -581,6 +583,7 @@ func SetSymbols(c *gin.Context) {
 			SymbolName: *request.SymbolName,
 			SymbolType: *request.SymbolType,
 			SymbolSide: *request.SymbolSide,
+			Photo:      image,
 			CreatedAt:  time.Now(),
 		}
 		_, err := db.Collection("symbols").InsertOne(context.Background(), newSymbol)
@@ -596,7 +599,7 @@ func SetSymbols(c *gin.Context) {
 }
 
 func SetUserPermissions(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionSetPermission) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	var permissions struct {
@@ -626,7 +629,7 @@ func SetUserPermissions(c *gin.Context) {
 }
 
 func SetUser(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionEditUser) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 
@@ -700,7 +703,7 @@ func SetUser(c *gin.Context) {
 }
 
 func SetDeleteProduct(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	var request struct {
@@ -741,7 +744,7 @@ func SetDeleteProduct(c *gin.Context) {
 }
 
 func SetDeleteUser(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionDeleteUser) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	var request struct {
@@ -782,7 +785,7 @@ func SetDeleteUser(c *gin.Context) {
 }
 
 func SetFreezeUser(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionFreeUser) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	var request struct {
@@ -827,7 +830,7 @@ func SetFreezeUser(c *gin.Context) {
 }
 
 func SetUnFreezeUser(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionFreeUser) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	var request struct {
@@ -872,7 +875,7 @@ func SetUnFreezeUser(c *gin.Context) {
 }
 
 func SetDefineUser(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionSetUser) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	var request models.RequestSetDefineUser
@@ -957,7 +960,7 @@ func SetDefineUser(c *gin.Context) {
 }
 
 func SetEditDeliveryMethods(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	var request models.RequestSetDeliveryMethod
@@ -1007,7 +1010,7 @@ func SetEditDeliveryMethods(c *gin.Context) {
 }
 
 func SetDeliveryMethods(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	user, _ := models.ValidateSession(c)
@@ -1049,7 +1052,7 @@ func SetDeliveryMethods(c *gin.Context) {
 }
 
 func SetDeleteSymbol(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	var request struct {
@@ -1094,7 +1097,7 @@ func SetDeleteSymbol(c *gin.Context) {
 }
 
 func SetDeleteDeliveryMethodl(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionGeneralDataEdit) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 	var request struct {
@@ -1139,7 +1142,7 @@ func SetDeleteDeliveryMethodl(c *gin.Context) {
 }
 
 func SetOrders(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionMetaTrader) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 
@@ -1176,7 +1179,7 @@ func SetOrders(c *gin.Context) {
 }
 
 func SetCancelOrder(c *gin.Context) {
-	if !models.AllowedAction(c, models.ActionMetaTrader) {
+	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
 

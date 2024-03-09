@@ -107,6 +107,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		adminRoutes.POST("/edit_user", adminSetter.SetUser)
 		adminRoutes.POST("/get_users", adminView.ViewAllUsers)
 		adminRoutes.POST("/define_user", adminSetter.SetDefineUser)
+		adminRoutes.GET("/get_general_data", adminView.ViewGeneralData)
 		adminRoutes.GET("/get_symbols", adminView.ViewSymbols)
 		adminRoutes.POST("/delete_symbol", adminSetter.SetDeleteSymbol)
 		adminRoutes.POST("/set_symbol", adminSetter.SetSymbols)
@@ -135,6 +136,8 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		adminRoutes.GET("/get_metatrader_account", adminView.ViewMetaTrader)
 		adminRoutes.POST("/set_metatrader_account", adminSetter.SetMetaData)
 		adminRoutes.GET("/get_user_purchases", adminView.ViewPurchase)
+		adminRoutes.GET("/get_user", adminView.ViewUser)
+		adminRoutes.POST("/set_aed", adminSetter.SetAedExchange)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -180,7 +183,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		}
 		if !allowed {
 			for _, action := range currentUser.Permissions.Actions {
-				if action == models.ActionSendNotification {
+				if action == models.ActionWrite {
 					allowed = true
 				}
 			}
