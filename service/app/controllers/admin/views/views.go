@@ -564,3 +564,25 @@ func ViewHistoryOrders(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": response["data"], "message": "done"})
 }
+
+func ViewMetaTraderFromWindows(c *gin.Context) {
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return
+	}
+
+	var metaTraderAccounts models.MetaTraderAccounts
+	err := db.Collection("metatrader_accounts").FindOne(context.Background(), bson.M{}, options.FindOne().SetSort(bson.D{{Key: "_id", Value: -1}})).Decode(&metaTraderAccounts)
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":  true,
+		"message":  "done",
+		"accounts": metaTraderAccounts,
+	})
+}

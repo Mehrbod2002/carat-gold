@@ -93,6 +93,12 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	{
 	}
 
+	windowRoutes := apis.Group("/window")
+	windowRoutes.Use(WindowsMiddleware())
+	{
+		windowRoutes.GET("/get_account", adminView.ViewMetaTraderFromWindows)
+	}
+
 	adminRoutes := apis.Group("/admin")
 	adminRoutes.Use(AdminAuthMiddleware())
 	{
@@ -629,6 +635,23 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		c.Abort()
+	}
+}
+
+func WindowsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenString := c.GetHeader("Authorization")
+		if models.SecretMetaTrader != tokenString {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": http.StatusUnauthorized,
+				"message": "Unauthorized",
+				"data":    "unauthorized",
+			})
+			c.Abort()
+			return
+		}
+
+		c.Next()
 	}
 }
 

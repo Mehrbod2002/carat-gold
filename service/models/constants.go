@@ -4,7 +4,7 @@ import "net"
 
 var MetaTraderSocket *net.Conn
 
-var SecretMetaTrader = map[string]string{"X-Secret-Header": "MysticalDragon$7392&WhisperingWinds&SunsetHaven$AuroraBorealis"}
+var SecretMetaTrader = "MysticalDragon$7392&WhisperingWinds&SunsetHaven$AuroraBorealis"
 
 const (
 	ActionWrite    Action = "edit"
