@@ -144,6 +144,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		adminRoutes.GET("/get_user_purchases", adminView.ViewPurchase)
 		adminRoutes.GET("/get_user", adminView.ViewUser)
 		adminRoutes.POST("/set_aed", adminSetter.SetAedExchange)
+		adminRoutes.POST("/update_fcm", user.UpdateFcm)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
