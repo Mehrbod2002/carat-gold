@@ -318,7 +318,8 @@ func ViewMetric(c *gin.Context) {
 	}
 
 	var generalData models.GeneralData
-	if err := db.Collection("general_data").FindOne(context.Background(), bson.M{}); err != nil {
+	if err := db.Collection("general_data").FindOne(context.Background(), bson.M{}).Decode(&generalData); err != nil {
+		log.Println(err)
 		utils.InternalError(c)
 		return
 	}
@@ -326,13 +327,11 @@ func ViewMetric(c *gin.Context) {
 	var users []models.User
 	cursor, err := db.Collection("users").Find(context.Background(), bson.M{})
 	if err != nil && err != mongo.ErrNoDocuments {
-		log.Println(err)
 		utils.InternalError(c)
 		return
 	}
 	defer cursor.Close(context.Background())
 	if err := cursor.All(context.Background(), &users); err != nil {
-		log.Println(err)
 		utils.InternalError(c)
 		return
 	}
@@ -352,13 +351,11 @@ func ViewMetric(c *gin.Context) {
 	var transactions []models.Transaction
 	cursor, err = db.Collection("transactions").Find(context.Background(), bson.M{})
 	if err != nil && err != mongo.ErrNoDocuments {
-		log.Println(err)
 		utils.InternalError(c)
 		return
 	}
 	defer cursor.Close(context.Background())
 	if err := cursor.All(context.Background(), &transactions); err != nil {
-		log.Println(err)
 		utils.InternalError(c)
 		return
 	}
