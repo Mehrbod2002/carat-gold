@@ -63,7 +63,7 @@ func AdminLogin(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := db.Collection("admin").FindOne(context.Background(), bson.M{
+	if err := db.Collection("users").FindOne(context.Background(), bson.M{
 		"email": loginData.Email,
 	}).Decode(&user); err != nil {
 		log.Println(err)

@@ -62,8 +62,6 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	})
 
 	apis := r.Group("/api")
-	apis.POST("/send_notification", adminSetter.SendNotification)
-
 	authRoutes := apis.Group("/auth")
 	{
 		authRoutes.POST("/user/send_otp", user.SendOTP)
@@ -104,6 +102,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	adminRoutes := apis.Group("/admin")
 	adminRoutes.Use(AdminAuthMiddleware())
 	{
+		adminRoutes.POST("/send_notification", adminSetter.SendNotification)
 		adminRoutes.POST("/metric", adminView.ViewMetric)
 		adminRoutes.GET("/get_users", adminView.ViewAllUsers)
 		adminRoutes.POST("/delete_user", adminSetter.SetDeleteUser)
@@ -175,7 +174,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 			}).Decode(&currentUser)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
-				err = db.Collection("admin").
+				err = db.Collection("users").
 					FindOne(context.Background(), bson.M{
 						"phone": user.PhoneNumber,
 					}).Decode(&currentUser)

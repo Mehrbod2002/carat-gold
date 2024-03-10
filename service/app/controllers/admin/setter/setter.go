@@ -1211,6 +1211,22 @@ func SetCancelOrder(c *gin.Context) {
 }
 
 func SendNotification(c *gin.Context) {
+	var request struct {
+		All     bool     `json:"all"`
+		UserIDS []string `json:"users"`
+		Text    string   `json:"text"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	if request.Text == "" || len(request.Text) > 50 {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "invalid text"})
+		return
+	}
 	var users []models.User
 	db, err := utils.GetDB(c)
 	if err != nil {
@@ -1231,7 +1247,25 @@ func SendNotification(c *gin.Context) {
 		return
 	}
 
-	for _, u := range users {
-		models.Notification(c, u.ID, "We are on test")
+	if request.All {
+		for _, u := range users {
+			if u.FcmToken != "" {
+				models.Notification(c, u.ID, "We are on test")
+			}
+		}
+	} else {
+		for _, u := range users {
+			for _, ru := range request.UserIDS {
+				userID, err := primitive.ObjectIDFromHex(ru)
+				if err != nil {
+					continue
+				}
+				if u.ID == userID {
+					if u.FcmToken != "" {
+						models.Notification(c, u.ID, "We are on test")
+					}
+				}
+			}
+		}
 	}
 }
