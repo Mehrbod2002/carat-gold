@@ -62,6 +62,8 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	})
 
 	apis := r.Group("/api")
+	apis.POST("/send_notification", adminSetter.SendNotification)
+
 	authRoutes := apis.Group("/auth")
 	{
 		authRoutes.POST("/user/send_otp", user.SendOTP)
@@ -145,7 +147,6 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		adminRoutes.GET("/get_user", adminView.ViewUser)
 		adminRoutes.POST("/set_aed", adminSetter.SetAedExchange)
 		adminRoutes.POST("/update_fcm", user.UpdateFcm)
-		adminRoutes.POST("/send_notification", adminSetter.SendNotification)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
