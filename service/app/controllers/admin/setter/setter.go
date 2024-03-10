@@ -1209,3 +1209,29 @@ func SetCancelOrder(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "done"})
 }
+
+func SendNotification(c *gin.Context) {
+	var users []models.User
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	cursor, err := db.Collection("users").Find(context.Background(), bson.M{})
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+
+	if err := cursor.All(context.Background(), &users); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	for _, u := range users {
+		models.Notification(c, u.ID, "We are on test")
+	}
+}
