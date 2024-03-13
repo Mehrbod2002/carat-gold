@@ -53,7 +53,9 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		ExposeHeaders:    []string{"Content-Length", "Set-Cookie", "Cookie"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
-			return origin == "http://0.0.0.0:3001" || origin == "http://localhost:3001" || origin == "http://127.0.0.1:5173" || origin == "https://goldshop24.co" || origin == "https://admin.goldshop24.co"
+			return origin == "http://0.0.0.0:3001" || origin == "http://localhost:3001" ||
+				origin == "http://127.0.0.1:5173" || origin == "https://goldshop24.co" ||
+				origin == "https://admin.goldshop24.co"
 		},
 	}))
 
@@ -64,6 +66,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	apis := r.Group("/api")
 	authRoutes := apis.Group("/auth")
 	{
+		authRoutes.POST("/validate_token", user.RevalidateToken)
 		authRoutes.POST("/user/send_otp", user.SendOTP)
 		authRoutes.POST("/admin/login", adminAuth.AdminLogin)
 		authRoutes.POST("/user/login_step_1", user.LoginOneTimeLoginStep1)

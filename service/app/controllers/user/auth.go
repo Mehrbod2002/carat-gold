@@ -4,7 +4,6 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -78,17 +77,18 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 		})
 		return
 	}
-	otp_code := utils.GenerateRandomCode()
-	sent, errMessage := models.Sendotp(user.PhoneNumber, fmt.Sprint(otp_code))
-	if !sent {
-		log.Println("otp : ", errMessage)
-		c.JSON(500, gin.H{
-			"success": false,
-			"message": errMessage,
-			"data":    "failed_otp",
-		})
-		return
-	}
+	otp_code := 12345
+	// otp_code := utils.GenerateRandomCode()
+	// sent, errMessage := models.Sendotp(user.PhoneNumber, fmt.Sprint(otp_code))
+	// if !sent {
+	// 	log.Println("otp : ", errMessage)
+	// 	c.JSON(500, gin.H{
+	// 		"success": false,
+	// 		"message": errMessage,
+	// 		"data":    "failed_otp",
+	// 	})
+	// 	return
+	// }
 	if user.ReTryOtp == 5 && time.Since(user.OtpValid) > time.Hour {
 		user.ReTryOtp = 0
 	}
@@ -239,17 +239,17 @@ func SendOTP(c *gin.Context) {
 	}}).Decode(&existingUser)
 	if exist != nil {
 		if exist == mongo.ErrNoDocuments {
-			otp_code := utils.GenerateRandomCode()
-			sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
-			if !sent {
-				log.Println("otp : ", errMessage)
-				c.JSON(500, gin.H{
-					"success": false,
-					"message": errMessage,
-					"data":    "failed_otp",
-				})
-				return
-			}
+			otp_code := 12345 // utils.GenerateRandomCode()
+			// sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
+			// if !sent {
+			// 	log.Println("otp : ", errMessage)
+			// 	c.JSON(500, gin.H{
+			// 		"success": false,
+			// 		"message": errMessage,
+			// 		"data":    "failed_otp",
+			// 	})
+			// 	return
+			// }
 			var user models.User
 			user.PhoneNumber = sendOTPData.PhoneNumber
 			user.OtpCode = &otp_code
@@ -283,17 +283,17 @@ func SendOTP(c *gin.Context) {
 			})
 			return
 		}
-		otp_code := utils.GenerateRandomCode()
-		sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
-		if !sent {
-			log.Println("otp : ", errMessage)
-			c.JSON(500, gin.H{
-				"success": false,
-				"message": errMessage,
-				"data":    "failed_otp",
-			})
-			return
-		}
+		otp_code := 12345 // utils.GenerateRandomCode()
+		// sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
+		// if !sent {
+		// 	log.Println("otp : ", errMessage)
+		// 	c.JSON(500, gin.H{
+		// 		"success": false,
+		// 		"message": errMessage,
+		// 		"data":    "failed_otp",
+		// 	})
+		// 	return
+		// }
 		if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) > time.Hour {
 			existingUser.ReTryOtp = 0
 		}

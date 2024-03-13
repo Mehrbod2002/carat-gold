@@ -1211,10 +1211,15 @@ func SetCancelOrder(c *gin.Context) {
 }
 
 func SendNotification(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionWrite) {
+		return
+	}
+
 	var request struct {
 		All     bool     `json:"all"`
 		UserIDS []string `json:"users"`
 		Text    string   `json:"text"`
+		Title   string   `json:"title"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -1223,7 +1228,12 @@ func SendNotification(c *gin.Context) {
 		return
 	}
 
-	if request.Text == "" || len(request.Text) > 50 {
+	if request.Title == "" || len(request.Title) > 50 {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "invalid title"})
+		return
+	}
+
+	if request.Text == "" || len(request.Text) > 500 {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "invalid text"})
 		return
 	}
@@ -1250,7 +1260,7 @@ func SendNotification(c *gin.Context) {
 	if request.All {
 		for _, u := range users {
 			if u.FcmToken != "" {
-				models.Notification(c, u.ID, "We are on test")
+				models.Notification(c, u.ID, request.Title, request.Text)
 			}
 		}
 	} else {
@@ -1262,7 +1272,7 @@ func SendNotification(c *gin.Context) {
 				}
 				if u.ID == userID {
 					if u.FcmToken != "" {
-						models.Notification(c, u.ID, "We are on test")
+						models.Notification(c, u.ID, request.Title, request.Text)
 					}
 				}
 			}

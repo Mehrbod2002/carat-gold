@@ -178,7 +178,7 @@ func CreateQr(payment string) (*string, error) {
 	return &qrBase64, nil
 }
 
-func Notification(c *gin.Context, userID primitive.ObjectID, notification string) error {
+func Notification(c *gin.Context, userID primitive.ObjectID, title string, notification string) error {
 	app := utils.GetApp(c)
 
 	db, err := utils.GetDB(c)
@@ -204,7 +204,7 @@ func Notification(c *gin.Context, userID primitive.ObjectID, notification string
 
 	message := &messaging.Message{
 		Notification: &messaging.Notification{
-			Title: "Fasih",
+			Title: title,
 			Body:  notification,
 		},
 		Token: user.FcmToken,

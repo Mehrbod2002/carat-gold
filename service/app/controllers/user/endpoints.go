@@ -26,7 +26,7 @@ func GetProducts(c *gin.Context) {
 	}
 	var products []models.Products
 	cursor, err := db.Collection("products").Find(context.Background(), bson.M{})
-	if err != nil && err != mongo.ErrNoDocuments {
+	if err != nil {
 		log.Println(err)
 		utils.InternalError(c)
 		return
@@ -681,7 +681,31 @@ func Pay(c *gin.Context) {
 	}
 
 	utils.AutoOrder(c, 0)
-	models.Notification(c, authUser.ID, "Payments set with #"+transction.OrderID)
+	models.Notification(c, authUser.ID, "Invoice", "Payments set with #"+transction.OrderID)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+	})
+}
+
+func RevalidateToken(c *gin.Context) {
+	authUser, _ := models.ValidateSession(c)
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	var user models.User
+	if err = db.Collection("users").FindOne(context.Background(), bson.M{
+		"_id": authUser.ID,
+	}).Decode(&user); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
