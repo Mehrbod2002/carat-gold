@@ -11,12 +11,57 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/crisp-im/go-crisp-api/crisp/v3"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+func Crisp(c *gin.Context) {
+	var payload map[string]interface{}
+	if err := c.BindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON payload"})
+		return
+	}
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	var callCenter models.CallCenterDatas
+	err = db.Collection("call_center").FindOne(context.Background(), bson.M{}).Decode(&callCenter)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	sessionID := payload["data"].(map[string]interface{})["session_id"].(string)
+	if payload["event"] == "message:notify:unread:received" {
+		fmt.Printf("Received Crisp webhook payload: %+v\n", payload)
+	}
+
+	// key := "887b6563dcda97bc5aa17be53af827ebaa3c36326527b249f456394c3bbe4c42"
+	// id := "7739a54b-6450-41f2-9e2b-87771e6096ca"
+
+	// endpoint := "https://api.crisp.chat/v1/website/" + *callCenter.LiveChat + "/conversation/" + sessionID
+	// /v1/website/{website_id}/conversation/{session_id}/meta
+	client := crisp.WebsiteService{}
+	if callCenter.LiveChat != nil &&
+		len(*callCenter.LiveChat) != 0 &&
+		len(sessionID) != 0 {
+		fmt.Println(*callCenter.LiveChat, sessionID, 123)
+		a, b, f := client.GetMessagesInConversationLast(*callCenter.LiveChat, sessionID)
+		if f != nil {
+			fmt.Println(a, b, f)
+		}
+	}
+	// fmt.Println(endpoint)
+	// fmt.Println("event: ", payload.Payload.Event, payload.Payload.Data.User.UserID, payload.Payload.Data.Type)
+}
 
 func GetProducts(c *gin.Context) {
 	db, err := utils.GetDB(c)

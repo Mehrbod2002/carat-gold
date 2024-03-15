@@ -176,6 +176,7 @@ func ViewSymbols(c *gin.Context) {
 		"message": "done",
 		"symbols": symbols,
 	})
+
 }
 
 func ViewPaymentMethods(c *gin.Context) {
@@ -223,14 +224,29 @@ func ViewPaymentMethods(c *gin.Context) {
 		utils.InternalError(c)
 		return
 	}
+
+	cryptoAll := make([]models.Crypto, 0)
+	cryptoAll = append(cryptoAll, crypto)
+
+	debitAll := make([]models.DebitCard, 0)
+	debitAll = append(debitAll, debitCard)
+
+	payPalAll := make([]models.PayPal, 0)
+	payPalAll = append(payPalAll, payPal)
+
+	applePlayAll := make([]models.ApplePlay, 0)
+	applePlayAll = append(applePlayAll, applePlay)
+
+	googlePlayAll := make([]models.GooglePlay, 0)
+	googlePlayAll = append(googlePlayAll, googlePlay)
 	c.JSON(http.StatusOK, gin.H{
 		"success":     true,
 		"message":     "done",
-		"crypto":      crypto,
-		"debit_card":  debitCard,
-		"paypal":      payPal,
-		"apple_play":  applePlay,
-		"google_play": googlePlay,
+		"crypto":      cryptoAll,
+		"debit_card":  debitAll,
+		"paypal":      payPalAll,
+		"apple_play":  applePlayAll,
+		"google_play": googlePlayAll,
 	})
 }
 

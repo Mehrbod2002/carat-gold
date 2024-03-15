@@ -8,6 +8,30 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type CrispWebhookPayload struct {
+	Payload struct {
+		Data struct {
+			Content     string        `json:"content"`
+			Fingerprint float64       `json:"fingerprint"`
+			From        string        `json:"from"`
+			Mentions    []interface{} `json:"mentions"`
+			Origin      string        `json:"origin"`
+			SessionID   string        `json:"session_id"`
+			Stamped     bool          `json:"stamped"`
+			Timestamp   float64       `json:"timestamp"`
+			Type        string        `json:"type"`
+			User        struct {
+				Nickname string `json:"nickname"`
+				UserID   string `json:"user_id"`
+			} `json:"user"`
+			WebsiteID string `json:"website_id"`
+		} `json:"data"`
+		Event     string  `json:"event"`
+		Timestamp float64 `json:"timestamp"`
+		WebsiteID string  `json:"website_id"`
+	} `json:"payload"`
+}
+
 type GeneralData struct {
 	ID     primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	AedUsd float64            `bson:"aedusd" json:"aedusd"`

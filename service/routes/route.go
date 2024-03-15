@@ -64,6 +64,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	})
 
 	apis := r.Group("/api")
+	apis.POST("/crisp/hooks", user.Crisp)
 	authRoutes := apis.Group("/auth")
 	{
 		authRoutes.POST("/validate_token", user.RevalidateToken)
