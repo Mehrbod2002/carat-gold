@@ -6,6 +6,8 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -470,6 +472,7 @@ func SetEditProduct(c *gin.Context) {
 		Purity:      request.Purity,
 		Length:      request.Length,
 		Width:       request.Width,
+		Amount:      request.Amount,
 		Images:      images,
 	}
 
@@ -497,6 +500,7 @@ func SetProduct(c *gin.Context) {
 	user, _ := models.ValidateSession(c)
 	var request models.RequestSetProduct
 	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
 		utils.BadBinding(c)
 		return
 	}
@@ -534,6 +538,7 @@ func SetProduct(c *gin.Context) {
 			Width:       request.Width,
 			Percentage:  request.Percentage,
 			Images:      images,
+			Amount:      request.Amount,
 			WhoDefine:   user.Email,
 			CreatedAt:   time.Now(),
 		})
@@ -713,6 +718,7 @@ func SetDeleteProduct(c *gin.Context) {
 	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
+
 	var request struct {
 		ID string `json:"product_id"`
 	}
@@ -721,13 +727,15 @@ func SetDeleteProduct(c *gin.Context) {
 		utils.BadBinding(c)
 		return
 	}
+
 	userID, err := primitive.ObjectIDFromHex(request.ID)
 	if err != nil {
 		log.Println(err)
 		utils.BadBinding(c)
 		return
 	}
-	var user models.User
+
+	var product models.Products
 	db, err := utils.GetDB(c)
 	if err != nil {
 		log.Println(err)
@@ -735,13 +743,19 @@ func SetDeleteProduct(c *gin.Context) {
 	}
 	if err := db.Collection("products").FindOne(context.Background(), bson.M{
 		"_id": userID,
-	}).Decode(&user); err != nil {
+	}).Decode(&product); err != nil {
 		log.Println(err)
 		utils.InternalError(c)
 		return
 	}
+
+	for _, image := range product.Images {
+		path := filepath.Join("CDN", image.PhotoID.Hex()+".svg")
+		os.Remove(path)
+	}
+
 	if _, err := db.Collection("products").DeleteOne(context.Background(), bson.M{
-		"_id": user.ID,
+		"_id": product.ID,
 	}); err != nil {
 		log.Println(err)
 		utils.InternalError(c)
