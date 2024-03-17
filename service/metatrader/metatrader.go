@@ -19,6 +19,9 @@ type DataMeta struct {
 	Close     float64 `json:"close" bson:"close"`
 	Type      string  `json:"type" bson:"type"`
 	Timeframe string  `json:"timeframe" bson:"timeframe"`
+	ProfitDay float64 `json:"profit_day" bson:"profit_day"`
+	Profithour float64 `json:"profit_hour" bson:"profit_hour"`
+	ProfitWeek float64  `json:"profit_week" bson:"profit_week"`
 }
 
 func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel chan<- DataMeta, stop chan struct{}) {
