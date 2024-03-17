@@ -1,10 +1,8 @@
 package main
 
 import (
-	"os"
-	"os/signal"
+	"log"
 	"sync"
-	"syscall"
 )
 
 var (
@@ -13,22 +11,21 @@ var (
 
 func main() {
 	errors := make(chan error)
+	dataChannel := make(chan DataMeta)
+	stop := make(chan struct{})
 	var wg sync.WaitGroup
 
-	dataChannel := make(chan DataMeta, 200)
-
-	stop := make(chan struct{})
-	go func() {
-		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
-		<-sig
-		close(stop)
-	}()
-	wg.Add(3)
+	wg.Add(2)
 	go startServerWSS(errors, &wg, 5050, dataChannel)
 	go startServerMetaTrader(errors, &wg, dataChannel, stop)
 
-	<-stop
-	close(errors)
-	wg.Wait()
+	go func() {
+		wg.Wait()
+		close(errors)
+		close(dataChannel)
+	}()
+
+	for err := range errors {
+		log.Println("Error:", err)
+	}
 }

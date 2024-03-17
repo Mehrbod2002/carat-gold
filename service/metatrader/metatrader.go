@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -23,82 +21,50 @@ type DataMeta struct {
 	Timeframe string  `json:"timeframe" bson:"timeframe"`
 }
 
-// var lastBarsDict = make(map[string]DataMeta)
-// var lastBarsDictLock sync.Mutex
-
-func handleMetaTrader(completeJSON []byte, dataChannel chan<- DataMeta) {
-	var dataMeta DataMeta
-
-	err := json.Unmarshal(completeJSON, &dataMeta)
-	if err != nil {
-		return
-	}
-	dataMeta.Time = fmt.Sprintf("%d", time.Now().UTC().Unix())
-	dataChannel <- dataMeta
-
-}
-
 func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel chan<- DataMeta, stop chan struct{}) {
 	defer wg.Done()
 
-	for {
-		select {
-		case <-stop:
-			return
-		default:
-		}
+	listener, err := net.Listen("tcp", serverAddress)
+	if err != nil {
+		errors <- err
+		return
+	}
+	defer listener.Close()
 
-		listener, err := net.Listen("tcp", serverAddress)
+	for {
+		conn, err := listener.Accept()
 		if err != nil {
 			errors <- err
 			continue
 		}
 
-		go func() {
-			defer listener.Close()
-			for {
-				select {
-				case <-stop:
-					return
-				default:
-				}
-
-				conn, err := listener.Accept()
-				if err != nil {
-					errors <- err
-					return
-				}
-
-				go handleClientMetatrader(conn, dataChannel)
-			}
-		}()
+		go handleConnection(conn, dataChannel, errors, stop)
 	}
 }
 
-func handleClientMetatrader(conn net.Conn, dataChannel chan<- DataMeta) {
+func handleConnection(conn net.Conn, dataChannel chan<- DataMeta, errors chan<- error, stop chan struct{}) {
 	defer conn.Close()
 
-	reader := bufio.NewReader(conn)
-	buffer := make([]byte, 0, 1024)
+	decoder := json.NewDecoder(conn)
 	for {
-		data, err := reader.ReadBytes('}')
-		if err != nil {
+		select {
+		case <-stop:
 			return
-		}
+		default:
+			var data DataMeta
 
-		buffer = append(buffer[:0], data...)
-
-		for {
-			start := bytes.Index(buffer, []byte{'{'})
-			end := bytes.Index(buffer, []byte{'}'})
-			if start != -1 && end != -1 && start < end {
-				completeJSON := buffer[start : end+1]
-				go handleMetaTrader(completeJSON, dataChannel)
-
-				buffer = buffer[end+1:]
-			} else {
-				break
+			err := decoder.Decode(&data)
+			if err != nil {
+				if _, ok := err.(*json.SyntaxError); ok {
+					continue
+				} else {
+					errors <- err
+					return
+				}
 			}
+
+			data.Time = fmt.Sprintf("%d", time.Now().UTC().Unix())
+			dataChannel <- data
 		}
 	}
 }

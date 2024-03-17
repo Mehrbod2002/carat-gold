@@ -26,6 +26,7 @@ func startServerWSS(errors chan<- error, wg *sync.WaitGroup, port int, dataChann
 	})
 
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	fmt.Println(err)
 	if err != nil {
 		errors <- fmt.Errorf("WebSocket server error: %v", err)
 	}

@@ -1,13 +1,15 @@
-import requests
+import asyncio
+import websockets
 
-url = 'https://goldshop24.co/api/window/get_account'
-secret = "MysticalDragon$7392&WhisperingWinds&SunsetHaven$AuroraBorealis"
+async def connect_to_websocket():
+    uri = "wss://goldshop24.co/feed"
+    async with websockets.connect(uri) as websocket:
+        while True:
+            try:
+                message = await websocket.recv()
+                print("Received message:", message)
+            except websockets.exceptions.ConnectionClosed:
+                print("Connection closed")
+                break
 
-headers = {
-    'Content-Type': 'application/json',
-    'Authorization': secret,
-}
-
-account = requests.get(url, headers=headers).json()
-
-print(account)
+asyncio.get_event_loop().run_until_complete(connect_to_websocket())
