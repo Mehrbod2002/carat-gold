@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -191,8 +190,9 @@ func DerefIntPtr(ptr *int) int {
 	}
 	return 0
 }
+
 func UploadPhoto(c *gin.Context, id string, photo string) bool {
-	path := filepath.Join("CDN", id+".svg")
+	pngPath := filepath.Join("CDN", id+".png")
 
 	var photoData []byte
 	if strings.Contains(photo, "base64,") {
@@ -208,14 +208,42 @@ func UploadPhoto(c *gin.Context, id string, photo string) bool {
 		return false
 	}
 
-	svgData := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <image xlink:href="data:image/png;base64,%s" x="0" y="0" width="100" height="100"/>
-    </svg>`, base64.StdEncoding.EncodeToString(decodedData))
-
-	if err := os.WriteFile(path, []byte(svgData), 0644); err != nil {
+	err = os.WriteFile(pngPath, decodedData, 0644)
+	if err != nil {
 		InternalError(c)
 		return false
 	}
+
+	// ppmPath := filepath.Join("temp", id+".ppm")
+	// cmdConvert := exec.Command("convert", pngPath, ppmPath)
+	// err = cmdConvert.Run()
+	// if err != nil {
+	// 	InternalError(c)
+	// 	return false
+	// }
+
+	// cmd := exec.Command("potrace", ppmPath, "-s", "-o", svgPath)
+	// output, err := cmd.CombinedOutput()
+	// if err != nil {
+	// 	fmt.Println("Error running potrace:", err)
+	// 	fmt.Println("Output:", string(output))
+	// 	InternalError(c)
+	// 	return false
+	// }
+
+	// err = os.Remove(pngPath)
+	// if err != nil {
+	// 	log.Println(err, 567)
+	// 	InternalError(c)
+	// 	return false
+	// }
+
+	// err = os.Remove(ppmPath)
+	// if err != nil {
+	// 	log.Println(err, 567)
+	// 	InternalError(c)
+	// 	return false
+	// }
 
 	return true
 }

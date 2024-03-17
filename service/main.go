@@ -1,7 +1,6 @@
 package main
 
 import (
-	"carat-gold/app/metatrader"
 	"carat-gold/models"
 	"carat-gold/routes"
 	"carat-gold/utils"
@@ -75,7 +74,6 @@ func main() {
 		}
 	}
 
-	go metatrader.InitiateMetatrader(dataChannel)
 	routes := routes.SetupRouter(dataChannel)
 	runningErr := routes.Run(":3000")
 	log.Println("start serving ...")

@@ -750,7 +750,7 @@ func SetDeleteProduct(c *gin.Context) {
 	}
 
 	for _, image := range product.Images {
-		path := filepath.Join("CDN", image.PhotoID.Hex()+".svg")
+		path := filepath.Join("CDN", image.PhotoID.Hex()+".png")
 		os.Remove(path)
 	}
 

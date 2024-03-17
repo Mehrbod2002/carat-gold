@@ -5,7 +5,6 @@ import (
 	adminSetter "carat-gold/app/controllers/admin/setter"
 	adminView "carat-gold/app/controllers/admin/views"
 	user "carat-gold/app/controllers/user"
-	"carat-gold/app/metatrader"
 
 	"carat-gold/models"
 	"carat-gold/utils"
@@ -59,9 +58,6 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		},
 	}))
 
-	r.GET("/feed", func(c *gin.Context) {
-		metatrader.HandleWebSocket(c.Writer, c.Request, dataChannel)
-	})
 
 	apis := r.Group("/api")
 	apis.POST("/crisp/hooks", user.Crisp)

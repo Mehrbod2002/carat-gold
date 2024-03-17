@@ -82,10 +82,17 @@ func GetProducts(c *gin.Context) {
 		utils.InternalError(c)
 		return
 	}
+
+	var outPut []models.Products
+	for _, product := range products {
+		if !product.Hide {
+			outPut = append(outPut, product)
+		}
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"success":  true,
 		"message":  "done",
-		"products": products,
+		"products": outPut,
 	})
 }
 
