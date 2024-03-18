@@ -621,7 +621,7 @@ func (requestSymbol *RequestSetSymbol) Validate(c *gin.Context) bool {
 		utils.Method(c, "front shot size exceeds 30 MB")
 		return false
 	}
-	if len(*requestSymbol.SymbolName) < 3 {
+	if len(requestSymbol.Name) < 3 {
 		utils.Method(c, "symbol name is short")
 		return false
 	}

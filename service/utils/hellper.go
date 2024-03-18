@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -198,18 +199,21 @@ func UploadPhoto(c *gin.Context, id string, photo string) bool {
 	if strings.Contains(photo, "base64,") {
 		photoData = []byte(strings.Split(photo, ",")[1])
 	} else {
+		fmt.Println("!23", photo)
 		InternalError(c)
 		return false
 	}
 
 	decodedData, err := base64.StdEncoding.DecodeString(string(photoData))
 	if err != nil {
+		fmt.Println(err, 123)
 		InternalError(c)
 		return false
 	}
 
 	err = os.WriteFile(pngPath, decodedData, 0644)
 	if err != nil {
+		fmt.Println(err, 1233)
 		InternalError(c)
 		return false
 	}

@@ -325,7 +325,7 @@ type Symbol struct {
 	SymbolName string             `bson:"name" json:"name"`
 	SymbolType SymbolType         `bson:"type" json:"type"`
 	SymbolSide SymbolSide         `bson:"side" json:"side"`
-	Photo      Image              `bson:"photo" json:"photo"`
+	Images     []Image            `bson:"images" json:"images"`
 	CreatedAt  time.Time          `bson:"created_at" json:"created_at"`
 }
 
@@ -443,10 +443,8 @@ type OperationMetaTrader struct {
 }
 
 type RequestSetSymbol struct {
-	SymbolName *string     `json:"symbol_name"`
-	SymbolType *SymbolType `json:"symbol_type"`
-	Image      string      `json:"images"`
-	SymbolSide *SymbolSide `json:"symbol_side"`
+	Name  string `json:"symbol_name"`
+	Image string `json:"image"`
 }
 
 type RequestSetGeneralData struct {

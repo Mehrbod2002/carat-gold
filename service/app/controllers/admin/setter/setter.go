@@ -557,6 +557,7 @@ func SetSymbols(c *gin.Context) {
 
 	var request models.RequestSetSymbol
 	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
 		utils.BadBinding(c)
 		return
 	}
@@ -567,16 +568,17 @@ func SetSymbols(c *gin.Context) {
 		return
 	}
 
-	var image models.Image
+	var images []models.Image
 	photoID := primitive.NewObjectID()
 	valid := utils.UploadPhoto(c, photoID.Hex(), request.Image)
 	if !valid {
 		return
 	}
 
+	images = append(images, models.Image{PhotoID: photoID})
 	var symbols []models.Symbol
 	cursor, err := db.Collection("symbols").Find(context.Background(),
-		bson.M{"name": *request.SymbolName})
+		bson.M{"name": request.Name})
 	if err != nil {
 		log.Println(err)
 		utils.InternalError(c)
@@ -592,10 +594,8 @@ func SetSymbols(c *gin.Context) {
 
 	if len(symbols) == 0 {
 		newSymbol := models.Symbol{
-			SymbolName: *request.SymbolName,
-			SymbolType: *request.SymbolType,
-			SymbolSide: *request.SymbolSide,
-			Photo:      image,
+			SymbolName: request.Name,
+			Images:     images,
 			CreatedAt:  time.Now(),
 		}
 		_, err := db.Collection("symbols").InsertOne(context.Background(), newSymbol)
@@ -1105,6 +1105,11 @@ func SetDeleteSymbol(c *gin.Context) {
 		log.Println(err)
 		utils.InternalError(c)
 		return
+	}
+
+	for _, image := range symbol.Images {
+		path := filepath.Join("CDN", image.PhotoID.Hex()+".png")
+		os.Remove(path)
 	}
 
 	if _, err := db.Collection("symbols").DeleteOne(context.Background(), bson.M{

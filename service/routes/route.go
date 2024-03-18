@@ -58,7 +58,6 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		},
 	}))
 
-
 	apis := r.Group("/api")
 	apis.POST("/crisp/hooks", user.Crisp)
 	authRoutes := apis.Group("/auth")
@@ -86,6 +85,8 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		userRoutes.GET("/products", user.GetProducts)
 		userRoutes.POST("/upload_documents", user.SendDocuments)
 		userRoutes.POST("/update_fcm", user.UpdateFcm)
+		userRoutes.GET("/get_fandq", user.GetFANDQ)
+		userRoutes.GET("/get_symbol", user.GetSymbol)
 	}
 
 	supportRoutes := apis.Group("/support")

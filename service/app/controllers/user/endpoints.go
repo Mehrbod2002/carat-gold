@@ -19,6 +19,60 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func GetFANDQ(c *gin.Context) {
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	var fandq []models.FANDQ
+	cursor, err := db.Collection("f&q").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &fandq); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+		"fandq":   fandq,
+	})
+}
+
+func GetSymbol(c *gin.Context) {
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	var symbols []models.Symbol
+	cursor, err := db.Collection("symbols").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &symbols); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+		"symbols": symbols,
+	})
+}
+
 func Crisp(c *gin.Context) {
 	var payload map[string]interface{}
 	if err := c.BindJSON(&payload); err != nil {
