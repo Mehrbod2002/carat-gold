@@ -31,7 +31,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoice, error) {
+func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoice, bool, string) {
 	url := "https://api.nowpayments.io/v1/invoice"
 
 	payloadData := struct {
@@ -46,22 +46,22 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 	}{
 		PriceAmount:      price,
 		PriceCurrency:    "usd",
-		PayCurrency:      "usdt",
+		PayCurrency:      "eth",
 		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
 		OrderID:          orderID,
 		OrderDescription: "Fasih Products",
-		SuccessURL:       "https://nwer.com",
-		CancelURL:        "https://nwer.com",
+		SuccessURL:       "https://success.com",
+		CancelURL:        "https://failed.com",
 	}
 
 	payloadBytes, err := json.Marshal(payloadData)
 	if err != nil {
-		return nil, err
+		return nil, false, ""
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return nil, err
+		return nil, false, ""
 	}
 
 	req.Header.Set("x-api-key", os.Getenv("CRYPTO_SECRET"))
@@ -70,28 +70,43 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, false, ""
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("failed to create url")
+		buf := new(bytes.Buffer)
+		_, err = buf.ReadFrom(resp.Body)
+		if err != nil {
+			return nil, false, ""
+		}
+
+		var errMessage map[string]interface{}
+		err = json.Unmarshal(buf.Bytes(), &errMessage)
+		if err != nil {
+			return nil, false, ""
+		}
+		errMsg, ok := errMessage["message"].(string)
+		if !ok {
+			return nil, false, "internal error"
+		}
+		return nil, false, errMsg
 	}
 
 	buf := new(bytes.Buffer)
 	_, err = buf.ReadFrom(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, false, ""
 	}
 
 	var paymentResponse Invoice
 	err = json.Unmarshal(buf.Bytes(), &paymentResponse)
 
 	if err != nil {
-		return nil, err
+		return nil, false, ""
 	}
 
-	return &paymentResponse, nil
+	return &paymentResponse, true, ""
 }
 
 func CreateCrypto(c *gin.Context, price float64, orderID string, secret string) (*PaymentResponse, error) {

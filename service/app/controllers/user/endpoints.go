@@ -19,6 +19,39 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func GetTransactions(c *gin.Context) {
+	authUser, _ := models.ValidateSession(c)
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	var transactions []models.Transaction
+	cursor, err := db.Collection("transactions").Find(context.Background(), bson.M{
+		"user_id": authUser.ID,
+	})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+
+	if err := cursor.All(context.Background(), &transactions); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":      true,
+		"message":      "done",
+		"transactions": transactions,
+	})
+}
+
 func GetFANDQ(c *gin.Context) {
 	db, err := utils.GetDB(c)
 	if err != nil {
@@ -537,7 +570,7 @@ func CreateTranscations(c *gin.Context) {
 		return
 	}
 
-	if !crypto.Disable {
+	if crypto.Disable {
 		c.JSON(http.StatusNotImplemented, gin.H{
 			"success": false,
 			"message": utils.Cap("payment method disabled"),
@@ -585,9 +618,11 @@ func CreateTranscations(c *gin.Context) {
 			StatusDelivery:    request.StatusDelivery,
 			PaymentMethod:     request.PaymentMethod,
 			ProductIDs:        request.ProductIDs,
+			DeliveryMethod:    request.DeliveryMethod,
 			TotalPrice:        request.TotalPrice,
 			Vat:               crypto.Vat,
 			PaymentCompletion: false,
+			PaymentStatus:     models.PendingStatus,
 		})
 	if err != nil {
 		log.Println(err)
@@ -595,17 +630,12 @@ func CreateTranscations(c *gin.Context) {
 		return
 	}
 
-	pay, err := models.CreateCrypto(c, request.TotalPrice+crypto.Vat, orderID, crypto.Token)
-	if err != nil {
-		utils.InternalError(c)
-		return
-	}
-
-	qrCode := fmt.Sprintf("ethereum:%s?value=%f&token=usdt", pay.PayAddress, pay.PayAmount)
-	url := fmt.Sprintf("https://nowpayments.io/payment/?iid=%s&paymentId=%s", pay.PurchaseID, pay.PaymentID)
-	qr, err := models.CreateQr(qrCode)
-	if err != nil {
-		utils.InternalError(c)
+	pay, valid, errStr := models.CreateCryptoInvoice(c, request.TotalPrice+crypto.Vat, orderID)
+	if !valid {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": errStr,
+		})
 		return
 	}
 
@@ -613,8 +643,7 @@ func CreateTranscations(c *gin.Context) {
 		"success": true,
 		"message": "done",
 		"data":    orderID,
-		"url":     url,
-		"qr":      qr,
+		"url":     pay.InvoiceURL,
 	})
 }
 
@@ -639,7 +668,7 @@ func MakeDepositTransaction(c *gin.Context) {
 		return
 	}
 
-	if request.TotalPrice < 100 {
+	if request.TotalPrice < 25 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": utils.Cap("Deposit price should be greater than 99$"),
@@ -672,6 +701,7 @@ func MakeDepositTransaction(c *gin.Context) {
 			Vat:               cryptoDetail.Vat,
 			TotalPrice:        request.TotalPrice,
 			IsDebit:           true,
+			PaymentStatus:     models.PendingStatus,
 			PaymentCompletion: false,
 		})
 	if err != nil {
@@ -680,17 +710,12 @@ func MakeDepositTransaction(c *gin.Context) {
 		return
 	}
 
-	pay, err := models.CreateCrypto(c, request.TotalPrice+cryptoDetail.Vat, orderID, cryptoDetail.Token)
-	if err != nil {
-		utils.InternalError(c)
-		return
-	}
-
-	qrCode := fmt.Sprintf("ethereum:%s?value=%f&token=usdt", pay.PayAddress, pay.PayAmount)
-	url := fmt.Sprintf("https://nowpayments.io/payment/?iid=%s&paymentId=%s", pay.PurchaseID, pay.PaymentID)
-	qr, err := models.CreateQr(qrCode)
-	if err != nil {
-		utils.InternalError(c)
+	pay, valid, errStr := models.CreateCryptoInvoice(c, request.TotalPrice+cryptoDetail.Vat, orderID)
+	if !valid {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": errStr,
+		})
 		return
 	}
 
@@ -698,8 +723,7 @@ func MakeDepositTransaction(c *gin.Context) {
 		"success": true,
 		"message": "done",
 		"data":    orderID,
-		"url":     url,
-		"qr":      qr,
+		"url":     pay.InvoiceURL,
 	})
 }
 

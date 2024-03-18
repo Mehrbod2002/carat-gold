@@ -349,6 +349,7 @@ type Transaction struct {
 	UserID            primitive.ObjectID   `bson:"user_id" json:"user_id,omitempty"`
 	CreatedAt         time.Time            `bson:"created_at" json:"created_at"`
 	PaymentMethod     PaymentMethod        `bson:"payment_method" json:"payment_method"`
+	DeliveryMethod    PaymentMethod        `bson:"delivery_method" json:"delivery_method"`
 	PaymentCompletion PaymentCompletion    `bson:"payment_completion" json:"payment_completion"`
 	StatusDelivery    DeliveryStatus       `bson:"status_delivery" json:"status_delivery"`
 	Symbol            string               `bson:"symbol" json:"symbol"`
