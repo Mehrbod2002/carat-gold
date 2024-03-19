@@ -315,6 +315,7 @@ func SendOTP(c *gin.Context) {
 			"message": "done",
 			"data":    "otp_sent",
 		})
+		return
 	} else {
 		c.JSON(406, gin.H{
 			"success": false,
@@ -445,6 +446,7 @@ func Register(c *gin.Context) {
 				"token": token,
 			},
 		})
+		return
 	} else {
 		_, errs := db.Collection("users").UpdateOne(context.Background(), bson.M{
 			"_id": existingUser.ID,
@@ -478,6 +480,7 @@ func Register(c *gin.Context) {
 				"token": token,
 			},
 		})
+		return
 	}
 }
 

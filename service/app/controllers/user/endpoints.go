@@ -747,12 +747,11 @@ func Pay(c *gin.Context) {
 
 	var transction models.Transaction
 	if err = db.Collection("transactions").FindOne(context.Background(), bson.M{
-		"$and": bson.M{
-			"order_id": request.OrderID,
-			"user_id":  authUser.ID,
+		"$and": []bson.M{
+			{"order_id": request.OrderID},
+			{"user_id": authUser.ID},
 		},
 	}).Decode(&transction); err != nil && err != mongo.ErrNoDocuments {
-		log.Println(err)
 		utils.InternalError(c)
 		return
 	}
@@ -770,7 +769,7 @@ func Pay(c *gin.Context) {
 		"$set": bson.M{
 			"$push": bson.M{
 				"wallet.purchased": models.Purchased{
-					PaymentStatus:  transction.PaymentStatus,
+					PaymentStatus:  models.ApprovedStatus,
 					PaymentMethd:   transction.PaymentMethod,
 					CreatePayment:  time.Now(),
 					CreatedAt:      transction.CreatedAt,
@@ -782,16 +781,23 @@ func Pay(c *gin.Context) {
 		},
 	}
 
-	if transction.StatusDelivery == models.Hold {
-		update["$inc"] = bson.M{
-			"wallet.balance": transction.TotalPrice - transction.Vat,
+	if transction.IsDebit {
+		if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
+			"_id": authUser.ID,
+		}, bson.M{"$set": bson.M{
+			"$inc": bson.M{
+				"wallet.balance": transction.TotalPrice - transction.Vat,
+			},
+		}}); err != nil {
+			utils.BadBinding(c)
+			return
 		}
 	}
 
 	if _, err := db.Collection("transactions").UpdateOne(context.Background(), bson.M{
-		"$and": bson.M{
-			"order_id": request.OrderID,
-			"user_id":  authUser.ID,
+		"$and": []bson.M{
+			{"order_id": request.OrderID},
+			{"user_id": authUser.ID},
 		},
 	}, bson.M{
 		"$set": bson.M{
@@ -814,8 +820,9 @@ func Pay(c *gin.Context) {
 	models.Notification(c, authUser.ID, "Invoice", "Payments set with #"+transction.OrderID)
 
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "done",
+		"success":     true,
+		"message":     "done",
+		"transaction": transction,
 	})
 }
 
@@ -836,6 +843,59 @@ func RevalidateToken(c *gin.Context) {
 		utils.InternalError(c)
 		return
 	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+	})
+}
+
+func Cancel(c *gin.Context) {
+	authUser, _ := models.ValidateSession(c)
+
+	var request struct {
+		OrderID string `json:"order_id"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	var transction models.Transaction
+	if err = db.Collection("transactions").FindOne(context.Background(), bson.M{
+		"$and": []bson.M{
+			{"order_id": request.OrderID},
+			{"user_id": authUser.ID},
+		},
+	}).Decode(&transction); err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	if _, err := db.Collection("transactions").UpdateOne(context.Background(), bson.M{
+		"$and": []bson.M{
+			{"order_id": request.OrderID},
+			{"user_id": authUser.ID},
+		},
+	}, bson.M{
+		"$set": bson.M{
+			"payment_status":     models.RejectedStatus,
+			"payment_completion": false,
+		},
+	}); err != nil {
+		utils.BadBinding(c)
+		return
+	}
+
+	models.Notification(c, authUser.ID, "Invoice", "Payments cancelled with #"+transction.OrderID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

@@ -46,7 +46,7 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 	}{
 		PriceAmount:      price,
 		PriceCurrency:    "usd",
-		PayCurrency:      "eth",
+		PayCurrency:      "btc",
 		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
 		OrderID:          orderID,
 		OrderDescription: "Fasih Products",

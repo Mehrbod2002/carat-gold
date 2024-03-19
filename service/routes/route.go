@@ -90,6 +90,8 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		userRoutes.POST("/create_transaction", user.CreateTranscations)
 		userRoutes.POST("/make_deposit", user.MakeDepositTransaction)
 		userRoutes.GET("/get_transaction", user.GetTransactions)
+		userRoutes.POST("/pay", user.Pay)
+		userRoutes.POST("/cancel", user.Cancel)
 	}
 
 	supportRoutes := apis.Group("/support")
