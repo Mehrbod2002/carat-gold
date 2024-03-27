@@ -1,0 +1,603 @@
+openapi: 3.0.0
+info:
+  title: User API
+  description: API for managing user information
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api
+paths:
+  /user/me:
+    get:
+      summary: Get current user information
+      description: Retrieve information about the currently authenticated user.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Done"
+                  data:
+                    $ref: "#/components/schemas/User"
+        '401':
+          description: Unauthorized, user not authenticated
+        '403':
+          description: Forbidden, user doesn't have permission
+
+  /user/register:
+    post:
+      summary: User Registration
+      description: Register a new user with phone number and OTP code.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "registered"
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: "JWT_TOKEN"
+        '400':
+          description: Bad request or invalid OTP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "request for otp first" # or "otp expired" or "invalid otp code"
+                  data:
+                    type: string
+                    example: "invalid_otp" # or "otp_expired"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "internal server connection"
+                  data:
+                    type: string
+                    example: "internal_error"
+
+  /user/send_otp:
+    post:
+      summary: Send OTP
+      description: Send OTP (One-Time Password) to the provided phone number.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendOTP"
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "done"
+                  data:
+                    type: string
+                    example: "otp_sent"
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "invalid request parameters"
+                  data:
+                    type: string
+                    example: "invalid_parameters"
+        '406':
+          description: OTP freezed or not allowed to send SMS
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "otp freezed for 1 hour" # or "2 minutes should pass to send SMS"
+                  data:
+                    type: string
+                    example: "otp_freezed_for_1_hour" # or "not_allowed_to_send_sms"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "internal server connection"
+                  data:
+                    type: string
+                    example: "internal_error"
+
+  /user/general_data:
+    get:
+      summary: Get general data
+      description: Retrieve general data including call center information.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Done"
+                  call_center:
+                    $ref: "#/components/schemas/CallCenterDatas"
+                  general_data:
+                    $ref: "#/components/schemas/GeneralData"
+    
+  /products:
+    get:
+      summary: Get products
+      description: Retrieve a list of products.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Done"
+                  products:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+  /user/get_fandq:
+    get:
+      summary: Get frequently asked questions and answers
+      description: Retrieve a list of frequently asked questions and their corresponding answers.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "done"
+                  fandq:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FANDQ"
+  /user/upload_documents:
+    post:
+      summary: Upload user documents
+      description: |
+        Upload front and back images of user documents.
+        Requires multipart/form-data with 'front' and 'back' file fields.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                front:
+                  type: string
+                  format: binary
+                back:
+                  type: string
+                  format: binary
+      responses:
+        '401':
+          description: User in processing or already verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "User in processing"
+                  data:
+                    type: string
+                    example: "already_registered"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal server connection"
+                  data:
+                    type: string
+                    example: "internal_error"
+
+  /user/update_fcm:
+    post:
+      summary: Update FCM token
+      description: Update the Firebase Cloud Messaging (FCM) token for push notifications.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fcm_token:
+                  type: string
+                  example: "sample_fcm_token"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Done"
+  /validate_token:
+    post:
+      summary: Validate Token
+      description: Validate the user token.
+      responses:
+        '200':
+          description: Token validated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "done"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "internal server connection"
+                  data:
+                    type: string
+                    example: "internal_error"
+
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          example: "+1234567890"
+        otp_code:
+          type: integer
+          example: 12345
+    FANDQ:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "5e7a2c3bc5f90a2fe8b3b0e9"
+        question:
+          type: string
+          example: "What is Lorem Ipsum?"
+        answer:
+          type: string
+          example: "Lorem Ipsum is simply dummy text of the printing and typesetting industry."
+        who_define:
+          type: string
+          example: "Some defining info"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-03-27T12:00:00Z"
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "5e7a2c3bc5f90a2fe8b3b0e9"
+        avatar:
+          type: string
+          example: "https://example.com/avatar.jpg"
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          example: "john.doe@example.com"
+        phone:
+          type: string
+          example: "+1234567890"
+        password:
+          type: string
+          example: "hashed_password"
+        phone_verified:
+          type: boolean
+          example: true
+        otp_code:
+          type: integer
+          example: 123456
+        address:
+          type: string
+          example: "123 Main St, City, Country"
+        reset_token:
+          type: string
+          example: "reset_token_value"
+        reset_token_valid:
+          type: string
+          format: date-time
+          example: "2024-03-27T12:00:00Z"
+        change_phone:
+          type: boolean
+          example: false
+        exchange_phone:
+          type: string
+          example: "+9876543210"
+        freeze:
+          type: boolean
+          example: false
+        currency:
+          type: string
+          example: "USD"
+        chat_list:
+          type: array
+          items:
+            type: string
+            example: "chat_id_1"
+        permissions:
+          $ref: "#/components/schemas/Permission"
+        otp_valid:
+          type: string
+          format: date-time
+          example: "2024-03-27T12:00:00Z"
+        retry_otp:
+          type: integer
+          example: 3
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-03-27T12:00:00Z"
+        user_verified:
+          type: boolean
+          example: true
+        user_status:
+          type: string
+          enum: ["ACTIVE", "INACTIVE", "PENDING"]
+          example: "ACTIVE"
+        reason:
+          type: string
+          example: "Reason for status"
+        support_or_admin:
+          type: boolean
+          example: true
+        wallet:
+          $ref: "#/components/schemas/Wallet"
+        fcm_token:
+          type: string
+          example: "fcm_token_value"
+
+    Permission:
+      type: object
+      properties:
+        read:
+          type: boolean
+          example: true
+        write:
+          type: boolean
+          example: true
+
+    Wallet:
+      type: object
+      properties:
+        balance:
+          type: number
+          example: 100.00
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+
+    Transaction:
+      type: object
+      properties:
+        amount:
+          type: number
+          example: 10.00
+        date:
+          type: string
+          format: date-time
+          example: "2024-03-27T12:00:00Z"
+
+    GeneralData:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "5e7a2c3bc5f90a2fe8b3b0e9"
+        aedusd:
+          type: number
+          example: 3.67
+
+    CallCenterDatas:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "5e7a2c3bc5f90a2fe8b3b0e8"
+        whatsapp:
+          type: string
+          example: "+1234567890"
+        live:
+          type: string
+          example: "live_chat_id"
+        telegram:
+          type: string
+          example: "@telegram_id"
+        website_reference:
+          type: string
+          example: "https://example.com"
+        email:
+          type: string
+          example: "contact@example.com"
+        phone:
+          type: string
+          example: "+1234567890"
+          
+    Product:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "5e7a2c3bc5f90a2fe8b3b0e9"
+        name:
+          type: string
+          example: "Product Name"
+        description:
+          type: string
+          example: "Product Description"
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/Image"
+        width:
+          type: number
+          example: 10.5
+        length:
+          type: number
+          example: 20.3
+        weight_oz:
+          type: number
+          example: 16.8
+        weight_gramm:
+          type: number
+          example: 476.2
+        purity:
+          type: number
+          example: 0.999
+        percentage:
+          type: number
+          example: 99.9
+        hide:
+          type: boolean
+          example: false
+        limited:
+          type: boolean
+          example: true
+        who_define:
+          type: string
+          example: "Some defining info"
+        amount:
+          type: integer
+          example: 100
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-03-27T12:00:00Z"
+
+    Image:
+      type: object
+      properties:
+        url:
+          type: string
+          example: "https://example.com/image.jpg"
+
+    SendOTP:
+      type: object
+      properties:
+        phone:
+          type: string
+          example: "+1234567890"
