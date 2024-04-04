@@ -232,6 +232,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 			}
 		}
 	})
+
 	r.GET("/message", AuthMiddleware(), func(c *gin.Context) {
 		user, _ := models.ValidateSession(c)
 		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)

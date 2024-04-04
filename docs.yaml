@@ -61,6 +61,9 @@ paths:
                       token:
                         type: string
                         example: "JWT_TOKEN"
+                      refresh_token:
+                        type: string
+                        example: "refresh_token_value_here"
         '400':
           description: Bad request or invalid OTP
           content:
@@ -322,6 +325,15 @@ paths:
     post:
       summary: Validate Token
       description: Validate the user token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:   # Added to specify the expected request parameter
+                  type: string
       responses:
         '200':
           description: Token validated successfully
@@ -336,6 +348,15 @@ paths:
                   message:
                     type: string
                     example: "done"
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: "token_value_here"
+                      refresh_token:
+                        type: string
+                        example: "refresh_token_value_here"
         '500':
           description: Internal server error
           content:
@@ -352,10 +373,448 @@ paths:
                   data:
                     type: string
                     example: "internal_error"
+  /user/edit_user:
+    post:
+      summary: Edit User
+      description: Edit user information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestEdit'
+      responses:
+        '200':
+          description: User information edited successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "User information edited successfully"
 
-
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "invalid request parameters"
+                  data:
+                    type: string
+                    example: "invalid_parameters"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "internal server connection"
+                  data:
+                    type: string
+                    example: "internal_error"
+                    
+  /user/get_symbol:
+    get:
+      summary: Get Symbols
+      description: Retrieve symbols.
+      responses:
+        '200':
+          description: Symbols retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "done"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Symbol'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "invalid request parameters"
+                  data:
+                    type: string
+                    example: "invalid_parameters"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "internal server connection"
+                  data:
+                    type: string
+                    example: "internal_error"
+                    
+  /user/cancel:
+    post:
+      summary: Cancel Order
+      description: Cancel an order.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelRequest'
+      responses:
+        '200':
+          description: Order canceled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "invalid request parameters"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "internal server connection"
+                    
+  /user/create_transaction:
+    post:
+      summary: Create Transaction
+      description: Create a new transaction.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        '201':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepositResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "invalid request parameters"
+                  data:
+                    type: string
+                    example: "invalid_parameters"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "internal server connection"
+                  data:
+                    type: string
+                    example: "internal_error"
+  //user/pay:
+    post:
+      summary: Pay for Order
+      description: Pay for an order.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "invalid request parameters"
+                  data:
+                    type: string
+                    example: "invalid_parameters"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "internal server connection"
+                  data:
+                    type: string
+                    example: "internal_error"
+                    
+  /user/make_deposit:
+    post:
+      summary: Make Deposit
+      description: Make a deposit.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositRequest'
+      responses:
+        '200':
+          description: Deposit made successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepositResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "invalid request parameters"
+                  data:
+                    type: string
+                    example: "invalid_parameters"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "internal server connection"
+                  data:
+                    type: string
+                    example: "internal_error"
+    
 components:
   schemas:
+    CancelRequest:
+      type: object
+      properties:
+        order_id:
+          type: string
+          example: "123456"
+    CancelResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "done"
+    DepositRequest:
+      type: object
+      properties:
+        payment_method:
+          type: string
+          example: "credit_card"
+        total_price:
+          type: number
+          example: 100.00
+    DepositResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "done"
+        data:
+          type: object
+          properties:
+            order_id:
+              type: string
+              example: "123456"
+            url:
+              type: string
+              example: "https://example.com/payment/invoice"
+    TransactionRequest:
+      type: object
+      properties:
+        StatusDelivery:
+          type: string
+          example: "delivered"
+        PaymentMethod:
+          type: string
+          example: "credit_card"
+        ProductIDs:
+          type: array
+          items:
+            type: string
+            example: "5feceb67ff866cd082a1aab73" # Example ProductID
+        DeliveryMethod:
+          type: string
+          example: "express"
+        TotalPrice:
+          type: number
+          example: 100.00
+    Transaction:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "5feceb66ff866cd082a1aab72"
+        order_id:
+          type: string
+          example: "123456"
+        product_id:
+          type: array
+          items:
+            type: string
+            example: "5feceb67ff866cd082a1aab73"
+        user_id:
+          type: string
+          example: "5feceb66ff866cd082a1aab74"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-04-04T12:00:00Z"
+        payment_method:
+          type: string
+          example: "credit_card"
+        delivery_method:
+          type: string
+          example: "express"
+        payment_completion:
+          type: string
+          example: "false"
+        status_delivery:
+          type: string
+          example: "delivered"
+        symbol:
+          type: string
+          example: "symbol_name"
+        total_price:
+          type: number
+          example: 100.00
+        vat:
+          type: number
+          example: 20.00
+        payment_status:
+          type: string
+          example: "pending"
+        is_debit:
+          type: boolean
+          example: false
+        external_data:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            key1: "value1"
+            key2: "value2"
+    RequestEdit:
+        type: object
+        properties:
+          name:
+            type: string
+          address:
+            type: string
+            nullable: true
+          email:
+            type: string
+            nullable: true
+          phone:
+            type: string
+        required:
+          - name
+          - phone
+
     RegisterRequest:
       type: object
       properties:
@@ -491,17 +950,6 @@ components:
           items:
             $ref: "#/components/schemas/Transaction"
 
-    Transaction:
-      type: object
-      properties:
-        amount:
-          type: number
-          example: 10.00
-        date:
-          type: string
-          format: date-time
-          example: "2024-03-27T12:00:00Z"
-
     GeneralData:
       type: object
       properties:
@@ -511,7 +959,106 @@ components:
         aedusd:
           type: number
           example: 3.67
+          
+    Symbol:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "5feceb66ff866cd082a1aab72"
+        name:
+          type: string
+          example: "Symbol Name"
+        type:
+          type: string
+          example: "Symbol Type"
+        side:
+          type: string
+          example: "Symbol Side"
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-04-04T12:00:00Z"
 
+    Image:
+      type: object
+      properties:
+        url:
+          type: string
+          example: "https://example.com/image.jpg"
+    PaymentRequest:
+      type: object
+      properties:
+        order_id:
+          type: string
+          example: "123456"
+    PaymentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "done"
+        data:
+          $ref: '#/components/schemas/TransactionComponent'
+
+    TransactionComponent:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "5feceb66ff866cd082a1aab72"
+        order_id:
+          type: string
+          example: "123456"
+        user_id:
+          type: string
+          example: "5feceb66ff866cd082a1aab74"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-04-04T12:00:00Z"
+        payment_method:
+          type: string
+          example: "credit_card"
+        delivery_method:
+          type: string
+          example: "express"
+        payment_completion:
+          type: string
+          example: "false"
+        status_delivery:
+          type: string
+          example: "delivered"
+        symbol:
+          type: string
+          example: "symbol_name"
+        total_price:
+          type: number
+          example: 100.00
+        vat:
+          type: number
+          example: 20.00
+        payment_status:
+          type: string
+          example: "pending"
+        is_debit:
+          type: boolean
+          example: false
+        external_data:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            key1: "value1"
+            key2: "value2"
+            
     CallCenterDatas:
       type: object
       properties:
@@ -587,13 +1134,6 @@ components:
           type: string
           format: date-time
           example: "2024-03-27T12:00:00Z"
-
-    Image:
-      type: object
-      properties:
-        url:
-          type: string
-          example: "https://example.com/image.jpg"
 
     SendOTP:
       type: object
