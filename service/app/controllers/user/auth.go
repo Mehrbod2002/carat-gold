@@ -199,6 +199,23 @@ func LoginOneTimeLoginStep2(c *gin.Context) {
 		return
 	}
 
+	refreshToken, errs := user.GenerateToken()
+	if errs != nil {
+		log.Println(errs)
+		utils.InternalError(c)
+		return
+	}
+	_, errs = db.Collection("users").UpdateOne(context.Background(), bson.M{
+		"_id": user.ID,
+	}, bson.M{"$set": bson.M{
+		"refresh_token": refreshToken,
+	}})
+	if errs != nil {
+		log.Println(errs)
+		utils.InternalError(c)
+		return
+	}
+
 	session.Set("token", token)
 	errs = session.Save()
 	if errs != nil {
@@ -210,7 +227,8 @@ func LoginOneTimeLoginStep2(c *gin.Context) {
 		"success": true,
 		"message": "logged in",
 		"data": map[string]string{
-			"token": token,
+			"token":         token,
+			"refresh_token": refreshToken,
 		},
 	})
 }
@@ -439,11 +457,29 @@ func Register(c *gin.Context) {
 			return
 		}
 
+		refreshToken, errs := newUser.GenerateToken()
+		if errs != nil {
+			log.Println(errs)
+			utils.InternalError(c)
+			return
+		}
+		_, errs = db.Collection("users").UpdateOne(context.Background(), bson.M{
+			"_id": newUser.ID,
+		}, bson.M{"$set": bson.M{
+			"refresh_token": refreshToken,
+		}})
+		if errs != nil {
+			log.Println(errs)
+			utils.InternalError(c)
+			return
+		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"message": "registered",
 			"data": map[string]string{
-				"token": token,
+				"token":         token,
+				"refresh_token": refreshToken,
 			},
 		})
 		return
@@ -466,6 +502,23 @@ func Register(c *gin.Context) {
 			return
 		}
 
+		refreshToken, errs := existingUser.GenerateToken()
+		if errs != nil {
+			log.Println(errs)
+			utils.InternalError(c)
+			return
+		}
+		_, errs = db.Collection("users").UpdateOne(context.Background(), bson.M{
+			"_id": existingUser.ID,
+		}, bson.M{"$set": bson.M{
+			"refresh_token": refreshToken,
+		}})
+		if errs != nil {
+			log.Println(errs)
+			utils.InternalError(c)
+			return
+		}
+
 		session.Set("token", token)
 		errs = session.Save()
 		if errs != nil {
@@ -477,7 +530,8 @@ func Register(c *gin.Context) {
 			"success": true,
 			"message": "logged in",
 			"data": map[string]string{
-				"token": token,
+				"token":         token,
+				"refresh_token": refreshToken,
 			},
 		})
 		return

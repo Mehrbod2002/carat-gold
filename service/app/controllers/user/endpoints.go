@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/crisp-im/go-crisp-api/crisp/v3"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -824,7 +825,17 @@ func Pay(c *gin.Context) {
 }
 
 func RevalidateToken(c *gin.Context) {
+	session := sessions.Default(c)
 	authUser, _ := models.ValidateSession(c)
+
+	var request struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
 
 	db, err := utils.GetDB(c)
 	if err != nil {
@@ -834,8 +845,56 @@ func RevalidateToken(c *gin.Context) {
 
 	var user models.User
 	if err = db.Collection("users").FindOne(context.Background(), bson.M{
-		"_id": authUser.ID,
+		"_id":           authUser.ID,
+		"refresh_token": request.RefreshToken,
 	}).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": utils.Cap("user not found"),
+			})
+			return
+		}
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	session.Delete("token")
+	err = session.Save()
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	token, err := user.GenerateToken()
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	refreshToken, err := user.GenerateToken()
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	_, err = db.Collection("users").UpdateOne(context.Background(), bson.M{
+		"_id": user.ID,
+	}, bson.M{"$set": bson.M{
+		"refresh_token": refreshToken,
+	}})
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	session.Set("token", token)
+	err = session.Save()
+	if err != nil {
 		log.Println(err)
 		utils.InternalError(c)
 		return
@@ -844,7 +903,10 @@ func RevalidateToken(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "done",
-	})
+		"data": map[string]string{
+			"token":         token,
+			"refresh_token": refreshToken,
+		}})
 }
 
 func Cancel(c *gin.Context) {

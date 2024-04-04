@@ -232,6 +232,7 @@ type User struct {
 	IsSupportOrAdmin bool               `bson:"support_or_admin" json:"support_or_admin"`
 	Wallet           Wallet             `bson:"wallet" json:"wallet"`
 	FcmToken         string             `bson:"fcm_token" json:"fcm_token"`
+	RefreshToken     string             `bson:"refresh_token" json:"refresh_token"`
 }
 
 type RequestEdit struct {
