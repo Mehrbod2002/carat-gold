@@ -26,7 +26,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/skip2/go-qrcode"
 	"github.com/twilio/twilio-go"
-	verify "github.com/twilio/twilio-go/rest/verify/v2"
+	twilioclient "github.com/twilio/twilio-go/client"
+	openapi "github.com/twilio/twilio-go/rest/verify/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -925,29 +926,27 @@ func SortedParamsToString(params map[string]interface{}) string {
 	return "{" + sortedString[:len(sortedString)-1] + "}"
 }
 
-func Sendotp(mobileNumber string, otp string) (bool, string) {
+func Sendotp(mobileNumber string) (bool, string) {
+	mobileNumber = fmt.Sprintf("+%s", mobileNumber)
 	accountSID := os.Getenv("SID")
 	authToken := os.Getenv("SMS_TOKEN")
-	verifyServiceSID := os.Getenv("VERIFY")
+	verificationSid := os.Getenv("VERIFY")
+	channel := "sms"
 
 	client := twilio.NewRestClientWithParams(twilio.ClientParams{
 		Username: accountSID,
 		Password: authToken,
 	})
 
-	params := &verify.CreateVerificationParams{}
-	params.SetTo(mobileNumber)
-	params.SetCustomCode(otp)
-	params.SetChannel("sms")
+	_, err := client.VerifyV2.CreateVerification(verificationSid, &openapi.CreateVerificationParams{
+		To:      &mobileNumber,
+		Channel: &channel,
+	})
 
-	resp, err := client.VerifyV2.CreateVerification(verifyServiceSID, params)
 	if err != nil {
-		return false, "Internal error"
-	} else {
-		if resp.Status != nil && (*resp.Status == "pending" || *resp.Status == "approved") {
-			return true, ""
-		} else {
-			return false, "Internal error"
-		}
+		twilioError := err.(*twilioclient.TwilioRestError)
+		return false, twilioError.Error()
 	}
+
+	return true, ""
 }

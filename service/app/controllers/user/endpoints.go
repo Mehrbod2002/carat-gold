@@ -46,9 +46,9 @@ func GetTransactions(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":      true,
-		"message":      "done",
-		"transactions": transactions,
+		"success": true,
+		"message": "done",
+		"data":    transactions,
 	})
 }
 
@@ -75,7 +75,7 @@ func GetFANDQ(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "done",
-		"fandq":   fandq,
+		"data":    fandq,
 	})
 }
 
@@ -102,7 +102,7 @@ func GetSymbol(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "done",
-		"symbols": symbols,
+		"data":    symbols,
 	})
 }
 
@@ -177,9 +177,9 @@ func GetProducts(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"success":  true,
-		"message":  "done",
-		"products": outPut,
+		"success": true,
+		"message": "done",
+		"data":    outPut,
 	})
 }
 
@@ -207,10 +207,9 @@ func GeneralData(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":      true,
-		"message":      "done",
-		"call_center":  callCenter,
-		"general_data": generalData,
+		"success": true,
+		"message": "done",
+		"data":    map[string]any{"call_center": callCenter, "general_data": generalData},
 	})
 }
 
@@ -301,9 +300,9 @@ func ViewProducts(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"success":  true,
-		"message":  "done",
-		"products": products,
+		"success": true,
+		"message": "done",
+		"data":    products,
 	})
 }
 
@@ -642,8 +641,7 @@ func CreateTranscations(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "done",
-		"data":    orderID,
-		"url":     pay.InvoiceURL,
+		"data":    map[string]string{"order_id": orderID, "url": pay.InvoiceURL},
 	})
 }
 
@@ -722,8 +720,7 @@ func MakeDepositTransaction(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "done",
-		"data":    orderID,
-		"url":     pay.InvoiceURL,
+		"data":    map[string]string{"order_id": orderID, "url": pay.InvoiceURL},
 	})
 }
 
@@ -820,9 +817,9 @@ func Pay(c *gin.Context) {
 	models.Notification(c, authUser.ID, "Invoice", "Payments set with #"+transction.OrderID)
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":     true,
-		"message":     "done",
-		"transaction": transction,
+		"success": true,
+		"message": "done",
+		"data":    transction,
 	})
 }
 
