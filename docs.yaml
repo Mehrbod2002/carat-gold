@@ -4,7 +4,9 @@ info:
   description: API for managing user information
   version: 1.0.0
 servers:
-  - url: http://goldshop24.co/api
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/M9AKHLAGHPOOR/Fasih/1.0.0
+  - url: https://goldshop24.co/api
 paths:
   /user/me:
     get:
@@ -31,7 +33,7 @@ paths:
         '403':
           description: Forbidden, user doesn't have permission
 
-  /user/register:
+  /auth/user/register:
     post:
       summary: User Registration
       description: Register a new user with phone number and OTP code.
@@ -76,10 +78,10 @@ paths:
                     example: false
                   message:
                     type: string
-                    example: "request for otp first" # or "otp expired" or "invalid otp code"
+                    example: "request for otp first"
                   data:
                     type: string
-                    example: "invalid_otp" # or "otp_expired"
+                    example: "invalid_otp"
         '500':
           description: Internal server error
           content:
@@ -97,7 +99,7 @@ paths:
                     type: string
                     example: "internal_error"
 
-  /user/send_otp:
+  /auth/user/send_otp:
     post:
       summary: Send OTP
       description: Send OTP (One-Time Password) to the provided phone number.
@@ -152,10 +154,10 @@ paths:
                     example: false
                   message:
                     type: string
-                    example: "otp freezed for 1 hour" # or "2 minutes should pass to send SMS"
+                    example: "otp freezed for 1 hour"
                   data:
                     type: string
-                    example: "otp_freezed_for_1_hour" # or "not_allowed_to_send_sms"
+                    example: "otp_freezed_for_1_hour"
         '500':
           description: Internal server error
           content:
@@ -195,8 +197,7 @@ paths:
                     $ref: "#/components/schemas/CallCenterDatas"
                   general_data:
                     $ref: "#/components/schemas/GeneralData"
-    
-  /products:
+  /user/products:
     get:
       summary: Get products
       description: Retrieve a list of products.
@@ -321,7 +322,7 @@ paths:
                   message:
                     type: string
                     example: "Done"
-  /validate_token:
+  /auth/validate_token:
     post:
       summary: Validate Token
       description: Validate the user token.
@@ -332,7 +333,7 @@ paths:
             schema:
               type: object
               properties:
-                refresh_token:   # Added to specify the expected request parameter
+                refresh_token:
                   type: string
       responses:
         '200':
@@ -430,7 +431,7 @@ paths:
                   data:
                     type: string
                     example: "internal_error"
-                    
+
   /user/get_symbol:
     get:
       summary: Get Symbols
@@ -444,6 +445,7 @@ paths:
                 type: object
                 properties:
                   success:
+
                     type: boolean
                     example: true
                   message:
@@ -485,7 +487,7 @@ paths:
                   data:
                     type: string
                     example: "internal_error"
-                    
+
   /user/cancel:
     post:
       summary: Cancel Order
@@ -529,7 +531,7 @@ paths:
                   message:
                     type: string
                     example: "internal server connection"
-                    
+
   /user/create_transaction:
     post:
       summary: Create Transaction
@@ -579,7 +581,7 @@ paths:
                   data:
                     type: string
                     example: "internal_error"
-  //user/pay:
+  /user/pay:
     post:
       summary: Pay for Order
       description: Pay for an order.
@@ -628,7 +630,7 @@ paths:
                   data:
                     type: string
                     example: "internal_error"
-                    
+
   /user/make_deposit:
     post:
       summary: Make Deposit
@@ -678,7 +680,7 @@ paths:
                   data:
                     type: string
                     example: "internal_error"
-    
+
 components:
   schemas:
     CancelRequest:
@@ -726,21 +728,21 @@ components:
     TransactionRequest:
       type: object
       properties:
-        StatusDelivery:
+        status_delivery:
           type: string
           example: "delivered"
-        PaymentMethod:
+        payment_method:
           type: string
           example: "credit_card"
-        ProductIDs:
+        product_ids:
           type: array
           items:
             type: string
-            example: "5feceb67ff866cd082a1aab73" # Example ProductID
-        DeliveryMethod:
+            example: "5feceb67ff866cd082a1aab73"
+        delivery_method:
           type: string
           example: "express"
-        TotalPrice:
+        total_price:
           type: number
           example: 100.00
     Transaction:
@@ -959,7 +961,7 @@ components:
         aedusd:
           type: number
           example: 3.67
-          
+
     Symbol:
       type: object
       properties:
@@ -1058,7 +1060,7 @@ components:
           example:
             key1: "value1"
             key2: "value2"
-            
+
     CallCenterDatas:
       type: object
       properties:
@@ -1083,7 +1085,7 @@ components:
         phone:
           type: string
           example: "+1234567890"
-          
+
     Product:
       type: object
       properties:
