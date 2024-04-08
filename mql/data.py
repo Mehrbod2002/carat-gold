@@ -37,12 +37,12 @@ def initialize_mt5():
 @app.before_request
 def before_request():
     if 'X-Secret-Header' not in request.headers or request.headers['X-Secret-Header'] != secret:
-        return jsonify({"status": False, "message": "Unauthorized"}), 401
+        return jsonify({"status": False, "message": "unauthorized"}), 401
 
     if not hasattr(request, 'mt5_initialized'):
         request.mt5_initialized = True
         if not mt5.initialize():
-            return jsonify({"status": False, "message": "Unauthorized"}), 401
+            return jsonify({"status": False, "message": "unauthorized"}), 401
 
 
 @app.route('/get_history', methods=['GET'])

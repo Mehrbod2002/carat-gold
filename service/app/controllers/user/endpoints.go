@@ -826,7 +826,11 @@ func Pay(c *gin.Context) {
 
 func RevalidateToken(c *gin.Context) {
 	session := sessions.Default(c)
-	authUser, _ := models.ValidateSession(c)
+	authUser, valid := models.ValidateSession(c)
+
+	if !valid {
+		return
+	}
 
 	var request struct {
 		RefreshToken string `json:"refresh_token"`

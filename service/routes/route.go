@@ -598,7 +598,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		if jwtSecret == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"message": "Unauthorized",
+				"message": "unauthorized",
 				"data":    "unauthorized",
 			})
 			c.Abort()
@@ -612,7 +612,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		if err != nil || !parsedToken.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"message": "Unauthorized",
+				"message": "unauthorized",
 				"data":    "unauthorized",
 			})
 			c.Abort()
