@@ -9,19 +9,19 @@ import (
 )
 
 type DataMeta struct {
-	Time      string  `json:"time" bson:"time"`
-	Symbol    string  `json:"symbol" bson:"symbol"`
-	Ask       float64 `json:"ask" bson:"ask"`
-	Bid       float64 `json:"bid" bson:"bid"`
-	High      float64 `json:"high" bson:"high"`
-	Low       float64 `json:"low" bson:"low"`
-	Open      float64 `json:"open" bson:"open"`
-	Close     float64 `json:"close" bson:"close"`
-	Type      string  `json:"type" bson:"type"`
-	Timeframe string  `json:"timeframe" bson:"timeframe"`
-	ProfitDay float64 `json:"profit_day" bson:"profit_day"`
+	Time       string  `json:"time" bson:"time"`
+	Symbol     string  `json:"symbol" bson:"symbol"`
+	Ask        float64 `json:"ask" bson:"ask"`
+	Bid        float64 `json:"bid" bson:"bid"`
+	High       float64 `json:"high" bson:"high"`
+	Low        float64 `json:"low" bson:"low"`
+	Open       float64 `json:"open" bson:"open"`
+	Close      float64 `json:"close" bson:"close"`
+	Type       string  `json:"type" bson:"type"`
+	Timeframe  string  `json:"timeframe" bson:"timeframe"`
+	ProfitDay  float64 `json:"profit_day" bson:"profit_day"`
 	Profithour float64 `json:"profit_hour" bson:"profit_hour"`
-	ProfitWeek float64  `json:"profit_week" bson:"profit_week"`
+	ProfitWeek float64 `json:"profit_week" bson:"profit_week"`
 }
 
 func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel chan<- DataMeta, stop chan struct{}) {
@@ -66,6 +66,7 @@ func handleConnection(conn net.Conn, dataChannel chan<- DataMeta, errors chan<- 
 				}
 			}
 
+			time.Sleep(time.Second)
 			data.Time = fmt.Sprintf("%d", time.Now().UTC().Unix())
 			dataChannel <- data
 		}
