@@ -572,6 +572,7 @@ func ValidateSession(c *gin.Context) {
 		userID, ok := claims["_id"].(string)
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"success": false})
+			return
 		}
 		if _, err := primitive.ObjectIDFromHex(userID); err == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"success": false})
