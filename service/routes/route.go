@@ -583,7 +583,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		if token == nil && tokenString == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"message": "Unauthorized",
+				"message": "unauthorized",
 				"data":    "unauthorized",
 			})
 			c.Abort()
@@ -624,7 +624,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			if !ok {
 				c.JSON(http.StatusUnauthorized, gin.H{
 					"success": false,
-					"message": "Unauthorized",
+					"message": "unauthorized",
 					"data":    "unauthorized",
 				})
 				c.Abort()
@@ -636,7 +636,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			}
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"message": "Unauthorized",
+				"message": "unauthorized",
 				"data":    "unauthorized",
 			})
 			c.Abort()
@@ -653,7 +653,7 @@ func WindowsMiddleware() gin.HandlerFunc {
 		if models.SecretMetaTrader != tokenString {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": http.StatusUnauthorized,
-				"message": "Unauthorized",
+				"message": "unauthorized",
 				"data":    "unauthorized",
 			})
 			c.Abort()
@@ -672,7 +672,7 @@ func AdminAuthMiddleware() gin.HandlerFunc {
 		if token == nil && tokenString == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": http.StatusUnauthorized,
-				"message": "Unauthorized",
+				"message": "unauthorized",
 				"data":    "unauthorized",
 			})
 			c.Abort()

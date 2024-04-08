@@ -351,7 +351,7 @@ func ValidateSession(c *gin.Context) (*User, bool) {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
 			"data":    "unauthorized",
-			"message": "Unauthorized",
+			"message": "unauthorized",
 		})
 		return nil, false
 	}
