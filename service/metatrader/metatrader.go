@@ -62,7 +62,7 @@ func handleConnection(conn net.Conn, dataChannel chan<- DataMeta, errors chan<- 
 					continue
 				} else {
 					errors <- err
-					return
+					continue
 				}
 			}
 

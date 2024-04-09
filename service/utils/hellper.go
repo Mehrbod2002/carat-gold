@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -199,55 +198,21 @@ func UploadPhoto(c *gin.Context, id string, photo string) bool {
 	if strings.Contains(photo, "base64,") {
 		photoData = []byte(strings.Split(photo, ",")[1])
 	} else {
-		fmt.Println("!23", photo)
 		InternalError(c)
 		return false
 	}
 
 	decodedData, err := base64.StdEncoding.DecodeString(string(photoData))
 	if err != nil {
-		fmt.Println(err, 123)
 		InternalError(c)
 		return false
 	}
 
 	err = os.WriteFile(pngPath, decodedData, 0644)
 	if err != nil {
-		fmt.Println(err, 1233)
 		InternalError(c)
 		return false
 	}
-
-	// ppmPath := filepath.Join("temp", id+".ppm")
-	// cmdConvert := exec.Command("convert", pngPath, ppmPath)
-	// err = cmdConvert.Run()
-	// if err != nil {
-	// 	InternalError(c)
-	// 	return false
-	// }
-
-	// cmd := exec.Command("potrace", ppmPath, "-s", "-o", svgPath)
-	// output, err := cmd.CombinedOutput()
-	// if err != nil {
-	// 	fmt.Println("Error running potrace:", err)
-	// 	fmt.Println("Output:", string(output))
-	// 	InternalError(c)
-	// 	return false
-	// }
-
-	// err = os.Remove(pngPath)
-	// if err != nil {
-	// 	log.Println(err, 567)
-	// 	InternalError(c)
-	// 	return false
-	// }
-
-	// err = os.Remove(ppmPath)
-	// if err != nil {
-	// 	log.Println(err, 567)
-	// 	InternalError(c)
-	// 	return false
-	// }
 
 	return true
 }

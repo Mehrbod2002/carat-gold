@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"sync"
 )
 
@@ -10,6 +11,7 @@ var (
 )
 
 func main() {
+	log.SetOutput(os.Stdout)
 	errors := make(chan error)
 	dataChannel := make(chan DataMeta)
 	stop := make(chan struct{})
