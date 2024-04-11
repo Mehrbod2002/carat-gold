@@ -66,7 +66,7 @@ func handleConnection(conn net.Conn, dataChannel chan<- DataMeta, errors chan<- 
 				}
 			}
 
-			time.Sleep(time.Second * 1)
+			time.Sleep(time.Millisecond * 1)
 			data.Time = fmt.Sprintf("%d", time.Now().UTC().Unix())
 			dataChannel <- data
 		}
