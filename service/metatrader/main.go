@@ -21,13 +21,7 @@ func main() {
 	go startServerWSS(errors, &wg, 5050, dataChannel)
 	go startServerMetaTrader(errors, &wg, dataChannel, stop)
 
-	go func() {
-		wg.Wait()
-		close(errors)
-		close(dataChannel)
-	}()
-
-	for err := range errors {
-		log.Println("Error:", err)
-	}
+	wg.Wait()
+	close(errors)
+	close(dataChannel)
 }
