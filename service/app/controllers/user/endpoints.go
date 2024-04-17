@@ -20,6 +20,51 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func GetSingelTransaction(c *gin.Context) {
+	authUser, _ := models.ValidateSession(c)
+
+	var request struct {
+		ID string `json:"id"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	var transaction models.Transaction
+	err = db.Collection("transactions").FindOne(context.Background(), bson.M{"%and": []bson.M{
+		{"user_id": authUser.ID},
+		{"_id": request.ID},
+	}}).Decode(&transaction)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	if err == mongo.ErrNoDocuments {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": utils.Cap("transaction not found"),
+			"data":    "not_found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+		"data":    transaction,
+	})
+}
+
 func GetTransactions(c *gin.Context) {
 	authUser, _ := models.ValidateSession(c)
 
@@ -551,6 +596,7 @@ func CreateTranscations(c *gin.Context) {
 	db, DBerr := utils.GetDB(c)
 	if DBerr != nil {
 		log.Println(DBerr)
+		utils.InternalError(c)
 		return
 	}
 
@@ -725,105 +771,6 @@ func MakeDepositTransaction(c *gin.Context) {
 	})
 }
 
-func Pay(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
-
-	var request struct {
-		OrderID string `json:"order_id"`
-	}
-	if err := c.ShouldBindJSON(&request); err != nil {
-		log.Println(err)
-		utils.BadBinding(c)
-		return
-	}
-
-	db, err := utils.GetDB(c)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	var transction models.Transaction
-	if err = db.Collection("transactions").FindOne(context.Background(), bson.M{
-		"$and": []bson.M{
-			{"order_id": request.OrderID},
-			{"user_id": authUser.ID},
-		},
-	}).Decode(&transction); err != nil && err != mongo.ErrNoDocuments {
-		utils.InternalError(c)
-		return
-	}
-
-	if transction.IsDebit {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": utils.Cap("This is debit operation"),
-			"data":    "invalid_operation",
-		})
-		return
-	}
-
-	update := bson.M{
-		"$set": bson.M{
-			"$push": bson.M{
-				"wallet.purchased": models.Purchased{
-					PaymentStatus:  models.ApprovedStatus,
-					PaymentMethd:   transction.PaymentMethod,
-					CreatePayment:  time.Now(),
-					CreatedAt:      transction.CreatedAt,
-					StatusDelivery: transction.StatusDelivery,
-					Product:        transction.ProductIDs,
-					OrderID:        transction.OrderID,
-				},
-			},
-		},
-	}
-
-	if transction.IsDebit {
-		if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
-			"_id": authUser.ID,
-		}, bson.M{"$set": bson.M{
-			"$inc": bson.M{
-				"wallet.balance": transction.TotalPrice - transction.Vat,
-			},
-		}}); err != nil {
-			utils.BadBinding(c)
-			return
-		}
-	}
-
-	if _, err := db.Collection("transactions").UpdateOne(context.Background(), bson.M{
-		"$and": []bson.M{
-			{"order_id": request.OrderID},
-			{"user_id": authUser.ID},
-		},
-	}, bson.M{
-		"$set": bson.M{
-			"payment_status":     models.ApprovedStatus,
-			"payment_completion": true,
-		},
-	}); err != nil {
-		utils.BadBinding(c)
-		return
-	}
-
-	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
-		"_id": authUser.ID,
-	}, update); err != nil {
-		utils.BadBinding(c)
-		return
-	}
-
-	utils.AutoOrder(c, 0)
-	models.Notification(c, authUser.ID, "Invoice", "Payments set with #"+transction.OrderID)
-
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "done",
-		"data":    transction,
-	})
-}
-
 func RevalidateToken(c *gin.Context) {
 	session := sessions.Default(c)
 	authUser, valid := models.ValidateSession(c)
@@ -913,55 +860,113 @@ func RevalidateToken(c *gin.Context) {
 		}})
 }
 
-func Cancel(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
-
-	var request struct {
-		OrderID string `json:"order_id"`
-	}
-	if err := c.ShouldBindJSON(&request); err != nil {
-		log.Println(err)
-		utils.BadBinding(c)
-		return
-	}
-
+func UserPaymentMethods(c *gin.Context) {
 	db, err := utils.GetDB(c)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	var transction models.Transaction
-	if err = db.Collection("transactions").FindOne(context.Background(), bson.M{
-		"$and": []bson.M{
-			{"order_id": request.OrderID},
-			{"user_id": authUser.ID},
-		},
-	}).Decode(&transction); err != nil && err != mongo.ErrNoDocuments {
+	// var googlePlay models.GooglePlay
+	// var applePlay models.ApplePlay
+	// var payPal models.PayPal
+	var debitCard []models.UserDebitCard
+	var crypto []models.UserCrypto
+	// err = db.Collection("google_play").FindOne(context.Background(), bson.M{}).Decode(&googlePlay)
+	// if err != nil && err != mongo.ErrNoDocuments {
+	// 	log.Println(err)
+	// 	utils.InternalError(c)
+	// 	return
+	// }
+	// err = db.Collection("apple_play").FindOne(context.Background(), bson.M{}).Decode(&applePlay)
+	// if err != nil && err != mongo.ErrNoDocuments {
+	// 	log.Println(err)
+	// 	utils.InternalError(c)
+	// 	return
+	// }
+	// err = db.Collection("paypal").FindOne(context.Background(), bson.M{}).Decode(&payPal)
+	// if err != nil && err != mongo.ErrNoDocuments {
+	// 	log.Println(err)
+	// 	utils.InternalError(c)
+	// 	return
+	// }
+	cursor, err := db.Collection("debit_card").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &debitCard); err != nil {
 		log.Println(err)
 		utils.InternalError(c)
 		return
 	}
 
-	if _, err := db.Collection("transactions").UpdateOne(context.Background(), bson.M{
-		"$and": []bson.M{
-			{"order_id": request.OrderID},
-			{"user_id": authUser.ID},
-		},
-	}, bson.M{
-		"$set": bson.M{
-			"payment_status":     models.RejectedStatus,
-			"payment_completion": false,
-		},
-	}); err != nil {
-		utils.BadBinding(c)
+	cursor, err = db.Collection("crypto").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &crypto); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
 		return
 	}
 
-	models.Notification(c, authUser.ID, "Invoice", "Payments cancelled with #"+transction.OrderID)
+	// payPalAll := make([]models.PayPal, 0)
+	// payPalAll = append(payPalAll, payPal)
+
+	// applePlayAll := make([]models.ApplePlay, 0)
+	// applePlayAll = append(applePlayAll, applePlay)
+
+	// googlePlayAll := make([]models.GooglePlay, 0)
+	// googlePlayAll = append(googlePlayAll, googlePlay)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+		"data": map[string]any{
+			"crypto":     crypto,
+			"debit_card": debitCard,
+			// "paypal":      payPalAll,
+			// "apple_play":  applePlayAll,
+			// "google_play": googlePlayAll,
+		},
+	})
+}
+
+func UserDeliveryMethods(c *gin.Context) {
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	var deliveryMethods []models.UserDeliveryMethods
+	cursor, err := db.Collection("delivery_methods").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &deliveryMethods); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	var finalDeliveryMethods []models.UserDeliveryMethods
+	for _, deliveryMethod := range deliveryMethods {
+		if !deliveryMethod.Disable {
+			finalDeliveryMethods = append(finalDeliveryMethods, deliveryMethod)
+		}
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "done",
+		"data":    finalDeliveryMethods,
 	})
 }

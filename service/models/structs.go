@@ -359,6 +359,7 @@ type Transaction struct {
 	PaymentStatus     UserStatus           `bson:"payment_status" json:"payment_status"`
 	IsDebit           bool                 `bson:"is_debit" json:"is_debit"`
 	ExternalData      map[string]string    `bson:"external_data" json:"external_data"`
+	MetatraderID      string               `bson:"metatrader_id" json:"metatrader_id"`
 }
 
 type RequestSetDefineUser struct {
@@ -504,7 +505,7 @@ type RequestSetDeliveryMethod struct {
 }
 
 type RequestSetCancelTrade struct {
-	Ticket int64 `json:"ticket_id"`
+	Ticket string `json:"ticket_id"`
 }
 
 type RequestSetFANDQ struct {
@@ -514,25 +515,25 @@ type RequestSetFANDQ struct {
 }
 
 type PaymentCallBack struct {
-	PaymentID          int64       `json:"payment_id"`
-	ParentPaymentID    int64       `json:"parent_payment_id"`
-	InvoiceID          interface{} `json:"invoice_id"`
-	PaymentStatus      string      `json:"payment_status"`
-	PayAddress         string      `json:"pay_address"`
-	PayinExtraID       interface{} `json:"payin_extra_id"`
-	PriceAmount        float64     `json:"price_amount"`
-	PriceCurrency      string      `json:"price_currency"`
-	PayAmount          float64     `json:"pay_amount"`
-	ActuallyPaid       float64     `json:"actually_paid"`
-	ActuallyPaidAtFiat float64     `json:"actually_paid_at_fiat"`
-	PayCurrency        string      `json:"pay_currency"`
-	OrderID            interface{} `json:"order_id"`
-	OrderDescription   interface{} `json:"order_description"`
-	PurchaseID         string      `json:"purchase_id"`
-	OutcomeAmount      float64     `json:"outcome_amount"`
-	OutcomeCurrency    string      `json:"outcome_currency"`
-	PaymentExtraIDs    interface{} `json:"payment_extra_ids"`
-	Fee                Fee         `json:"fee"`
+	PaymentID          int64            `json:"payment_id"`
+	ParentPaymentID    int64            `json:"parent_payment_id"`
+	InvoiceID          interface{}      `json:"invoice_id"`
+	PaymentStatus      NowPaymentStatus `json:"payment_status"`
+	PayAddress         string           `json:"pay_address"`
+	PayinExtraID       interface{}      `json:"payin_extra_id"`
+	PriceAmount        float64          `json:"price_amount"`
+	PriceCurrency      string           `json:"price_currency"`
+	PayAmount          float64          `json:"pay_amount"`
+	ActuallyPaid       float64          `json:"actually_paid"`
+	ActuallyPaidAtFiat float64          `json:"actually_paid_at_fiat"`
+	PayCurrency        string           `json:"pay_currency"`
+	OrderID            interface{}      `json:"order_id"`
+	OrderDescription   interface{}      `json:"order_description"`
+	PurchaseID         string           `json:"purchase_id"`
+	OutcomeAmount      float64          `json:"outcome_amount"`
+	OutcomeCurrency    string           `json:"outcome_currency"`
+	PaymentExtraIDs    interface{}      `json:"payment_extra_ids"`
+	Fee                Fee              `json:"fee"`
 }
 
 type Fee struct {
@@ -550,4 +551,39 @@ type TwilioVerifyVerification struct {
 type TwilioVerifyVerificationCheck struct {
 	To   string `json:"to"`
 	Code string `json:"code"`
+}
+
+type UserDeliveryMethods struct {
+	ID            primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Description   string             `bson:"description,omitempty" json:"description"`
+	WhoDefine     string             `bson:"who_define" json:"-"`
+	CreatedAt     time.Time          `bson:"created_at" json:"-"`
+	Title         string             `bson:"title,omitempty" json:"title"`
+	Fee           float64            `bson:"fee" json:"fee"`
+	SubTitle      string             `bson:"sub_title" json:"sub_title"`
+	EstimatedTime string             `bson:"estimated_time,omitempty" json:"estimated_time"`
+	TimeProvided  bool               `bson:"time_provided,omitempty" json:"time_provided"`
+	Disable       bool               `bson:"disable" json:"-"`
+}
+
+type UserCrypto struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Coin      string             `bson:"coin" json:"coin"`
+	Vat       float64            `bson:"vat" json:"vat"`
+	Wallet    string             `bson:"wallet" json:"-"`
+	WhoDefine string             `bson:"who_define" json:"-"`
+	Address   string             `bson:"address" json:"-"`
+	Access    string             `bson:"access" json:"-"`
+	Token     string             `bson:"token" json:"-"`
+	Disable   bool               `bson:"disable" json:"-"`
+}
+
+type UserDebitCard struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	Vat       float64            `bson:"vat" json:"vat"`
+	Address   string             `bson:"address" json:"-"`
+	Access    string             `bson:"access" json:"-"`
+	Token     string             `bson:"token" json:"-"`
+	WhoDefine string             `bson:"who_define" json:"-"`
+	Disable   bool               `bson:"disable" json:"-"`
 }

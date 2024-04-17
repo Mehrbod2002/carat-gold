@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	firebase "firebase.google.com/go"
-	"github.com/gin-gonic/gin"
 	"google.golang.org/api/option"
 )
 
@@ -28,6 +27,6 @@ func InitializeApp() error {
 	return nil
 }
 
-func GetApp(c *gin.Context) *firebase.App {
+func GetApp() *firebase.App {
 	return App
 }

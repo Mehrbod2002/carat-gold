@@ -34,6 +34,15 @@ func InitializeDB() error {
 	return nil
 }
 
+func GetDBServer() (*mongo.Database, error) {
+	err := Client.Ping(context.Background(), nil)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return Client.Database(os.Getenv("DB_NAME")), nil
+}
+
 func GetDB(c *gin.Context) (*mongo.Database, error) {
 	err := Client.Ping(context.Background(), nil)
 	if err != nil {

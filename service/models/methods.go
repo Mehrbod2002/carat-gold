@@ -30,6 +30,7 @@ import (
 	openapi "github.com/twilio/twilio-go/rest/verify/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoice, bool, string) {
@@ -51,8 +52,8 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
 		OrderID:          orderID,
 		OrderDescription: "Fasih Products",
-		SuccessURL:       "https://success.com",
-		CancelURL:        "https://failed.com",
+		SuccessURL:       os.Getenv("SUCCESS_URL"),
+		CancelURL:        os.Getenv("CANCEL_URL"),
 	}
 
 	payloadBytes, err := json.Marshal(payloadData)
@@ -110,79 +111,79 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 	return &paymentResponse, true, ""
 }
 
-func CreateCrypto(c *gin.Context, price float64, orderID string, secret string) (*PaymentResponse, error) {
-	url := "https://api.nowpayments.io/v1/payment"
+// func CreateCrypto(c *gin.Context, price float64, orderID string, secret string) (*PaymentResponse, error) {
+// 	url := "https://api.nowpayments.io/v1/payment"
 
-	payloadData := struct {
-		PriceAmount      float64 `json:"price_amount"`
-		PriceCurrency    string  `json:"price_currency"`
-		PayCurrency      string  `json:"pay_currency"`
-		IPNCallbackURL   string  `json:"ipn_callback_url"`
-		OrderID          string  `json:"order_id"`
-		OrderDescription string  `json:"order_description"`
-	}{
-		PriceAmount:      price,
-		PriceCurrency:    "usd",
-		PayCurrency:      "usdt",
-		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
-		OrderID:          orderID,
-		OrderDescription: "Fasih Products",
-	}
+// 	payloadData := struct {
+// 		PriceAmount      float64 `json:"price_amount"`
+// 		PriceCurrency    string  `json:"price_currency"`
+// 		PayCurrency      string  `json:"pay_currency"`
+// 		IPNCallbackURL   string  `json:"ipn_callback_url"`
+// 		OrderID          string  `json:"order_id"`
+// 		OrderDescription string  `json:"order_description"`
+// 	}{
+// 		PriceAmount:      price,
+// 		PriceCurrency:    "usd",
+// 		PayCurrency:      "usdt",
+// 		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
+// 		OrderID:          orderID,
+// 		OrderDescription: "Fasih Products",
+// 	}
 
-	payloadBytes, err := json.Marshal(payloadData)
-	if err != nil {
-		return nil, err
-	}
+// 	payloadBytes, err := json.Marshal(payloadData)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		return nil, err
-	}
+// 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	req.Header.Set("x-api-key", secret)
-	req.Header.Set("Content-Type", "application/json")
+// 	req.Header.Set("x-api-key", secret)
+// 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+// 	client := &http.Client{}
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer resp.Body.Close()
 
-	if resp.StatusCode != 201 {
-		var serialized map[string]interface{}
-		response, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create url")
-		}
+// 	if resp.StatusCode != 201 {
+// 		var serialized map[string]interface{}
+// 		response, err := io.ReadAll(resp.Body)
+// 		if err != nil {
+// 			return nil, fmt.Errorf("failed to create url")
+// 		}
 
-		err = json.Unmarshal(response, &serialized)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create url: %v", err)
-		}
+// 		err = json.Unmarshal(response, &serialized)
+// 		if err != nil {
+// 			return nil, fmt.Errorf("failed to create url: %v", err)
+// 		}
 
-		if message, ok := serialized["message"].(string); ok {
-			return nil, fmt.Errorf(message)
-		}
+// 		if message, ok := serialized["message"].(string); ok {
+// 			return nil, fmt.Errorf(message)
+// 		}
 
-		return nil, fmt.Errorf("failed to create url")
-	}
+// 		return nil, fmt.Errorf("failed to create url")
+// 	}
 
-	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+// 	buf := new(bytes.Buffer)
+// 	_, err = buf.ReadFrom(resp.Body)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	var paymentResponse PaymentResponse
-	err = json.Unmarshal(buf.Bytes(), &paymentResponse)
+// 	var paymentResponse PaymentResponse
+// 	err = json.Unmarshal(buf.Bytes(), &paymentResponse)
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return &paymentResponse, nil
-}
+// 	return &paymentResponse, nil
+// }
 
 func CreateQr(payment string) (*string, error) {
 	qrCode, err := qrcode.Encode(string(payment), qrcode.Medium, 256)
@@ -194,21 +195,20 @@ func CreateQr(payment string) (*string, error) {
 	return &qrBase64, nil
 }
 
-func Notification(c *gin.Context, userID primitive.ObjectID, title string, notification string) error {
-	app := utils.GetApp(c)
+func Notification(userID primitive.ObjectID, title string, notification string) error {
+	app := utils.GetApp()
 
-	db, err := utils.GetDB(c)
+	db, err := utils.GetDBServer()
 	if err != nil {
 		return err
 	}
 
 	var user User
-	exist := db.Collection("users").FindOne(context.Background(), bson.M{"$and": []bson.M{
-		{"_id": userID},
-	}}).Decode(&user)
+	exist := db.Collection("users").FindOne(context.Background(), bson.M{
+		"_id": userID,
+	}).Decode(&user)
 	if exist != nil {
 		log.Println(exist)
-		utils.InternalError(c)
 		return exist
 	}
 
@@ -761,14 +761,6 @@ func CreateOrder(order *RequestSetTrade) (string, string) {
 	return requestID, orderStr
 }
 
-func CancelOrder(order *RequestSetCancelTrade) (string, string) {
-	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())[1:]
-	ticket := fmt.Sprintf("%d", order.Ticket)
-
-	orderStr := requestID + "|CLOSE_TRADE|" + "|" + ticket
-	return requestID, orderStr
-}
-
 func GetCurrentOrder() (string, string) {
 	requestID := fmt.Sprintf("%d", utils.GenerateRandomCode())[1:]
 
@@ -886,8 +878,89 @@ func HandleIPN(c *gin.Context) {
 		return
 	}
 
-	// payment.orderid
+	if payment.PaymentStatus == PaymentFinished {
+		valid := Pay(payment.OrderID)
+		if !valid {
+			user := GetUserByPayment(payment.OrderID)
+			if user != nil {
+				Notification(user.ID, "Invoice", "Payments cancelled #"+payment.OrderID.(string))
+			}
+		}
+	} else if payment.PaymentStatus == PaymentConfirming {
+		transaction := GetTransaction(payment.OrderID)
+		if transaction != nil {
+			if !transaction.IsDebit {
+				mID, valid := utils.AutoOrder(transaction.TotalPrice)
+				if valid {
+					StoreMetatraderID(transaction.OrderID, fmt.Sprintf("%d", mID))
+				}
+			}
+		}
+	} else if payment.PaymentStatus == PaymentFailed ||
+		payment.PaymentStatus == PaymentRefunded ||
+		payment.PaymentStatus == PaymentPartiallyPaid ||
+		payment.PaymentStatus == PaymentExpired {
+		valid, isDebit := Cancel(payment.OrderID)
+		if !valid {
+			user := GetUserByPayment(payment.OrderID)
+			if user != nil {
+				Notification(user.ID, "Invoice", "Your invoice is cancelled . Please contact supports for invoice #"+payment.OrderID.(string))
+			}
+		} else {
+			if !isDebit {
+				transaction := GetTransaction(payment.OrderID)
+				if transaction != nil {
+					payload := map[string]interface{}{
+						"ticket_id": transaction.MetatraderID,
+					}
+					utils.PostRequest(payload, "cancel_order")
+				}
+			}
+		}
+	}
+}
 
+func StoreMetatraderID(orderIDInterface interface{}, metatraderID string) {
+	orderID, valid := orderIDInterface.(string)
+	if !valid {
+		return
+	}
+
+	db, err := utils.GetDBServer()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if _, err = db.Collection("transactions").UpdateOne(context.Background(), bson.M{
+		"order_id": orderID,
+	}, bson.M{
+		"metatrader_id": metatraderID,
+	}); err != nil {
+		return
+	}
+}
+
+func GetTransaction(orderIDInterface interface{}) *Transaction {
+	orderID, valid := orderIDInterface.(string)
+	if !valid {
+		return nil
+	}
+
+	db, err := utils.GetDBServer()
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	var transaction Transaction
+	if err = db.Collection("transactions").FindOne(context.Background(), bson.M{
+		"order_id": orderID,
+	}).Decode(&transaction); err != nil && err != mongo.ErrNoDocuments {
+		return nil
+	}
+
+	return &transaction
 }
 
 func VerifyIPN(signature string) bool {
@@ -949,4 +1022,136 @@ func Sendotp(mobileNumber string) (bool, string) {
 	}
 
 	return true, ""
+}
+
+func GetUserByPayment(orderIDInterface interface{}) *User {
+	orderID, valid := orderIDInterface.(string)
+	if !valid {
+		return nil
+	}
+
+	db, err := utils.GetDBServer()
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	var transaction Transaction
+	if err = db.Collection("transactions").FindOne(context.Background(), bson.M{
+		"order_id": orderID,
+	}).Decode(&transaction); err != nil && err != mongo.ErrNoDocuments {
+		return nil
+	}
+
+	var user User
+	if err = db.Collection("transactions").FindOne(context.Background(), bson.M{
+		"_id": transaction.UserID,
+	}).Decode(&transaction); err != nil && err != mongo.ErrNoDocuments {
+		return nil
+	}
+
+	return &user
+}
+
+func Pay(orderIDInterface interface{}) bool {
+	orderID, valid := orderIDInterface.(string)
+	if !valid {
+		return false
+	}
+
+	db, err := utils.GetDBServer()
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	var transaction Transaction
+	if err = db.Collection("transactions").FindOne(context.Background(), bson.M{
+		"order_id": orderID,
+	}).Decode(&transaction); err != nil && err != mongo.ErrNoDocuments {
+		return false
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"$push": bson.M{
+				"wallet.purchased": Purchased{
+					PaymentStatus:  ApprovedStatus,
+					PaymentMethd:   transaction.PaymentMethod,
+					CreatePayment:  time.Now(),
+					CreatedAt:      transaction.CreatedAt,
+					StatusDelivery: transaction.StatusDelivery,
+					Product:        transaction.ProductIDs,
+					OrderID:        transaction.OrderID,
+				},
+			},
+		},
+	}
+
+	if transaction.IsDebit {
+		if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
+			"_id": transaction.UserID,
+		}, bson.M{"$set": bson.M{
+			"$inc": bson.M{
+				"wallet.balance": transaction.TotalPrice - transaction.Vat,
+			},
+		}}); err != nil {
+			return false
+		}
+	}
+
+	if _, err := db.Collection("transactions").UpdateOne(context.Background(), bson.M{
+		"order_id": orderID,
+	}, bson.M{
+		"$set": bson.M{
+			"payment_status":     ApprovedStatus,
+			"payment_completion": true,
+		},
+	}); err != nil {
+		return false
+	}
+
+	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
+		"_id": transaction.UserID,
+	}, update); err != nil {
+		return false
+	}
+
+	Notification(transaction.UserID, "Invoice", "Payments set with #"+transaction.OrderID)
+	return true
+}
+
+func Cancel(orderIDInterface interface{}) (bool, bool) {
+	orderID, valid := orderIDInterface.(string)
+	if !valid {
+		return false, false
+	}
+
+	db, err := utils.GetDBServer()
+	if err != nil {
+		log.Println(err)
+		return false, false
+	}
+
+	var transaction Transaction
+	if err = db.Collection("transactions").FindOne(context.Background(), bson.M{
+		"order_id": orderID,
+	}).Decode(&transaction); err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		return false, false
+	}
+
+	if _, err := db.Collection("transactions").UpdateOne(context.Background(), bson.M{
+		"order_id": orderID,
+	}, bson.M{
+		"$set": bson.M{
+			"payment_status":     RejectedStatus,
+			"payment_completion": false,
+		},
+	}); err != nil {
+		return false, transaction.IsDebit
+	}
+
+	Notification(transaction.ID, "Invoice", "Payments cancelled with #"+transaction.OrderID)
+	return true, transaction.IsDebit
 }

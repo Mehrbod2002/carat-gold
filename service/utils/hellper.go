@@ -217,7 +217,7 @@ func UploadPhoto(c *gin.Context, id string, photo string) bool {
 	return true
 }
 
-func AutoOrder(c *gin.Context, price float64) bool {
+func AutoOrder(price float64) (*uint64, bool) {
 	volume := price - (price / 10)
 	payload := map[string]interface{}{
 		"comment":   "User Payment Stream",
@@ -232,8 +232,13 @@ func AutoOrder(c *gin.Context, price float64) bool {
 	result, valid := PostRequest(payload, "send_order")
 
 	if !valid || result["status"] == false {
-		return false
+		return nil, false
 	}
 
-	return true
+	orderID, ok := result["data"].(uint64)
+	if !ok {
+		return nil, false
+	}
+
+	return &orderID, true
 }

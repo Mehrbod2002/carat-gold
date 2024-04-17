@@ -708,52 +708,7 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/UserDebitCard'
-  /get_single_transaction:
-    post:
-      summary: Retrieve a single transaction
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                  description: The ID of the transaction to retrieve
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: done
-                  data:
-                    $ref: '#/components/schemas/Transaction'
-        '404':
-          description: Transaction not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "Transaction not found"
-                  data:
-                    type: string
-                    example: "not_found"
-                    
+                          
   /user/delivery_methods:
     get:
         summary: Retrieve delivery methods

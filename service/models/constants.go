@@ -79,3 +79,12 @@ const (
 var AllActions = []Action{
 	ActionContent, ActionWrite, ActionReadOnly,
 }
+
+const (
+	PaymentFinished      NowPaymentStatus = "finished"
+	PaymentFailed        NowPaymentStatus = "failed"
+	PaymentRefunded      NowPaymentStatus = "refunded"
+	PaymentPartiallyPaid NowPaymentStatus = "partially_paid"
+	PaymentExpired       NowPaymentStatus = "expired"
+	PaymentConfirming    NowPaymentStatus = "confirming"
+)

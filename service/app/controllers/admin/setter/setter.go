@@ -1279,7 +1279,7 @@ func SendNotification(c *gin.Context) {
 	if request.All {
 		for _, u := range users {
 			if u.FcmToken != "" {
-				models.Notification(c, u.ID, request.Title, request.Text)
+				models.Notification(u.ID, request.Title, request.Text)
 			}
 		}
 	} else {
@@ -1291,7 +1291,7 @@ func SendNotification(c *gin.Context) {
 				}
 				if u.ID == userID {
 					if u.FcmToken != "" {
-						models.Notification(c, u.ID, request.Title, request.Text)
+						models.Notification(u.ID, request.Title, request.Text)
 					}
 				}
 			}
