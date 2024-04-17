@@ -26,4 +26,5 @@ jobs:
             go install
             go build
             pm2 restart carat-gold
+            pm2 start history/api.py --interpreter=python3 --name=api_history
 
