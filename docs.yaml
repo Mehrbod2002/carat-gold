@@ -488,50 +488,6 @@ paths:
                     type: string
                     example: "internal_error"
 
-  /user/cancel:
-    post:
-      summary: Cancel Order
-      description: Cancel an order.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CancelRequest'
-      responses:
-        '200':
-          description: Order canceled successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CancelResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "invalid request parameters"
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "internal server connection"
-
   /user/create_transaction:
     post:
       summary: Create Transaction
@@ -581,56 +537,7 @@ paths:
                   data:
                     type: string
                     example: "internal_error"
-  /user/pay:
-    post:
-      summary: Pay for Order
-      description: Pay for an order.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PaymentRequest'
-      responses:
-        '200':
-          description: Payment processed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaymentResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "invalid request parameters"
-                  data:
-                    type: string
-                    example: "invalid_parameters"
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "internal server connection"
-                  data:
-                    type: string
-                    example: "internal_error"
-
+ 
   /user/make_deposit:
     post:
       summary: Make Deposit
@@ -708,7 +615,7 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/UserDebitCard'
-  /get_single_transaction:
+  /user/get_single_transaction:
     post:
       summary: Retrieve a single transaction
       requestBody:
