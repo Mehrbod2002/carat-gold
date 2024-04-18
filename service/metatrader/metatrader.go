@@ -49,6 +49,9 @@ func handleConnection(conn net.Conn, dataChannel chan<- DataMeta, errors chan<- 
 	defer conn.Close()
 
 	decoder := json.NewDecoder(conn)
+
+	sentTimestamps := make(map[string]struct{})
+
 	for {
 		select {
 		case <-stop:
@@ -66,12 +69,11 @@ func handleConnection(conn net.Conn, dataChannel chan<- DataMeta, errors chan<- 
 				}
 			}
 
-			time.Sleep(time.Second * 1)
-			data.Time = fmt.Sprintf("%d", time.Now().UTC().Unix())
+			if _, ok := sentTimestamps[data.Time]; !ok {
+				data.Time = fmt.Sprintf("%d", time.Now().UTC().Unix())
+				dataChannel <- data
 
-			select {
-			case dataChannel <- data:
-			default:
+				sentTimestamps[data.Time] = struct{}{}
 			}
 		}
 	}
