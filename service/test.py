@@ -22,6 +22,6 @@ data = {
     'count': 1
 }
 
-data = requests.post("http://127.0.0.1:3000/api/public/get_history",json=data)
+data = requests.post("http://127.0.0.1:3000/history",json=data)
 
 print(data.json())

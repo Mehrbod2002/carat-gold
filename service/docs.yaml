@@ -488,49 +488,6 @@ paths:
                     type: string
                     example: "internal_error"
 
-  /user/cancel:
-    post:
-      summary: Cancel Order
-      description: Cancel an order.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CancelRequest'
-      responses:
-        '200':
-          description: Order canceled successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CancelResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "invalid request parameters"
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "internal server connection"
 
   /user/create_transaction:
     post:
@@ -581,56 +538,7 @@ paths:
                   data:
                     type: string
                     example: "internal_error"
-  /user/pay:
-    post:
-      summary: Pay for Order
-      description: Pay for an order.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PaymentRequest'
-      responses:
-        '200':
-          description: Payment processed successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaymentResponse'
-        '400':
-          description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "invalid request parameters"
-                  data:
-                    type: string
-                    example: "invalid_parameters"
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "internal server connection"
-                  data:
-                    type: string
-                    example: "internal_error"
-
+ 
   /user/make_deposit:
     post:
       summary: Make Deposit
@@ -708,7 +616,52 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/UserDebitCard'
-                          
+  /user/get_single_transaction:
+    post:
+      summary: Retrieve a single transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: The ID of the transaction to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: done
+                  data:
+                    $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Transaction not found"
+                  data:
+                    type: string
+                    example: "not_found"
+                    
   /user/delivery_methods:
     get:
         summary: Retrieve delivery methods
@@ -769,7 +722,60 @@ paths:
                     data:
                       type: string
                       example: "internal_error"
-
+  /history:
+    post:
+      summary: Get historical data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    symbol:
+                      type: string
+                      example: 'FX:XAUUSD'
+                    timeframe:
+                      type: string
+                      example: '1'
+                    until:
+                      type: integer
+                      example: 1713360757
+                    to:
+                      type: integer
+                      example: 1713378757
+                    count:
+                      type: integer
+                      example: 1
+                  required:
+                    - symbol
+                    - timeframe
+                    - until
+                    - to
+                    - count
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    i:
+                      type: integer
+                      example: 0
+                    v:
+                      type: array
+                      items:
+                        type: number
+                  required:
+                    - i
+                    - v
 components:
   schemas:
     UserCrypto:
