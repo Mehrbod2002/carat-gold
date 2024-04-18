@@ -26,6 +26,11 @@ jobs:
             go install
             go build
             pm2 restart carat-gold
-            pm2 delete api_history
+            cd metatrader
+            go install
+            go build
+            pm2 restart metatrader
+            cd ..
+            pm2 restart api_history
             pm2 start history/api.py --interpreter=python3 --name=api_history
 
