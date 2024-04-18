@@ -74,6 +74,8 @@ func handleConnection(conn net.Conn, dataChannel chan<- DataMeta, errors chan<- 
 				dataChannel <- data
 
 				sentTimestamps[data.Time] = struct{}{}
+
+				time.Sleep(100 * time.Millisecond)
 			}
 		}
 	}
