@@ -62,13 +62,16 @@ func handleConnection(conn net.Conn, dataChannel chan<- DataMeta, errors chan<- 
 					continue
 				} else {
 					errors <- err
-					continue
+					break
 				}
 			}
 
-			time.Sleep(time.Millisecond * 1)
 			data.Time = fmt.Sprintf("%d", time.Now().UTC().Unix())
-			dataChannel <- data
+
+			select {
+			case dataChannel <- data:
+			default:
+			}
 		}
 	}
 }
