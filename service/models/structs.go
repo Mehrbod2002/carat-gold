@@ -205,6 +205,11 @@ type Wallet struct {
 	Purchased  []Purchased        `bson:"purchased" json:"purchased"`
 }
 
+type Address struct {
+	Label   string `bson:"label" json:"label"`
+	Address string `bson:"address" json:"address"`
+}
+
 type User struct {
 	ID               primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	Avatar           string             `bson:"avatar" json:"avatar"`
@@ -214,7 +219,7 @@ type User struct {
 	Password         string             `bson:"password" json:"password"`
 	PhoneVerified    bool               `bson:"phone_verified" json:"phone_verified"`
 	OtpCode          *int               `bson:"otp_code" json:"otp_code"`
-	Address          string             `bson:"address" json:"address"`
+	Address          []Address          `bson:"address" json:"address"`
 	ResetToken       string             `bson:"reset_token" json:"reset_token"`
 	ResetTokenValid  time.Time          `bson:"reset_token_valid" json:"reset_token_valid"`
 	ChangePhone      bool               `bson:"change_phone" json:"change_phone"`
@@ -236,10 +241,10 @@ type User struct {
 }
 
 type RequestEdit struct {
-	Name    string  `json:"name"`
-	Address *string `json:"address"`
-	Email   *string `json:"email"`
-	Phone   string  `json:"phone"`
+	Name    string     `json:"name"`
+	Address *[]Address `json:"address"`
+	Email   *string    `json:"email"`
+	Phone   string     `json:"phone"`
 }
 
 type Permission struct {
@@ -374,7 +379,7 @@ type RequestSetDefineUser struct {
 	Status      *UserStatus `json:"status"`
 	Reason      *string     `json:"reason"`
 	Permissions *Permission `json:"permissions"`
-	Address     *string     `json:"address"`
+	Address     *[]Address  `json:"address"`
 }
 
 type LoginDataStep1 struct {

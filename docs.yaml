@@ -721,7 +721,60 @@ paths:
                     data:
                       type: string
                       example: "internal_error"
-
+  /history:
+    post:
+      summary: Get historical data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    symbol:
+                      type: string
+                      example: 'FX:XAUUSD'
+                    timeframe:
+                      type: string
+                      example: '1'
+                    until:
+                      type: integer
+                      example: 1713360757
+                    to:
+                      type: integer
+                      example: 1713378757
+                    count:
+                      type: integer
+                      example: 1
+                  required:
+                    - symbol
+                    - timeframe
+                    - until
+                    - to
+                    - count
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    i:
+                      type: integer
+                      example: 0
+                    v:
+                      type: array
+                      items:
+                        type: number
+                  required:
+                    - i
+                    - v
 components:
   schemas:
     UserCrypto:
@@ -876,21 +929,29 @@ components:
             key1: "value1"
             key2: "value2"
     RequestEdit:
-        type: object
-        properties:
-          name:
-            type: string
-          address:
-            type: string
-            nullable: true
-          email:
-            type: string
-            nullable: true
-          phone:
-            type: string
-        required:
-          - name
-          - phone
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        email:
+          type: string
+          nullable: truecd golang
+        phone:
+          type: string
+      required:
+        - name
+        - phone
+
+    Address:
+      type: object
+      properties:
+        label:
+          type: string
+        address:
+          type: string
+
 
     RegisterRequest:
       type: object
@@ -948,8 +1009,7 @@ components:
           type: integer
           example: 123456
         address:
-          type: string
-          example: "123 Main St, City, Country"
+          $ref: "#/components/schemas/Address"
         reset_token:
           type: string
           example: "reset_token_value"

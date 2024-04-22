@@ -275,10 +275,16 @@ func (req *RequestEdit) Validate(c *gin.Context) bool {
 		utils.Method(c, "invalid phone")
 		return false
 	}
-	if req.Address != nil && *req.Address != "" {
-		if len(*req.Address) > 100 || len(*req.Address) < 5 {
-			utils.Method(c, "invalid address ")
-			return false
+	if req.Address != nil && len(*req.Address) != 0 {
+		for _, address := range *req.Address {
+			if len(address.Address) > 100 || len(address.Address) < 5 {
+				utils.Method(c, "invalid address ")
+				return false
+			}
+			if len(address.Label) > 20 || len(address.Label) < 3 {
+				utils.Method(c, "invalid label ")
+				return false
+			}
 		}
 	}
 	return true
@@ -318,9 +324,18 @@ func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
 		utils.Method(c, "invalid reason length")
 		return false
 	}
-	if len(*req.Address) > 300 {
-		utils.Method(c, "invalid address length")
-		return false
+
+	if req.Address != nil && len(*req.Address) != 0 {
+		for _, address := range *req.Address {
+			if len(address.Address) > 300 {
+				utils.Method(c, "invalid address length")
+				return false
+			}
+			if len(address.Label) > 50 {
+				utils.Method(c, "invalid address label")
+				return false
+			}
+		}
 	}
 	return true
 }

@@ -691,7 +691,7 @@ func SetUser(c *gin.Context) {
 		PhoneVerified:    utils.DerefBoolPtr(request.PhoneVerify),
 		StatusString:     *request.Status,
 		Reason:           utils.DerefStringPtr(request.Reason),
-		Address:          utils.DerefStringPtr(request.Address),
+		Address:          *request.Address,
 	}
 
 	userID, valid := utils.ValidateID(*request.UserID, c)
@@ -951,6 +951,7 @@ func SetDefineUser(c *gin.Context) {
 	if *request.Status == models.ApprovedStatus {
 		UserVerified = true
 	}
+
 	if len(users) == 0 {
 		newUser := models.User{
 			Email:            *request.Email,

@@ -1,11 +1,13 @@
 from flask import Flask, jsonify, request
 from websocket import create_connection
+from flask_cors import CORS
 import json
 import random
 import string
 import re
 
 app = Flask(__name__)
+CORS(app, resources={r"/history": {"origins": "*"}})
 
 
 def generateSession():
