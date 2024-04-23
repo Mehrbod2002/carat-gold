@@ -934,10 +934,12 @@ components:
         name:
           type: string
         address:
-          $ref: '#/components/schemas/Address'
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
         email:
           type: string
-          nullable: truecd golang
+          nullable: true
         phone:
           type: string
       required:
@@ -1009,7 +1011,9 @@ components:
           type: integer
           example: 123456
         address:
-          $ref: "#/components/schemas/Address"
+          type: array
+          items:
+            $ref: "#/components/schemas/Address"
         reset_token:
           type: string
           example: "reset_token_value"
