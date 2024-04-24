@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: myapp
+  name: deployment
 spec:
   replicas: 5
   selector:
     matchLabels:
-      app: service
+      app: deployment
   template:
     metadata:
       labels:
-        app: service
+        app: deployment
     spec:
       containers:
-      - name: myapp
+      - name: deployment
         image: carat-gold
         resources:
           limits:
@@ -21,3 +21,63 @@ spec:
             cpu: "500m"
         ports:
         - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefullapp
+spec:
+  selector:
+    matchLabels:
+      app: mongodb
+  serviceName: mongodb-service
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:latest
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongodb-data
+          mountPath: /data/db
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-app
+spec:
+  selector:
+    app: deployment
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: LoadBalancer
