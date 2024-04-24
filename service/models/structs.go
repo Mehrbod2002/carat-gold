@@ -213,7 +213,8 @@ type Address struct {
 type User struct {
 	ID               primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
 	Avatar           string             `bson:"avatar" json:"avatar"`
-	Name             string             `bson:"name" json:"name"`
+	FirstName        string             `bson:"first_name" json:"first_name"`
+	LastName         string             `bson:"last_name" json:"last_name"`
 	Email            string             `bson:"email" json:"email"`
 	PhoneNumber      string             `bson:"phone" json:"phone"`
 	Password         string             `bson:"password" json:"password"`
@@ -241,10 +242,11 @@ type User struct {
 }
 
 type RequestEdit struct {
-	Name    string     `json:"name"`
-	Address *[]Address `json:"address"`
-	Email   *string    `json:"email"`
-	Phone   string     `json:"phone"`
+	FirstName string     `json:"first_name"`
+	LastName  string     `json:"last_name"`
+	Address   *[]Address `json:"address"`
+	Email     *string    `json:"email"`
+	Phone     string     `json:"phone"`
 }
 
 type Permission struct {
@@ -355,7 +357,7 @@ type Transaction struct {
 	UserID            primitive.ObjectID   `bson:"user_id" json:"user_id,omitempty"`
 	CreatedAt         time.Time            `bson:"created_at" json:"created_at"`
 	PaymentMethod     PaymentMethod        `bson:"payment_method" json:"payment_method"`
-	DeliveryMethod    PaymentMethod        `bson:"delivery_method" json:"delivery_method"`
+	DeliveryMethod    DeliveryMethod       `bson:"delivery_method" json:"delivery_method"`
 	PaymentCompletion PaymentCompletion    `bson:"payment_completion" json:"payment_completion"`
 	StatusDelivery    DeliveryStatus       `bson:"status_delivery" json:"status_delivery"`
 	Symbol            string               `bson:"symbol" json:"symbol"`
@@ -369,7 +371,8 @@ type Transaction struct {
 
 type RequestSetDefineUser struct {
 	UserID      *string     `json:"user_id"`
-	Name        *string     `json:"name"`
+	FirstName   *string     `json:"name"`
+	LastName    *string     `json:"last_name"`
 	Email       *string     `json:"email"`
 	Password    *string     `json:"password"`
 	Phone       *string     `json:"phone"`

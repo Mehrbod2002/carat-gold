@@ -377,10 +377,11 @@ func EditUser(c *gin.Context) {
 		"_id": authUser.ID,
 	}, bson.M{
 		"$set": bson.M{
-			"phone":   request.Phone,
-			"address": request.Address,
-			"name":    request.Name,
-			"email":   request.Email,
+			"phone":      request.Phone,
+			"address":    request.Address,
+			"first_name": utils.TrimAndLowerCase(request.FirstName),
+			"last_name":  utils.TrimAndLowerCase(request.LastName),
+			"email":      utils.TrimAndLowerCase(*request.Email),
 		},
 	}); err != nil {
 		utils.BadBinding(c)
@@ -608,13 +609,35 @@ func CreateTranscations(c *gin.Context) {
 		return
 	}
 
-	var crypto models.Crypto
-	err := db.Collection("crypto").FindOne(context.Background(), bson.M{}).Decode(&crypto)
+	var deliveryMethods []models.UserDeliveryMethods
+	cursor, err := db.Collection("delivery_methods").Find(context.Background(), bson.M{})
 	if err != nil && err != mongo.ErrNoDocuments {
 		log.Println(err)
 		utils.InternalError(c)
 		return
 	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &deliveryMethods); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	var crypto models.Crypto
+	err = db.Collection("crypto").FindOne(context.Background(), bson.M{}).Decode(&crypto)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	// if len(request.ProductIDs) == 0 {
+	// 	c.JSON(http.StatusBadRequest, gin.H{
+	// 		"success": false,
+	// 		"message": utils.Cap("invalid products"),
+	// 	})
+	// 	return
+	// }
 
 	if crypto.Disable {
 		c.JSON(http.StatusNotImplemented, gin.H{
@@ -625,7 +648,7 @@ func CreateTranscations(c *gin.Context) {
 	}
 
 	var products []models.Products
-	cursor, err := db.Collection("products").Find(context.Background(), bson.M{
+	cursor, err = db.Collection("products").Find(context.Background(), bson.M{
 		"_id": request,
 	})
 	if err != nil {
@@ -638,6 +661,21 @@ func CreateTranscations(c *gin.Context) {
 		utils.InternalError(c)
 		return
 	}
+
+	// accepted := false
+	// for _, i := range deliveryMethods {
+	// 	if request.DeliveryMethod == models.DeliveryMethod(i.Title) {
+	// 		accepted = true
+	// 	}
+	// }
+
+	// if !accepted {
+	// 	c.JSON(http.StatusNotFound, gin.H{
+	// 		"success": false,
+	// 		"message": utils.Cap("invalid delivery method"),
+	// 	})
+	// 	return
+	// }
 
 	for _, product := range products {
 		if product.Amount == 0 {

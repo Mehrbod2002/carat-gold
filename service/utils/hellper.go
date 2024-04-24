@@ -242,3 +242,7 @@ func AutoOrder(price float64) (*uint64, bool) {
 
 	return &orderID, true
 }
+
+func TrimAndLowerCase(data string) string {
+	return strings.ToLower(strings.TrimSpace(data))
+}

@@ -58,12 +58,14 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 
 	payloadBytes, err := json.Marshal(payloadData)
 	if err != nil {
-		return nil, false, ""
+		fmt.Println(err, 1)
+		return nil, false, "internal error"
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return nil, false, ""
+		fmt.Println(err, 2)
+		return nil, false, "internal error"
 	}
 
 	req.Header.Set("x-api-key", os.Getenv("CRYPTO_SECRET"))
@@ -72,7 +74,8 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, false, ""
+		fmt.Println(err, 3)
+		return nil, false, "internal error"
 	}
 	defer resp.Body.Close()
 
@@ -80,16 +83,19 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 		buf := new(bytes.Buffer)
 		_, err = buf.ReadFrom(resp.Body)
 		if err != nil {
-			return nil, false, ""
+			fmt.Println(err, 4)
+			return nil, false, "internal error"
 		}
 
 		var errMessage map[string]interface{}
 		err = json.Unmarshal(buf.Bytes(), &errMessage)
 		if err != nil {
-			return nil, false, ""
+			fmt.Println(err, 5)
+			return nil, false, "internal error"
 		}
 		errMsg, ok := errMessage["message"].(string)
 		if !ok {
+			fmt.Println(err, 6)
 			return nil, false, "internal error"
 		}
 		return nil, false, errMsg
@@ -98,14 +104,16 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 	buf := new(bytes.Buffer)
 	_, err = buf.ReadFrom(resp.Body)
 	if err != nil {
-		return nil, false, ""
+		fmt.Println(err, 7)
+		return nil, false, "internal error"
 	}
 
 	var paymentResponse Invoice
 	err = json.Unmarshal(buf.Bytes(), &paymentResponse)
 
 	if err != nil {
-		return nil, false, ""
+		fmt.Println(err, 8)
+		return nil, false, "internal error"
 	}
 
 	return &paymentResponse, true, ""
@@ -261,8 +269,12 @@ func IsValidPassowrd(password string, c *gin.Context) bool {
 }
 
 func (req *RequestEdit) Validate(c *gin.Context) bool {
-	if len(req.Name) > 20 || len(req.Name) < 4 {
-		utils.Method(c, "invalid name ")
+	if len(req.FirstName) > 20 || len(req.FirstName) < 4 {
+		utils.Method(c, "invalid first name")
+		return false
+	}
+	if len(req.LastName) > 20 || len(req.LastName) < 4 {
+		utils.Method(c, "invalid last name ")
 		return false
 	}
 	if req.Email != nil && *req.Email != "" {
@@ -291,9 +303,15 @@ func (req *RequestEdit) Validate(c *gin.Context) bool {
 }
 
 func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
-	if req.Name != nil {
-		if len(*req.Name) > 20 || len(*req.Name) < 2 {
-			utils.Method(c, "invalid name length")
+	if req.FirstName != nil {
+		if len(*req.FirstName) > 20 || len(*req.FirstName) < 2 {
+			utils.Method(c, "invalid first name length")
+			return false
+		}
+	}
+	if req.LastName != nil {
+		if len(*req.LastName) > 20 || len(*req.LastName) < 2 {
+			utils.Method(c, "invalid last name length")
 			return false
 		}
 	}

@@ -681,9 +681,10 @@ func SetUser(c *gin.Context) {
 	}
 
 	editedUser := models.User{
-		Email:            utils.DerefStringPtr(request.Email),
+		Email:            utils.TrimAndLowerCase(utils.DerefStringPtr(request.Email)),
 		PhoneNumber:      utils.DerefStringPtr(request.Phone),
-		Name:             utils.DerefStringPtr(request.Name),
+		FirstName:        utils.TrimAndLowerCase(utils.DerefStringPtr(request.FirstName)),
+		LastName:         utils.TrimAndLowerCase(utils.DerefStringPtr(request.LastName)),
 		UserVerified:     UserVerified,
 		Freeze:           utils.DerefBoolPtr(request.Freeze),
 		Permissions:      *request.Permissions,
@@ -954,9 +955,10 @@ func SetDefineUser(c *gin.Context) {
 
 	if len(users) == 0 {
 		newUser := models.User{
-			Email:            *request.Email,
+			Email:            utils.TrimAndLowerCase(*request.Email),
 			PhoneNumber:      *request.Phone,
-			Name:             *request.Name,
+			FirstName:        utils.TrimAndLowerCase(*request.FirstName),
+			LastName:         utils.TrimAndLowerCase(*request.LastName),
 			UserVerified:     UserVerified,
 			Password:         string(hashedPassword),
 			Freeze:           *request.Freeze,

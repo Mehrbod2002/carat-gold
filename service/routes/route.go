@@ -217,7 +217,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 			if data.Type == "send_notification" {
 				for _, onlineUser := range OnlineClients {
 					for _, user := range data.Names {
-						if onlineUser.User.Name == user {
+						if onlineUser.User.FirstName == user {
 							err := onlineUser.Conn.WriteJSON(models.NotificationAdmin{
 								Type:    "notification",
 								Subject: data.Subject,
