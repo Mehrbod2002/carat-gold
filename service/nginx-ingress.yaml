@@ -13,7 +13,7 @@ spec:
   - host: goldshop24.co
     http:
       paths:
-      - path: /
+      - path: /argo
         pathType: ImplementationSpecific
         backend:
           service:
