@@ -528,6 +528,7 @@ type PaymentCallBack struct {
 	InvoiceID          interface{}      `json:"invoice_id"`
 	PaymentStatus      NowPaymentStatus `json:"payment_status"`
 	PayAddress         string           `json:"pay_address"`
+	UpdatedAt          time.Time        `json:"updated_at"`
 	PayinExtraID       interface{}      `json:"payin_extra_id"`
 	PriceAmount        float64          `json:"price_amount"`
 	PriceCurrency      string           `json:"price_currency"`

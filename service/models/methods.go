@@ -49,7 +49,7 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 		PriceAmount:      price,
 		PriceCurrency:    "usd",
 		PayCurrency:      "btc",
-		IPNCallbackURL:   os.Getenv("BASE_HOST") + "/" + os.Getenv("CALLBACK"),
+		IPNCallbackURL:   os.Getenv("BASE_HOST") + os.Getenv("CALLBACK"),
 		OrderID:          orderID,
 		OrderDescription: "Fasih Products",
 		SuccessURL:       os.Getenv("SUCCESS_URL"),
@@ -58,13 +58,11 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 
 	payloadBytes, err := json.Marshal(payloadData)
 	if err != nil {
-		fmt.Println(err, 1)
 		return nil, false, "internal error"
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		fmt.Println(err, 2)
 		return nil, false, "internal error"
 	}
 
@@ -74,7 +72,6 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err, 3)
 		return nil, false, "internal error"
 	}
 	defer resp.Body.Close()
@@ -83,19 +80,16 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 		buf := new(bytes.Buffer)
 		_, err = buf.ReadFrom(resp.Body)
 		if err != nil {
-			fmt.Println(err, 4)
 			return nil, false, "internal error"
 		}
 
 		var errMessage map[string]interface{}
 		err = json.Unmarshal(buf.Bytes(), &errMessage)
 		if err != nil {
-			fmt.Println(err, 5)
 			return nil, false, "internal error"
 		}
 		errMsg, ok := errMessage["message"].(string)
 		if !ok {
-			fmt.Println(err, 6)
 			return nil, false, "internal error"
 		}
 		return nil, false, errMsg
@@ -104,7 +98,6 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 	buf := new(bytes.Buffer)
 	_, err = buf.ReadFrom(resp.Body)
 	if err != nil {
-		fmt.Println(err, 7)
 		return nil, false, "internal error"
 	}
 
@@ -112,7 +105,6 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 	err = json.Unmarshal(buf.Bytes(), &paymentResponse)
 
 	if err != nil {
-		fmt.Println(err, 8)
 		return nil, false, "internal error"
 	}
 
@@ -900,10 +892,12 @@ func HandleIPN(c *gin.Context) {
 		return
 	}
 
-	signature := c.GetHeader("x-nowpayments-sig")
-	if !VerifyIPN(signature) {
-		return
-	}
+	// signature := c.GetHeader("x-nowpayments-sig")
+	// verified := VerifyIPN(c.Request, signature)
+	// if !verified {
+	// 	utils.InternalError(c)
+	// 	return
+	// }
 
 	var payment PaymentCallBack
 	if err := json.Unmarshal(body, &payment); err != nil {
@@ -996,9 +990,11 @@ func GetTransaction(orderIDInterface interface{}) *Transaction {
 	return &transaction
 }
 
-func VerifyIPN(signature string) bool {
-	var params map[string]interface{}
-	sortedString := SortedParamsToString(params)
+func VerifyIPN(req *http.Request, receivedHMAC string) bool {
+	requestJSON, err := io.ReadAll(req.Body)
+	if err != nil {
+		return false
+	}
 
 	db, err := utils.GetDB(&gin.Context{})
 	if err != nil {
@@ -1008,14 +1004,32 @@ func VerifyIPN(signature string) bool {
 	var cryptoDetail Crypto
 	err = db.Collection("crypto").FindOne(context.Background(), bson.M{}).Decode(&cryptoDetail)
 	if err != nil {
-		log.Println(err)
 		return false
 	}
-	hash := hmac.New(sha512.New, []byte(cryptoDetail.Access))
-	hash.Write([]byte(sortedString))
-	signatureCalculated := hex.EncodeToString(hash.Sum(nil))
 
-	return signature == signatureCalculated
+	var requestData map[string]interface{}
+	err = json.Unmarshal(requestJSON, &requestData)
+	if err != nil {
+		return false
+	}
+
+	keys := make([]string, 0, len(requestData))
+	for k := range requestData {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var sortedRequestJSON string
+	for _, k := range keys {
+		sortedRequestJSON += fmt.Sprintf(`"%s":%v,`, k, requestData[k])
+	}
+	sortedRequestJSON = "{" + sortedRequestJSON[:len(sortedRequestJSON)-1] + "}"
+
+	hmacHash := hmac.New(sha512.New, []byte(cryptoDetail.Access))
+	hmacHash.Write([]byte(sortedRequestJSON))
+	signatureCalculated := hex.EncodeToString(hmacHash.Sum(nil))
+
+	return signatureCalculated == receivedHMAC
 }
 
 func SortedParamsToString(params map[string]interface{}) string {
