@@ -78,6 +78,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	userRoutes := apis.Group("/user")
 	userRoutes.Use(AuthMiddleware())
 	{
+		userRoutes.POST("/cancel", user.Cancel)
 		userRoutes.POST("/edit_user", user.EditUser)
 		userRoutes.GET("/me", user.GetUser)
 		userRoutes.POST("/update_currency", user.SetCurrency)
