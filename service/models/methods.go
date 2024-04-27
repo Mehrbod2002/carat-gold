@@ -886,6 +886,38 @@ func (meta *RequestMetaTraderAccounts) Validate(c *gin.Context) bool {
 	return true
 }
 
+func (p *PaymentCallBack) UnmarshalJSON(data []byte) error {
+	var tmp struct {
+		UpdatedAt          int64            `json:"updated_at"`
+		PaymentID          int64            `json:"payment_id"`
+		ParentPaymentID    int64            `json:"parent_payment_id"`
+		InvoiceID          interface{}      `json:"invoice_id"`
+		PaymentStatus      NowPaymentStatus `json:"payment_status"`
+		PayAddress         string           `json:"pay_address"`
+		PayinExtraID       interface{}      `json:"payin_extra_id"`
+		PriceAmount        float64          `json:"price_amount"`
+		PriceCurrency      string           `json:"price_currency"`
+		PayAmount          float64          `json:"pay_amount"`
+		ActuallyPaid       float64          `json:"actually_paid"`
+		ActuallyPaidAtFiat float64          `json:"actually_paid_at_fiat"`
+		PayCurrency        string           `json:"pay_currency"`
+		OrderID            interface{}      `json:"order_id"`
+		OrderDescription   interface{}      `json:"order_description"`
+		PurchaseID         string           `json:"purchase_id"`
+		OutcomeAmount      float64          `json:"outcome_amount"`
+		OutcomeCurrency    string           `json:"outcome_currency"`
+		PaymentExtraIDs    interface{}      `json:"payment_extra_ids"`
+		Fee                Fee              `json:"fee"`
+	}
+
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	p.UpdatedAt = time.Unix(tmp.UpdatedAt/1000, 0)
+	return nil
+}
+
 func HandleIPN(c *gin.Context) {
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -900,7 +932,7 @@ func HandleIPN(c *gin.Context) {
 	// }
 
 	var payment PaymentCallBack
-	if err := json.Unmarshal(body, &payment); err != nil {
+	if err := payment.UnmarshalJSON(body); err != nil {
 		utils.InternalError(c)
 		return
 	}
