@@ -19,12 +19,10 @@ token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjI5NDRmMWMwODE4ZWMwYm
 
 data = {
     "products_ids": [],
-    "create_at": datetime.datetime.utcnow().isoformat(),
     "payment_method": "CRYPTO",
-    "delivery_method": "Express",
-    "total_price": 100.50,
-    "vat": 10.20,
-    "is_debit": False,
+    "delivery_method": "Hold The Gold",
+    "total_price": 168333.84,
+    "status_deliery":"",
 }
 
 data = requests.post("http://127.0.0.1:3000/api/user/create_transaction", json=data, headers={
