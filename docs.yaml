@@ -587,6 +587,42 @@ paths:
                   data:
                     type: string
                     example: "internal_error"
+                    
+  /user/cancel:
+    post:
+      summary: "Cancel user order"
+      parameters:
+        - in: query
+          name: "body"
+          description: "Order ID to cancel"
+          required: true
+          schema:
+            type: "object"
+            properties:
+              order_id:
+                type: "string"
+                example: "123456"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Done"
+        '404':
+          description: transaction not found
+        '401':
+          description: Unauthorized, user not authenticated
+        '403':
+          description: Forbidden, user doesn't have permission
+        
   /user/payment_methods:
     get:
       summary: Retrieve payment methods

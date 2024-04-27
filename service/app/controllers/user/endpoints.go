@@ -40,7 +40,7 @@ func GetSingelTransaction(c *gin.Context) {
 	}
 
 	var transaction models.Transaction
-	err = db.Collection("transactions").FindOne(context.Background(), bson.M{"%and": []bson.M{
+	err = db.Collection("transactions").FindOne(context.Background(), bson.M{"$and": []bson.M{
 		{"user_id": authUser.ID},
 		{"_id": request.ID},
 	}}).Decode(&transaction)
@@ -829,7 +829,7 @@ func Cancel(c *gin.Context) {
 	}
 
 	var transaction models.Transaction
-	err = db.Collection("transactions").FindOne(context.Background(), bson.M{"%and": []bson.M{
+	err = db.Collection("transactions").FindOne(context.Background(), bson.M{"$and": []bson.M{
 		{"user_id": authUser.ID},
 		{"order_id": request.OrderID},
 	}}).Decode(&transaction)
@@ -847,15 +847,16 @@ func Cancel(c *gin.Context) {
 		return
 	}
 
-	transaction.PaymentStatus = models.RejectedStatus
-	err = db.Collection("transactions").FindOne(context.Background(), bson.M{"%and": []bson.M{
+	if _, err = db.Collection("transactions").UpdateOne(context.Background(), bson.M{"$and": []bson.M{
 		{"user_id": authUser.ID},
 		{"order_id": request.OrderID},
-	}}).Decode(&transaction)
-	if err != nil && err != mongo.ErrNoDocuments {
+	}}, bson.M{
+		"$set": bson.M{
+			"payment_status": models.RejectedStatus,
+		},
+	}); err != nil {
 		log.Println(err)
 		utils.InternalError(c)
-		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
