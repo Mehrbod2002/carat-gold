@@ -207,6 +207,9 @@ type Wallet struct {
 
 type Address struct {
 	Label   string `bson:"label" json:"label"`
+	Country string `bson:"country" json:"country"`
+	City    string `bson:"city" json:"city"`
+	Region  string `bson:"region" json:"region"`
 	Address string `bson:"address" json:"address"`
 }
 
@@ -382,7 +385,6 @@ type RequestSetDefineUser struct {
 	Status      *UserStatus `json:"status"`
 	Reason      *string     `json:"reason"`
 	Permissions *Permission `json:"permissions"`
-	Address     *[]Address  `json:"address"`
 }
 
 type LoginDataStep1 struct {

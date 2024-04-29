@@ -13,7 +13,7 @@ paths:
       summary: Get current user information
       description: Retrieve information about the currently authenticated user.
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
@@ -28,9 +28,9 @@ paths:
                     example: "Done"
                   data:
                     $ref: "#/components/schemas/User"
-        '401':
+        "401":
           description: Unauthorized, user not authenticated
-        '403':
+        "403":
           description: Forbidden, user doesn't have permission
 
   /auth/user/register:
@@ -44,7 +44,7 @@ paths:
             schema:
               $ref: "#/components/schemas/RegisterRequest"
       responses:
-        '200':
+        "200":
           description: User registered successfully
           content:
             application/json:
@@ -66,7 +66,7 @@ paths:
                       refresh_token:
                         type: string
                         example: "refresh_token_value_here"
-        '400':
+        "400":
           description: Bad request or invalid OTP
           content:
             application/json:
@@ -82,7 +82,7 @@ paths:
                   data:
                     type: string
                     example: "invalid_otp"
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -110,7 +110,7 @@ paths:
             schema:
               $ref: "#/components/schemas/SendOTP"
       responses:
-        '200':
+        "200":
           description: OTP sent successfully
           content:
             application/json:
@@ -126,7 +126,7 @@ paths:
                   data:
                     type: string
                     example: "otp_sent"
-        '400':
+        "400":
           description: Invalid request parameters
           content:
             application/json:
@@ -142,7 +142,7 @@ paths:
                   data:
                     type: string
                     example: "invalid_parameters"
-        '406':
+        "406":
           description: OTP freezed or not allowed to send SMS
           content:
             application/json:
@@ -158,7 +158,7 @@ paths:
                   data:
                     type: string
                     example: "otp_freezed_for_1_hour"
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -180,7 +180,7 @@ paths:
       summary: Get general data
       description: Retrieve general data including call center information.
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
@@ -202,7 +202,7 @@ paths:
       summary: Get products
       description: Retrieve a list of products.
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
@@ -224,7 +224,7 @@ paths:
       summary: Get frequently asked questions and answers
       description: Retrieve a list of frequently asked questions and their corresponding answers.
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
@@ -261,7 +261,7 @@ paths:
                   type: string
                   format: binary
       responses:
-        '401':
+        "401":
           description: User in processing or already verified
           content:
             application/json:
@@ -277,7 +277,7 @@ paths:
                   data:
                     type: string
                     example: "already_registered"
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -309,7 +309,7 @@ paths:
                   type: string
                   example: "sample_fcm_token"
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
@@ -336,7 +336,7 @@ paths:
                 refresh_token:
                   type: string
       responses:
-        '200':
+        "200":
           description: Token validated successfully
           content:
             application/json:
@@ -358,7 +358,7 @@ paths:
                       refresh_token:
                         type: string
                         example: "refresh_token_value_here"
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -383,9 +383,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RequestEdit'
+              $ref: "#/components/schemas/RequestEdit"
       responses:
-        '200':
+        "200":
           description: User information edited successfully
           content:
             application/json:
@@ -399,7 +399,7 @@ paths:
                     type: string
                     example: "User information edited successfully"
 
-        '400':
+        "400":
           description: Invalid request parameters
           content:
             application/json:
@@ -415,7 +415,7 @@ paths:
                   data:
                     type: string
                     example: "invalid_parameters"
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -437,7 +437,7 @@ paths:
       summary: Get Symbols
       description: Retrieve symbols.
       responses:
-        '200':
+        "200":
           description: Symbols retrieved successfully
           content:
             application/json:
@@ -445,7 +445,6 @@ paths:
                 type: object
                 properties:
                   success:
-
                     type: boolean
                     example: true
                   message:
@@ -454,8 +453,8 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Symbol'
-        '400':
+                      $ref: "#/components/schemas/Symbol"
+        "400":
           description: Invalid request parameters
           content:
             application/json:
@@ -471,7 +470,7 @@ paths:
                   data:
                     type: string
                     example: "invalid_parameters"
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -497,15 +496,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TransactionRequest'
+              $ref: "#/components/schemas/TransactionRequest"
       responses:
-        '201':
+        "201":
           description: Transaction created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepositResponse'
-        '400':
+                $ref: "#/components/schemas/DepositResponse"
+        "400":
           description: Invalid request parameters
           content:
             application/json:
@@ -521,7 +520,7 @@ paths:
                   data:
                     type: string
                     example: "invalid_parameters"
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -537,7 +536,7 @@ paths:
                   data:
                     type: string
                     example: "internal_error"
- 
+
   /user/make_deposit:
     post:
       summary: Make Deposit
@@ -547,15 +546,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DepositRequest'
+              $ref: "#/components/schemas/DepositRequest"
       responses:
-        '200':
+        "200":
           description: Deposit made successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepositResponse'
-        '400':
+                $ref: "#/components/schemas/DepositResponse"
+        "400":
           description: Invalid request parameters
           content:
             application/json:
@@ -571,7 +570,7 @@ paths:
                   data:
                     type: string
                     example: "invalid_parameters"
-        '500':
+        "500":
           description: Internal server error
           content:
             application/json:
@@ -591,7 +590,7 @@ paths:
     get:
       summary: Retrieve payment methods
       responses:
-        '200':
+        "200":
           description: Successful operation
           content:
             application/json:
@@ -610,11 +609,11 @@ paths:
                       crypto:
                         type: array
                         items:
-                          $ref: '#/components/schemas/UserCrypto'
+                          $ref: "#/components/schemas/UserCrypto"
                       debit_card:
                         type: array
                         items:
-                          $ref: '#/components/schemas/UserDebitCard'
+                          $ref: "#/components/schemas/UserDebitCard"
   /user/get_single_transaction:
     post:
       summary: Retrieve a single transaction
@@ -629,7 +628,7 @@ paths:
                   type: string
                   description: The ID of the transaction to retrieve
       responses:
-        '200':
+        "200":
           description: Successful operation
           content:
             application/json:
@@ -643,8 +642,8 @@ paths:
                     type: string
                     example: done
                   data:
-                    $ref: '#/components/schemas/Transaction'
-        '404':
+                    $ref: "#/components/schemas/Transaction"
+        "404":
           description: Transaction not found
           content:
             application/json:
@@ -660,67 +659,67 @@ paths:
                   data:
                     type: string
                     example: "not_found"
-                    
+
   /user/delivery_methods:
     get:
-        summary: Retrieve delivery methods
-        parameters:
-          - in: query
-            name: filter
-            schema:
-              type: string
-            description: Filter delivery methods based on a certain criteria
-        responses:
-          '200':
-            description: Successful operation
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    success:
-                      type: boolean
-                      example: true
-                    message:
-                      type: string
-                      example: done
-                    data:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/UserDeliveryMethods'
-          
-          '400':
-            description: Invalid request parameters
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    success:
-                      type: boolean
-                      example: false
-                    message:
-                      type: string
-                      example: "invalid request parameters"
-                    data:
-                      type: string
-                      example: "invalid_parameters"
-          '500':
-            description: Internal server error
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    success:
-                      type: boolean
-                      example: false
-                    message:
-                      type: string
-                      example: "internal server connection"
-                    data:
-                      type: string
-                      example: "internal_error"
+      summary: Retrieve delivery methods
+      parameters:
+        - in: query
+          name: filter
+          schema:
+            type: string
+          description: Filter delivery methods based on a certain criteria
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: done
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserDeliveryMethods"
+
+        "400":
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "invalid request parameters"
+                  data:
+                    type: string
+                    example: "invalid_parameters"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "internal server connection"
+                  data:
+                    type: string
+                    example: "internal_error"
   /history:
     post:
       summary: Get historical data
@@ -736,10 +735,10 @@ paths:
                   properties:
                     symbol:
                       type: string
-                      example: 'FX:XAUUSD'
+                      example: "FX:XAUUSD"
                     timeframe:
                       type: string
-                      example: '1'
+                      example: "1"
                     until:
                       type: integer
                       example: 1713360757
@@ -756,7 +755,7 @@ paths:
                     - to
                     - count
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
@@ -936,7 +935,7 @@ components:
         address:
           type: array
           items:
-            $ref: '#/components/schemas/Address'
+            $ref: "#/components/schemas/Address"
         email:
           type: string
           nullable: true
@@ -946,14 +945,19 @@ components:
         - name
         - phone
 
-    Address:
-      type: object
-      properties:
-        label:
-          type: string
-        address:
-          type: string
-
+      Address:
+        type: object
+        properties:
+          label:
+            type: string
+          country:
+            type: string
+          city:
+            type: string
+          region:
+            type: string
+          address:
+            type: string
 
     RegisterRequest:
       type: object
@@ -1119,7 +1123,7 @@ components:
         images:
           type: array
           items:
-            $ref: '#/components/schemas/Image'
+            $ref: "#/components/schemas/Image"
         created_at:
           type: string
           format: date-time
@@ -1147,7 +1151,7 @@ components:
           type: string
           example: "done"
         data:
-          $ref: '#/components/schemas/TransactionComponent'
+          $ref: "#/components/schemas/TransactionComponent"
     UserDeliveryMethods:
       type: object
       properties:

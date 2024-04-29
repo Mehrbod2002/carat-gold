@@ -692,7 +692,6 @@ func SetUser(c *gin.Context) {
 		PhoneVerified:    utils.DerefBoolPtr(request.PhoneVerify),
 		StatusString:     *request.Status,
 		Reason:           utils.DerefStringPtr(request.Reason),
-		Address:          *request.Address,
 	}
 
 	userID, valid := utils.ValidateID(*request.UserID, c)
@@ -968,7 +967,6 @@ func SetDefineUser(c *gin.Context) {
 			PhoneVerified:    *request.PhoneVerify,
 			StatusString:     *request.Status,
 			Reason:           *request.Reason,
-			Address:          *request.Address,
 			CreatedAt:        time.Now(),
 		}
 		_, err := db.Collection("users").InsertOne(context.Background(), newUser)

@@ -408,6 +408,14 @@ func GetUser(c *gin.Context) {
 		{"_id": authUser.ID},
 	}}).Decode(&user)
 	if exist != nil {
+		if exist == mongo.ErrNoDocuments {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": http.StatusUnauthorized,
+				"message": "unauthorized",
+				"data":    "unauthorized",
+			})
+			return
+		}
 		log.Println(exist)
 		utils.InternalError(c)
 		return

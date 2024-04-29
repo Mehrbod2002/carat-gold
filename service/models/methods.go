@@ -281,8 +281,20 @@ func (req *RequestEdit) Validate(c *gin.Context) bool {
 	}
 	if req.Address != nil && len(*req.Address) != 0 {
 		for _, address := range *req.Address {
-			if len(address.Address) > 100 || len(address.Address) < 5 {
-				utils.Method(c, "invalid address ")
+			if len(address.City) > 20 || len(address.City) == 0 {
+				utils.Method(c, "invalid city")
+				return false
+			}
+			if len(address.Country) > 20 || len(address.Country) == 0 {
+				utils.Method(c, "invalid country")
+				return false
+			}
+			if len(address.Region) > 20 || len(address.Region) == 0 {
+				utils.Method(c, "invalid region")
+				return false
+			}
+			if len(address.Address) > 300 || len(address.Address) == 0 {
+				utils.Method(c, "invalid address")
 				return false
 			}
 			if len(address.Label) > 20 || len(address.Label) < 3 {
@@ -335,18 +347,30 @@ func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
 		return false
 	}
 
-	if req.Address != nil && len(*req.Address) != 0 {
-		for _, address := range *req.Address {
-			if len(address.Address) > 300 {
-				utils.Method(c, "invalid address length")
-				return false
-			}
-			if len(address.Label) > 50 {
-				utils.Method(c, "invalid address label")
-				return false
-			}
-		}
-	}
+	// if req.Address != nil && len(*req.Address) != 0 {
+	// 	for _, address := range *req.Address {
+	// 		if len(address.City) > 20 || len(address.City) == 0 {
+	// 			utils.Method(c, "invalid city length")
+	// 			return false
+	// 		}
+	// 		if len(address.Country) > 20 || len(address.Country) == 0 {
+	// 			utils.Method(c, "invalid country length")
+	// 			return false
+	// 		}
+	// 		if len(address.Region) > 20 || len(address.Region) == 0 {
+	// 			utils.Method(c, "invalid region length")
+	// 			return false
+	// 		}
+	// 		if len(address.Address) > 300 || len(address.Address) == 0 {
+	// 			utils.Method(c, "invalid address length")
+	// 			return false
+	// 		}
+	// 		if len(address.Label) > 50 || len(address.Label) == 0 {
+	// 			utils.Method(c, "invalid address label")
+	// 			return false
+	// 		}
+	// 	}
+	// }
 	return true
 }
 
