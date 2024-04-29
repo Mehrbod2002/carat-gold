@@ -24,5 +24,5 @@ jobs:
             cd carat-gold/service && git pull origin main && go install && go build && pm2 restart carat-gold
             cd metatrader && go install && go build &&  pm2 restart metatrader && cd ..
             cd socket && go install && go build && pm2 start socket && cd ..
-            pm2 restart api_history && pm2 restart history/api.py --interpreter=python3 --name=api_history
+            pm2 restart api_history && pm2 save
 
