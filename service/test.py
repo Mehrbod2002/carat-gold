@@ -17,19 +17,19 @@ token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjI5NDRmMWMwODE4ZWMwYm
 #     "Authorization": token
 # }).json()
 
-data = {
-    "products_ids": [],
-    "payment_method": "CRYPTO",
-    "delivery_method": "Hold The Gold",
-    "total_price": 168333.84,
-    "status_deliery":"",
-}
+# data = {
+#     "products_ids": [],
+#     "payment_method": "CRYPTO",
+#     "delivery_method": "Hold The Gold",
+#     "total_price": 168333.84,
+#     "status_deliery":"",
+# }
 
-data = requests.post("http://127.0.0.1:3000/api/user/create_transaction", json=data, headers={
-    "Authorization": token
-})
+# data = requests.post("http://127.0.0.1:3000/api/user/create_transaction", json=data, headers={
+#     "Authorization": token
+# })
 
-print(data.json())
+# print(data.json())
 
 # print(data.json())
 # async def connect_to_websocket():
@@ -55,3 +55,18 @@ print(data.json())
 # data = requests.post("http://127.0.0.1:3000/history",json=data)
 
 # print(data.json())
+
+import requests
+
+url = "https://test.bitpay.com/tokens"
+
+payload = { "facade": "pos" }
+headers = {
+    "accept": "application/json",
+    "Content-Type": "application/json",
+    "X-Accept-Version": "2.0.0"
+}
+
+response = requests.post(url, json=payload, headers=headers)
+
+print(response.text)
