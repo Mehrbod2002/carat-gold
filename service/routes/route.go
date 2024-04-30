@@ -583,11 +583,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		token := session.Get("token")
 		tokenString := c.GetHeader("Authorization")
 		if token == nil && tokenString == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "unauthorized",
-				"data":    "unauthorized",
-			})
+			utils.Unauthorized(c)
 			c.Abort()
 			return
 		}
@@ -598,11 +594,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		jwtSecret := os.Getenv("SESSION_SECRET")
 		if jwtSecret == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "unauthorized",
-				"data":    "unauthorized",
-			})
+			utils.Unauthorized(c)
 			c.Abort()
 			return
 		}
@@ -612,11 +604,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		})
 
 		if err != nil || !parsedToken.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "unauthorized",
-				"data":    "unauthorized",
-			})
+			utils.Unauthorized(c)
 			c.Abort()
 			return
 		}
@@ -624,11 +612,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && claims["_id"] != nil {
 			userID, ok := claims["_id"].(string)
 			if !ok {
-				c.JSON(http.StatusUnauthorized, gin.H{
-					"success": false,
-					"message": "unauthorized",
-					"data":    "unauthorized",
-				})
+				utils.Unauthorized(c)
 				c.Abort()
 				return
 			}
@@ -636,11 +620,7 @@ func AuthMiddleware() gin.HandlerFunc {
 				c.Next()
 				return
 			}
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "unauthorized",
-				"data":    "unauthorized",
-			})
+			utils.Unauthorized(c)
 			c.Abort()
 			return
 		}
@@ -653,11 +633,7 @@ func WindowsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 		if models.SecretMetaTrader != tokenString {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": http.StatusUnauthorized,
-				"message": "unauthorized",
-				"data":    "unauthorized",
-			})
+			utils.Unauthorized(c)
 			c.Abort()
 			return
 		}
@@ -672,11 +648,7 @@ func AdminAuthMiddleware() gin.HandlerFunc {
 		token := session.Get("token_admins")
 		tokenString := c.GetHeader("Authorization")
 		if token == nil && tokenString == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": http.StatusUnauthorized,
-				"message": "unauthorized",
-				"data":    "unauthorized",
-			})
+			utils.Unauthorized(c)
 			c.Abort()
 			return
 		}
@@ -690,11 +662,7 @@ func AdminAuthMiddleware() gin.HandlerFunc {
 
 		jwtSecret := os.Getenv("SESSION_SECRET")
 		if jwtSecret == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "JWT secret not configured",
-				"data":    "unauthorized",
-			})
+			utils.Unauthorized(c)
 			c.Abort()
 			return
 		}
@@ -705,11 +673,7 @@ func AdminAuthMiddleware() gin.HandlerFunc {
 
 		if err != nil || !parsedToken.Valid {
 			log.Println(err)
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Invalid token",
-				"data":    "unauthorized",
-			})
+			utils.Unauthorized(c)
 			c.Abort()
 			return
 		}

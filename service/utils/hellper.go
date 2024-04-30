@@ -18,15 +18,23 @@ import (
 )
 
 func BadBinding(c *gin.Context) {
-	c.JSON(http.StatusBadRequest, gin.H{
+	c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 		"success": false,
-		"message": "invalid request parameters",
+		"message": Cap("invalid request parameters"),
 		"data":    "invalid_parameters",
 	})
 }
 
+func Unauthorized(c *gin.Context) {
+	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+		"success": false,
+		"message": Cap("unauthorized"),
+		"data":    "unauthorized",
+	})
+}
+
 func InternalErrorMsg(c *gin.Context, message string) {
-	c.JSON(http.StatusInternalServerError, gin.H{
+	c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 		"success": false,
 		"message": Cap(message),
 		"data":    "internal_error",
@@ -34,15 +42,15 @@ func InternalErrorMsg(c *gin.Context, message string) {
 }
 
 func InternalError(c *gin.Context) {
-	c.JSON(http.StatusInternalServerError, gin.H{
+	c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 		"success": false,
-		"message": "internal server connection",
+		"message": Cap("internal server connection"),
 		"data":    "internal_error",
 	})
 }
 
 func Method(c *gin.Context, message string) {
-	c.JSON(http.StatusBadRequest, gin.H{
+	c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 		"success": false,
 		"message": Cap(message),
 		"data":    "invalid_parameters",

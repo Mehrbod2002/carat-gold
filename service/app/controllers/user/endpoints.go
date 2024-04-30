@@ -407,11 +407,7 @@ func GetUser(c *gin.Context) {
 	}}).Decode(&user)
 	if exist != nil {
 		if exist == mongo.ErrNoDocuments {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": http.StatusUnauthorized,
-				"message": "unauthorized",
-				"data":    "unauthorized",
-			})
+			utils.Unauthorized(c)
 			return
 		}
 		log.Println(exist)
