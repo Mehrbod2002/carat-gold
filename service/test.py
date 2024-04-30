@@ -56,17 +56,19 @@ token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjI5NDRmMWMwODE4ZWMwYm
 
 # print(data.json())
 
-import requests
+from bitpay.client import Client
 
-url = "https://test.bitpay.com/tokens"
+# Initialize BitPay client with your API token
+bitpay = Client.create_pos_client(api_token='YOUR_API_TOKEN')
 
-payload = { "facade": "pos" }
-headers = {
-    "accept": "application/json",
-    "Content-Type": "application/json",
-    "X-Accept-Version": "2.0.0"
+# Create a payment invoice
+invoice_data = {
+    "price": 100,  # Amount in Tether
+    "currency": "USDT",
+    # Additional options can be added here, like "redirectURL" for redirection after payment
 }
+invoice = bitpay.create_invoice(invoice_data)
 
-response = requests.post(url, json=payload, headers=headers)
-
-print(response.text)
+# Extract QR code URL from the invoice
+qr_code_url = invoice['data']['url']
+print("QR Code URL:", qr_code_url)
