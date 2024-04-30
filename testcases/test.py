@@ -2,8 +2,8 @@ import asyncio
 import websockets
 
 async def connect_to_websocket():
-    # url = "wss://feed.caratgold/feed"
-    url = "http://127.0.0.1:3903/feed"
+    url = "wss://feed.caratgold/feed"
+    # url = "http://127.0.0.1:3903/feed"
     async with websockets.connect(url) as websocket:
         response = await websocket.recv()
         print(f"Received: {response}")
