@@ -1,12 +1,35 @@
-import asyncio
-import websockets
+import requests
+import json
+import websocket
 
-async def connect_to_websocket():
-    url = "wss://feed.caratgold/feed"
-    # url = "http://127.0.0.1:3903/feed"
-    async with websockets.connect(url) as websocket:
-        response = await websocket.recv()
-        print(f"Received: {response}")
+url = 'https://goldshop24.co/history'
+headers = {'Content-Type': 'application/json'}
 
-if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(connect_to_websocket())
+data = {
+    'symbol': 'FX:XAUUSD',
+    'timeframe': '1',
+    'until': 1714321363.0,
+    'to': 1714387995.0,
+    'count': 300
+}
+
+response = requests.post(url, headers=headers, data=json.dumps(data))
+
+print(response.json())
+# import asyncio
+# import websockets
+# import json
+
+# async def connect_to_server():
+#     async with websockets.connect(url) as websocket:
+#         while True:
+#             message = await websocket.recv()
+#             data = json.loads(message)
+#             if (data["symbol"] == "BTCUSD"):
+#                 print(data)
+
+# async def main():
+#     await connect_to_server()
+
+# if __name__ == "__main__":
+#     asyncio.run(main())

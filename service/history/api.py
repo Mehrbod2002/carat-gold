@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from websocket import create_connection
 from flask_cors import CORS
 import json
@@ -52,17 +52,17 @@ def sendMessage(ws, func, args):
 @app.route('/history', methods=['POST'])
 def get_data():
     data = request.get_json()
-    data["symbol"] = "FX:XAUUSD"
 
     try:
         if len(data["symbol"]) == 0 or len(data["symbol"]) == 50:
-            return jsonify({"status": False, "m": "invalid_parameters"})
-        if len(data["timeframe"]) == 0 or len(data["symbol"]) == 5:
-            return jsonify({"status": False, "m": "invalid_parameters"})
+            response = jsonify({"status": False, "m": "invalid_parameters"})
+            return make_response(response, 406)
         if data["count"] == 0 or data["to"] == 0 or data["until"] == 0:
-            return jsonify({"status": False, "m": "invalid_parameters"})
+            response = jsonify({"status": False, "m": "invalid_parameters"})
+            return make_response(response, 406)
     except KeyError:
-        return jsonify({"status": False, "m": "invalid_parameters"})
+        response = jsonify({"status": False, "m": "invalid_parameters"})
+        return make_response(response, 406)
 
     headers = json.dumps({
         'Origin': 'https://data.tradingview.com'
@@ -70,7 +70,6 @@ def get_data():
 
     ws = create_connection(
         'wss://data.tradingview.com/socket.io/websocket', headers=headers)
-
     session = generateSession()
     chart_session = generateChartSession()
 
@@ -101,19 +100,25 @@ def get_data():
                 if "error" in i:
                     err = json.loads(i)
                     if err["m"] == "critical_error":
-                        return jsonify({"status": False, "m": err["p"][1]})
+                        response = jsonify({"status": False, "m": err["p"][1]})
+                        return make_response(response, 500)
                     if err["m"] == "symbol_error":
-                        return jsonify({"status": False, "m": err["p"][2]})
+                        response = jsonify({"status": False, "m": err["p"][2]})
+                        return make_response(response, 500)
                     if err["m"] == "series_error":
-                        return jsonify({"status": False, "m": err["p"][3]})
+                        response = jsonify({"status": False, "m": err["p"][3]})
+                        return make_response(response, 500)
+
             if "timescale_update" in str(result):
                 for i in result.split("~m~"):
                     if "timescale_update" in i:
-                        data = json.loads(i)
-                        return jsonify(data['p'][1]['s1']["s"])
+                        loadData = json.loads(i)
+                        response = jsonify(loadData['p'][1]['s1']["s"])
+                        return make_response(response, 200)
         except Exception:
-            return jsonify({"status": False, "m": "internal_error"})
+            response = jsonify({"status": False, "m": "internal_error"})
+            return make_response(response, 500)
 
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
