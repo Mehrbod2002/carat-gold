@@ -7,6 +7,12 @@ var MetaTraderSocket *net.Conn
 var SecretMetaTrader = "MysticalDragon$7392&WhisperingWinds&SunsetHaven$AuroraBorealis"
 
 const (
+	CryptoType   SymbolType = "CRYPTO"
+	CurrencyType SymbolType = "CURRENCY"
+	StockType    SymbolType = "STOCK"
+)
+
+const (
 	ActionWrite    Action = "edit"
 	ActionReadOnly Action = "read"
 	ActionContent  Action = "media"
@@ -15,15 +21,6 @@ const (
 const (
 	TextType TypeMessage = "text"
 	FileType TypeMessage = "file"
-)
-
-const (
-	ForexType     SymbolType = "forex"
-	CommodityType SymbolType = "commodity"
-	IndexesType   SymbolType = "index"
-	CryptoType    SymbolType = "crypto"
-	StockType     SymbolType = "stock"
-	FiatType      SymbolType = "fiat"
 )
 
 const (

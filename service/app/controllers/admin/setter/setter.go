@@ -562,6 +562,13 @@ func SetSymbols(c *gin.Context) {
 		return
 	}
 
+	if request.Type != models.CryptoType &&
+		request.Type != models.StockType &&
+		request.Type != models.CurrencyType {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Bad type", "data": "bad_type"})
+		return
+	}
+
 	db, DBerr := utils.GetDB(c)
 	if DBerr != nil {
 		log.Println(DBerr)

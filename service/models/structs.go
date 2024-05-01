@@ -456,8 +456,9 @@ type OperationMetaTrader struct {
 }
 
 type RequestSetSymbol struct {
-	Name  string `json:"symbol_name"`
-	Image string `json:"image"`
+	Name  string     `json:"symbol_name"`
+	Image string     `json:"image"`
+	Type  SymbolType `json:"type"`
 }
 
 type RequestSetGeneralData struct {
