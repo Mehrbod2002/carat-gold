@@ -6,11 +6,11 @@ url = 'https://goldshop24.co/history'
 headers = {'Content-Type': 'application/json'}
 
 data = {
-    'symbol': 'FX:XAUUSD',
-    'timeframe': '1',
-    'until': 1714321363.0,
-    'to': 1714387995.0,
-    'count': 300
+  "symbol": "FX:XAUUSD",
+  "timeframe": "1",
+  "until": 1713360757,
+  "to": 1713378757,
+  "count": 1
 }
 
 response = requests.post(url, headers=headers, data=json.dumps(data))

@@ -19,7 +19,11 @@ import (
 )
 
 func GetSingelTransaction(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
 
 	var request struct {
 		ID string `json:"id"`
@@ -64,7 +68,11 @@ func GetSingelTransaction(c *gin.Context) {
 }
 
 func GetTransactions(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
 
 	db, err := utils.GetDB(c)
 	if err != nil {
@@ -228,6 +236,12 @@ func GetProducts(c *gin.Context) {
 }
 
 func GeneralData(c *gin.Context) {
+	_, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
+
 	db, err := utils.GetDB(c)
 	if err != nil {
 		log.Println(err)
@@ -258,7 +272,11 @@ func GeneralData(c *gin.Context) {
 }
 
 func SetCurrency(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
 
 	var request struct {
 		Name string `json:"currency_name"`
@@ -351,7 +369,11 @@ func ViewProducts(c *gin.Context) {
 }
 
 func EditUser(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
 	var request models.RequestEdit
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -360,7 +382,7 @@ func EditUser(c *gin.Context) {
 		return
 	}
 
-	valid := request.Validate(c)
+	valid = request.Validate(c)
 	if !valid {
 		return
 	}
@@ -393,7 +415,11 @@ func EditUser(c *gin.Context) {
 }
 
 func GetUser(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
 
 	db, DBerr := utils.GetDB(c)
 	if DBerr != nil {
@@ -423,7 +449,11 @@ func GetUser(c *gin.Context) {
 }
 
 func SendDocuments(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
 
 	db, DBerr := utils.GetDB(c)
 	if DBerr != nil {
@@ -488,7 +518,7 @@ func SendDocuments(c *gin.Context) {
 	}
 	frontBase64 := base64.StdEncoding.EncodeToString(frontData)
 	photoIDFront := primitive.NewObjectID()
-	valid := utils.UploadPhoto(c, photoIDFront.Hex(), frontBase64)
+	valid = utils.UploadPhoto(c, photoIDFront.Hex(), frontBase64)
 	if !valid {
 		return
 	}
@@ -551,7 +581,11 @@ func SendDocuments(c *gin.Context) {
 }
 
 func UpdateFcm(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
 
 	var request struct {
 		FcmToken string `json:"fcm_token"`
@@ -587,7 +621,11 @@ func UpdateFcm(c *gin.Context) {
 }
 
 func CreateTranscations(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
 
 	var request models.Transaction
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -633,13 +671,13 @@ func CreateTranscations(c *gin.Context) {
 		return
 	}
 
-	// if len(request.ProductIDs) == 0 {
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"success": false,
-	// 		"message": utils.Cap("invalid products"),
-	// 	})
-	// 	return
-	// }
+	if len(request.ProductIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": utils.Cap("invalid products"),
+		})
+		return
+	}
 
 	if crypto.Disable {
 		c.JSON(http.StatusNotImplemented, gin.H{
@@ -733,7 +771,11 @@ func CreateTranscations(c *gin.Context) {
 }
 
 func MakeDepositTransaction(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
 
 	var request struct {
 		PaymentMethod models.PaymentMethod `bson:"payment_method" json:"payment_method"`
@@ -812,7 +854,11 @@ func MakeDepositTransaction(c *gin.Context) {
 }
 
 func Cancel(c *gin.Context) {
-	authUser, _ := models.ValidateSession(c)
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
 
 	var request struct {
 		OrderID string `json:"order_id"`

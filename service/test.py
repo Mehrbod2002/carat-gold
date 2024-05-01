@@ -17,19 +17,19 @@ token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjI5NDRmMWMwODE4ZWMwYm
 #     "Authorization": token
 # }).json()
 
-# data = {
-#     "products_ids": [],
-#     "payment_method": "CRYPTO",
-#     "delivery_method": "Hold The Gold",
-#     "total_price": 168333.84,
-#     "status_deliery":"",
-# }
+data = {
+    # "products_ids": [],
+    # "payment_method": "CRYPTO",
+    # "delivery_method": "Hold The Gold",
+    # "total_price": 168333.84,
+    # "status_deliery":"",
+}
 
-# data = requests.post("http://127.0.0.1:3000/api/user/create_transaction", json=data, headers={
-#     "Authorization": token
-# })
+data = requests.get("https://goldshop24.co/api/user/general_data", json=data, headers={
+    "Authorization": token
+})
 
-# print(data.json())
+print(data.json())
 
 # print(data.json())
 # async def connect_to_websocket():
@@ -56,19 +56,19 @@ token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjI5NDRmMWMwODE4ZWMwYm
 
 # print(data.json())
 
-from bitpay.client import Client
+# from bitpay.client import Client
 
-# Initialize BitPay client with your API token
-bitpay = Client.create_pos_client(api_token='YOUR_API_TOKEN')
+# # Initialize BitPay client with your API token
+# bitpay = Client.create_pos_client(api_token='YOUR_API_TOKEN')
 
-# Create a payment invoice
-invoice_data = {
-    "price": 100,  # Amount in Tether
-    "currency": "USDT",
-    # Additional options can be added here, like "redirectURL" for redirection after payment
-}
-invoice = bitpay.create_invoice(invoice_data)
+# # Create a payment invoice
+# invoice_data = {
+#     "price": 100,  # Amount in Tether
+#     "currency": "USDT",
+#     # Additional options can be added here, like "redirectURL" for redirection after payment
+# }
+# invoice = bitpay.create_invoice(invoice_data)
 
-# Extract QR code URL from the invoice
-qr_code_url = invoice['data']['url']
-print("QR Code URL:", qr_code_url)
+# # Extract QR code URL from the invoice
+# qr_code_url = invoice['data']['url']
+# print("QR Code URL:", qr_code_url)

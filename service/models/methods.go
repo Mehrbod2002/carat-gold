@@ -374,6 +374,20 @@ func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
 	return true
 }
 
+func UserExists(c *gin.Context, id primitive.ObjectID) bool {
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return false
+	}
+	var currentUser User
+	err := db.Collection("users").
+		FindOne(context.Background(), bson.M{
+			"_id": id,
+		}).Decode(&currentUser)
+	return err == nil
+}
+
 func ErrInSocket(ws *websocket.Conn, user *User, message string) error {
 	err := ws.WriteJSON(Socket{
 		ResponseTo: *user,
@@ -447,6 +461,17 @@ func ValidateSession(c *gin.Context) (*User, bool) {
 					Email:     email,
 					CreatedAt: createdAt,
 				}
+				
+				exists := UserExists(c, userID)
+				if !exists {
+					session.Delete("token")
+					err = session.Save()
+					if err != nil {
+						log.Println(err)
+						return nil, false
+					}
+					return nil, false
+				}
 				return user, true
 			}
 			return nil, false
@@ -456,6 +481,7 @@ func ValidateSession(c *gin.Context) (*User, bool) {
 			if !ok {
 				return nil, false
 			}
+
 			if userID, err := primitive.ObjectIDFromHex(userID); err == nil {
 				createdStr := claims["created_at"].(string)
 				email := claims["email"].(string)
@@ -469,7 +495,18 @@ func ValidateSession(c *gin.Context) (*User, bool) {
 					Email:     email,
 					CreatedAt: createdAt,
 				}
-				return user, false
+
+				exists := UserExists(c, userID)
+				if !exists {
+					session.Delete("token")
+					err = session.Save()
+					if err != nil {
+						log.Println(err)
+						return nil, false
+					}
+					return nil, false
+				}
+				return user, true
 			}
 		}
 		return nil, false
