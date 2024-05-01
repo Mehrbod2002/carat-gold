@@ -32,6 +32,7 @@ var (
 
 func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	r := gin.Default()
+	r.MaxMultipartMemory = 8 << 20
 
 	store := cookie.NewStore([]byte("session-secret"))
 	store.Options(sessions.Options{

@@ -4,6 +4,7 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -568,52 +570,49 @@ func SetSymbols(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Bad type", "data": "bad_type"})
 		return
 	}
+	fmt.Println("etrd")
 
 	db, DBerr := utils.GetDB(c)
 	if DBerr != nil {
 		log.Println(DBerr)
 		return
 	}
+	fmt.Println("f")
 
 	var images []models.Image
 	photoID := primitive.NewObjectID()
 	valid := utils.UploadPhoto(c, photoID.Hex(), request.Image)
 	if !valid {
+		fmt.Println("14")
 		return
 	}
+	fmt.Println("e55")
 
 	images = append(images, models.Image{PhotoID: photoID})
-	var symbols []models.Symbol
-	cursor, err := db.Collection("symbols").Find(context.Background(),
-		bson.M{"name": request.Name})
-	if err != nil {
-		log.Println(err)
-		utils.InternalError(c)
-		return
-	}
-	defer cursor.Close(context.Background())
-
-	if err := cursor.All(context.Background(), &symbols); err != nil {
-		log.Println(err)
-		utils.InternalError(c)
-		return
-	}
-
-	if len(symbols) == 0 {
-		newSymbol := models.Symbol{
-			SymbolName: request.Name,
-			Images:     images,
-			CreatedAt:  time.Now(),
-		}
-		_, err := db.Collection("symbols").InsertOne(context.Background(), newSymbol)
-		if err != nil {
-			log.Println(err)
-			utils.InternalError(c)
+	var symbol models.Symbol
+	if err := db.Collection("symbols").FindOne(context.Background(),
+		bson.M{"name": request.Name}).Decode(&symbol); err != nil {
+		fmt.Println("e")
+		if err == mongo.ErrNoDocuments {
+			newSymbol := models.Symbol{
+				SymbolName: request.Name,
+				Images:     images,
+				CreatedAt:  time.Now(),
+				SymbolType: request.Type,
+			}
+			_, err := db.Collection("symbols").InsertOne(context.Background(), newSymbol)
+			if err != nil {
+				log.Println(err)
+				utils.InternalError(c)
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+		utils.InternalError(c)
 		return
 	}
+
 	c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "symbol already exsits"})
 }
 
