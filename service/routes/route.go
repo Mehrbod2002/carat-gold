@@ -45,7 +45,6 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 
 	r.Use(sessions.Sessions("token", store))
 	r.Static("/static", "./CDN")
-	r.POST(os.Getenv("CALLBACK"), models.HandleIPN)
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://0.0.0.0:3001", "http://localhost:3001", "http://127.0.0.1:5173", "https://admin.goldshop24.co", "https://goldshop24.co"},
 		AllowMethods:     []string{"PUT", "PATCH", "GET", "POST", "HEAD", "DELETE"},
