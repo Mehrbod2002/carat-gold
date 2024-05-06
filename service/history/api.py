@@ -120,5 +120,58 @@ def get_data():
             return make_response(response, 500)
 
 
+@app.route('/market_status', methods=['GET'])
+def get_status():
+    data = {"symbol": "FX:XAUUSD"}
+
+    headers = json.dumps({
+        'Origin': 'https://data.tradingview.com'
+    })
+
+    ws = create_connection(
+        'wss://data.tradingview.com/socket.io/websocket', headers=headers)
+    session = generateSession()
+    chart_session = generateChartSession()
+
+    sendMessage(ws, "set_auth_token", ["unauthorized_user_token"])
+    sendMessage(ws, "chart_create_session", [chart_session, ""])
+    sendMessage(ws, "quote_create_session", [session])
+    sendMessage(ws, "quote_set_fields", [session, "ch", "chp", "current_session", "description", "local_description", "language", "exchange", "fractional", "is_tradable",
+                "lp", "lp_time", "minmov", "minmove2", "original_name", "pricescale", "pro_name", "short_name", "type", "update_mode", "volume", "currency_code", "rchp", "rtc"])
+    sendMessage(ws, "resolve_symbol", [
+                chart_session, "symbol_1", "={\"symbol\":\""+data['symbol']+"\",\"adjustment\":\"splits\"}"])
+
+    while True:
+        try:
+            result = ws.recv()
+            pattern = re.compile("~m~\d+~m~~h~\d+$")
+            if pattern.match(result):
+                ws.recv()
+                ws.send(result)
+
+            for i in result.split("~m~"):
+                if "error" in i:
+                    err = json.loads(i)
+                    if err["m"] == "critical_error":
+                        response = jsonify({"status": False, "m": err["p"][1]})
+                        return make_response(response, 500)
+                    if err["m"] == "symbol_error":
+                        response = jsonify({"status": False, "m": err["p"][2]})
+                        return make_response(response, 500)
+                    if err["m"] == "series_error":
+                        response = jsonify({"status": False, "m": err["p"][3]})
+                        return make_response(response, 500)
+
+            if "symbol_resolved" in str(result):
+                for i in result.split("~m~"):
+                    if "symbol_resolved" in i:
+                        loadData = json.loads(i)
+                        response = jsonify(loadData['p'][2])
+                        return make_response(response, 200)
+        except Exception:
+            response = jsonify({"status": False, "m": "internal_error"})
+            return make_response(response, 500)
+
+
 if __name__ == '__main__':
     app.run(debug=True)

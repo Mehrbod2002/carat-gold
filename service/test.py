@@ -17,21 +17,21 @@ token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjI5NDRmMWMwODE4ZWMwYm
 #     "Authorization": token
 # }).json()
 
-data = {
-    # "products_ids": [],
-    # "payment_method": "CRYPTO",
-    # "delivery_method": "Hold The Gold",
-    # "total_price": 168333.84,
-    # "status_deliery":"",
-}
+# data = {
+#     # "products_ids": [],
+#     # "payment_method": "CRYPTO",
+#     # "delivery_method": "Hold The Gold",
+#     # "total_price": 168333.84,
+#     # "status_deliery":"",
+# }
 
-data = requests.get("https://goldshop24.co/api/user/general_data", json=data, headers={
-    "Authorization": token
-})
-
-print(data.json())
+# data = requests.get("https://goldshop24.co/api/user/general_data", json=data, headers={
+#     "Authorization": token
+# })
 
 # print(data.json())
+
+# # print(data.json())
 # async def connect_to_websocket():
 #     uri = "wss://goldshop24.co/feed"
 #     async with websockets.connect(uri) as websocket:
@@ -44,17 +44,37 @@ print(data.json())
 #                 break
 
 # # asyncio.get_event_loop().run_until_complete(connect_to_websocket())
-# data = {
-#     'symbol': 'FX:XAUUSD',
-#     'timeframe': '1',
-#     'until': 1713360757,
-#     'to': 1713378757,
-#     'count': 1
-# }
+data = {
+    'symbol': 'FX:XAUUSD',
+    # 'timeframe': '1',
+    # 'until': 1713360757,
+    # 'to': 1713378757,
+    # 'count': 1
+}
 
-# data = requests.post("http://127.0.0.1:3000/history",json=data)
+# data = requests.post("http://127.0.0.1:5000/history",json=data)
+data = requests.get("http://127.0.0.1:5000/market_status",json=data)
 
-# print(data.json())
+
+session_time = data.json()['session']
+session_start, session_end = session_time.split('-')
+
+# Get current time
+current_time = datetime.datetime.now().time()
+
+print(session_start)
+session_start_hour, session_start_minute = map(int, session_start.split(':'))
+
+# If current time is after session end, the market has closed for today
+if current_time >= datetime.time(hour=int(session_end[:2]), minute=int(session_end[-2:])):
+    # Calculate time until next session starts (assuming next session is tomorrow)
+    next_session_start = datetime.datetime.combine(datetime.date.today() + datetime.timedelta(days=1),
+                                                   datetime.time(hour=session_start_hour, minute=session_start_minute))
+    time_until_next_session = next_session_start - datetime.datetime.now()
+    print("Market is currently closed. It will open in:", time_until_next_session)
+else:
+    print("Market is currently open.")
+
 
 # from bitpay.client import Client
 
