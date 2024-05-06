@@ -122,7 +122,7 @@ def get_data():
 
 @app.route('/market_status', methods=['GET'])
 def get_status():
-    data = {"symbol": "FX:XAUUSD"}
+    data = {"symbol": "FX:BTCUSD"}
 
     headers = json.dumps({
         'Origin': 'https://data.tradingview.com'
@@ -166,7 +166,9 @@ def get_status():
                 for i in result.split("~m~"):
                     if "symbol_resolved" in i:
                         loadData = json.loads(i)
-                        response = jsonify(loadData['p'][2])
+                        payload = {
+                            "timezone": loadData['p'][2]["timezone"], "session": loadData['p'][2]["session"]}
+                        response = jsonify(payload)
                         return make_response(response, 200)
         except Exception:
             response = jsonify({"status": False, "m": "internal_error"})

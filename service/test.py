@@ -55,26 +55,27 @@ data = {
 # data = requests.post("http://127.0.0.1:5000/history",json=data)
 data = requests.get("http://127.0.0.1:5000/market_status",json=data)
 
+print(data.json())
+# session_time = data.json()['session']
+# session_start, session_end = session_time.split('-')
 
-session_time = data.json()['session']
-session_start, session_end = session_time.split('-')
+# current_time = datetime.datetime.now().time()
 
-# Get current time
-current_time = datetime.datetime.now().time()
+# print(session_start,session_end)
+# session_start_utc = datetime.datetime.strptime(session_start, '%H%M').replace(tzinfo=datetime.timezone.utc)
+# session_end_utc = datetime.datetime.strptime(session_end, '%H%M').replace(tzinfo=datetime.timezone.utc)
 
-print(session_start)
-session_start_hour, session_start_minute = map(int, session_start.split(':'))
+# current_time_utc = datetime.datetime.utcnow()
 
-# If current time is after session end, the market has closed for today
-if current_time >= datetime.time(hour=int(session_end[:2]), minute=int(session_end[-2:])):
-    # Calculate time until next session starts (assuming next session is tomorrow)
-    next_session_start = datetime.datetime.combine(datetime.date.today() + datetime.timedelta(days=1),
-                                                   datetime.time(hour=session_start_hour, minute=session_start_minute))
-    time_until_next_session = next_session_start - datetime.datetime.now()
-    print("Market is currently closed. It will open in:", time_until_next_session)
-else:
-    print("Market is currently open.")
-
+# print(current_time_utc,session_end_utc)
+# if current_time_utc >= session_end_utc:
+#     # Calculate time until next session starts (assuming next session is tomorrow)
+#     next_session_start_utc = datetime.datetime.combine(datetime.date.today() + datetime.timedelta(days=1),
+#                                                        session_start_utc.time())
+#     time_until_next_session = next_session_start_utc - current_time_utc
+#     print("Market is currently closed. It will open in:", time_until_next_session)
+# else:
+#     print("Market is currently open.")
 
 # from bitpay.client import Client
 
