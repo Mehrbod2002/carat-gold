@@ -122,7 +122,7 @@ def get_data():
 
 @app.route('/market_status', methods=['GET'])
 def get_status():
-    data = {"symbol": "FX:BTCUSD"}
+    data = {"symbol": "FX:XAUUSD"}
 
     headers = json.dumps({
         'Origin': 'https://data.tradingview.com'
