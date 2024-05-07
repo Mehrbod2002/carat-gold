@@ -764,9 +764,6 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                data:
                   type: object
                   properties:
                     symbol:
@@ -810,6 +807,24 @@ paths:
                   required:
                     - i
                     - v
+    
+  /market_status:
+    get:
+      summary: Get current market status
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                  type: object
+                  properties:
+                    session:
+                      type: string
+                      example: 1700-1700
+                    timezone:
+                      type: string
+                      example: America/New_York
 components:
   schemas:
     UserCrypto:
@@ -993,7 +1008,7 @@ components:
         region:
           type: string
         address:
-          type: string
+            type: string
 
     RegisterRequest:
       type: object
