@@ -1,0 +1,55 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MoonPay Integration</title>
+    <!-- Include MoonPay SDK script -->
+    <script
+      defer
+      src="https://static.moonpay.com/web-sdk/v1/moonpay-web-sdk.min.js"
+    ></script>
+  </head>
+  <body>
+    <!-- Your HTML content -->
+    <button id="buyButton">Buy Cryptocurrency</button>
+
+    <script>
+      // Your JavaScript code
+      // Assuming this code is included after the MoonPay SDK scripts
+
+      // Event listener for the button click
+      document
+        .getElementById("buyButton")
+        .addEventListener("click", async function () {
+          const moonPay = window.MoonPayWebSdk.init;
+
+          window.moonpaySdk = window.MoonPayWebSdk.init({
+            flow: "sell",
+            environment: "sandbox",
+            variant: "overlay",
+            params: {
+              apiKey: "pk_test_paQPDUbJpqLFsibzdhBEX0Y7SsAmFkIL",
+            },
+            handlers: {
+              async onInitiateDeposit(properties) {
+                const {
+                  cryptoCurrency,
+                  cryptoCurrencyAmount,
+                  depositWalletAddress,
+                } = properties;
+                console.log("did",depositWalletAddress,cryptoCurrency,cryptoCurrencyAmount);
+                const depositId = await deposit(
+                  cryptoCurrency.code,
+                  cryptoCurrencyAmount,
+                  depositWalletAddress
+                );
+                return { depositId };
+              },
+            },
+          });
+        });
+    </script>
+  </body>
+</html>
