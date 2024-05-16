@@ -356,7 +356,7 @@ type DeliveryMethods struct {
 type Transaction struct {
 	ID                primitive.ObjectID   `bson:"_id,omitempty" json:"_id"`
 	OrderID           string               `bson:"order_id" json:"order_id,omitempty"`
-	ProductIDs        []primitive.ObjectID `bson:"product_id" json:"product_id"`
+	ProductIDs        []primitive.ObjectID `bson:"product_ids" json:"product_ids"`
 	UserID            primitive.ObjectID   `bson:"user_id" json:"user_id,omitempty"`
 	CreatedAt         time.Time            `bson:"created_at" json:"created_at"`
 	PaymentMethod     PaymentMethod        `bson:"payment_method" json:"payment_method"`
