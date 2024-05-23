@@ -6,6 +6,9 @@ import random
 import string
 import re
 
+import pytz
+from datetime import datetime, timedelta
+
 app = Flask(__name__)
 CORS(app, resources={r"/history": {"origins": "*"}})
 
@@ -168,9 +171,32 @@ def get_status():
                         loadData = json.loads(i)
                         payload = {
                             "timezone": loadData['p'][2]["timezone"], "session": loadData['p'][2]["session"]}
-                        response = jsonify(payload)
+
+                        session_times = payload['session'].split('-')
+                        timezone = payload['timezone']
+
+                        local_tz = pytz.timezone(timezone)
+
+                        today = datetime.now(local_tz).date()
+
+                        time_format = "%H%M"
+                        start_time_str = session_times[0]
+                        end_time_str = session_times[1]
+
+                        start_time_today = local_tz.localize(datetime.strptime(
+                            f"{today} {start_time_str}", f"%Y-%m-%d {time_format}"))
+                        end_time_tomorrow = local_tz.localize(datetime.strptime(
+                            f"{today + timedelta(days=1)} {end_time_str}", f"%Y-%m-%d {time_format}"))
+
+                        start_time_utc = start_time_today.astimezone(pytz.utc)
+                        end_time_utc = end_time_tomorrow.astimezone(pytz.utc)
+
+                        response = jsonify(
+                            {"start": start_time_utc, "end": end_time_utc})
+
                         return make_response(response, 200)
-        except Exception:
+        except Exception as e:
+            print(e)
             response = jsonify({"status": False, "m": "internal_error"})
             return make_response(response, 500)
 
