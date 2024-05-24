@@ -1112,3 +1112,163 @@ func UserDeliveryMethods(c *gin.Context) {
 		"data":    finalDeliveryMethods,
 	})
 }
+
+func PayWithWallet(c *gin.Context) {
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
+
+	var request models.Transaction
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err)
+		utils.BadBinding(c)
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		utils.InternalError(c)
+		return
+	}
+
+	if request.PaymentMethod != models.CryptoPayment {
+		c.JSON(http.StatusNotImplemented, gin.H{
+			"success": false,
+			"message": utils.Cap("not implement just yet."),
+		})
+		return
+	}
+
+	if len(request.ProductIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": utils.Cap("invalid products"),
+		})
+		return
+	}
+
+	var deliveryMethods []models.UserDeliveryMethods
+	cursor, err := db.Collection("delivery_methods").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &deliveryMethods); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	var crypto models.Crypto
+	err = db.Collection("crypto").FindOne(context.Background(), bson.M{}).Decode(&crypto)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	var user models.User
+	err = db.Collection("users").FindOne(context.Background(), bson.M{
+		"_id": authUser.ID,
+	}).Decode(&user)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	if crypto.Disable {
+		c.JSON(http.StatusNotImplemented, gin.H{
+			"success": false,
+			"message": utils.Cap("payment method disabled"),
+		})
+		return
+	}
+
+	var products []models.Products
+	cursor, err = db.Collection("products").Find(context.Background(), bson.M{
+		"_id": request,
+	})
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	if err := cursor.All(context.Background(), &products); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	accepted := false
+	for _, i := range deliveryMethods {
+		if request.DeliveryMethod == models.DeliveryMethod(i.Title) {
+			accepted = true
+		}
+	}
+
+	if !accepted {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": utils.Cap("invalid delivery method"),
+		})
+		return
+	}
+
+	for _, product := range products {
+		if product.Amount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"message": utils.Cap("there is no more product left"),
+			})
+		}
+
+		if !product.Hide {
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"message": utils.Cap("invalid product"),
+			})
+		}
+	}
+
+	var orderID = primitive.NewObjectID().Hex()
+	_, err = db.Collection("transactions").InsertOne(context.Background(),
+		models.Transaction{
+			OrderID:           orderID,
+			UserID:            authUser.ID,
+			CreatedAt:         time.Now(),
+			StatusDelivery:    request.StatusDelivery,
+			PaymentMethod:     request.PaymentMethod,
+			ProductIDs:        request.ProductIDs,
+			DeliveryMethod:    request.DeliveryMethod,
+			TotalPrice:        request.TotalPrice,
+			Vat:               crypto.Vat,
+			PaymentCompletion: false,
+			PaymentStatus:     models.PendingStatus,
+		})
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	pay, valid, errStr := models.CreateCryptoInvoice(c, request.TotalPrice+crypto.Vat, orderID)
+	if !valid {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": errStr,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+		"data":    map[string]string{"order_id": orderID, "url": pay.InvoiceURL},
+	})
+}

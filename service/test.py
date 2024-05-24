@@ -53,7 +53,7 @@ data = {
 }
 
 # data = requests.post("http://127.0.0.1:5000/history",json=data)
-data = requests.get("http://127.0.0.1:5000/market_status",json=data)
+data = requests.get("https://goldshop24.co/market_status",json=data)
 
 print(data.json())
 # session_time = data.json()['session']

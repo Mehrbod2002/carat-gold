@@ -47,7 +47,7 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 		CancelURL        string  `json:"cancel_url"`
 	}{
 		PriceAmount:      price,
-		PriceCurrency:    "usd",
+		PriceCurrency:    "usdtbsc",
 		PayCurrency:      "btc",
 		IPNCallbackURL:   os.Getenv("BASE_HOST") + os.Getenv("CALLBACK"),
 		OrderID:          orderID,
@@ -319,6 +319,12 @@ func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
 			return false
 		}
 	}
+	if req.BalanceUSD != nil {
+		if *req.BalanceUSD < 0 {
+			utils.Method(c, "invalid balance")
+			return false
+		}
+	}
 	if !IsValidPhoneNumber(*req.Phone) {
 		utils.Method(c, "invalid phone")
 		return false
@@ -461,7 +467,7 @@ func ValidateSession(c *gin.Context) (*User, bool) {
 					Email:     email,
 					CreatedAt: createdAt,
 				}
-				
+
 				exists := UserExists(c, userID)
 				if !exists {
 					session.Delete("token")

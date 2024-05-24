@@ -645,8 +645,7 @@ func SetUserPermissions(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
 }
-
-func SetUser(c *gin.Context) {
+func SetEditUser(c *gin.Context) {
 	if !models.AllowedAction(c, models.ActionWrite) {
 		return
 	}
@@ -664,7 +663,7 @@ func SetUser(c *gin.Context) {
 
 	var password []byte
 	var passwordSet bool
-	if !strings.Contains(*request.Password, ".") {
+	if request.Password != nil && !strings.Contains(*request.Password, ".") {
 		passwordSet = true
 		hashedPassword, errHash := bcrypt.GenerateFromPassword([]byte(*request.Password), bcrypt.DefaultCost)
 		if errHash != nil {
@@ -675,8 +674,8 @@ func SetUser(c *gin.Context) {
 		password = hashedPassword
 	}
 
-	var UserVerified bool = false
-	if *request.Status == models.ApprovedStatus {
+	UserVerified := false
+	if request.Status != nil && *request.Status == models.ApprovedStatus {
 		UserVerified = true
 	}
 
@@ -686,18 +685,44 @@ func SetUser(c *gin.Context) {
 		return
 	}
 
-	editedUser := models.User{
-		Email:            utils.TrimAndLowerCase(utils.DerefStringPtr(request.Email)),
-		PhoneNumber:      utils.DerefStringPtr(request.Phone),
-		FirstName:        utils.TrimAndLowerCase(utils.DerefStringPtr(request.FirstName)),
-		LastName:         utils.TrimAndLowerCase(utils.DerefStringPtr(request.LastName)),
-		UserVerified:     UserVerified,
-		Freeze:           utils.DerefBoolPtr(request.Freeze),
-		Permissions:      *request.Permissions,
-		IsSupportOrAdmin: utils.DerefBoolPtr(request.IsSupport),
-		PhoneVerified:    utils.DerefBoolPtr(request.PhoneVerify),
-		StatusString:     *request.Status,
-		Reason:           utils.DerefStringPtr(request.Reason),
+	updateFields := bson.M{}
+
+	if request.Email != nil {
+		updateFields["email"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.Email))
+	}
+	if request.Phone != nil {
+		updateFields["phoneNumber"] = utils.DerefStringPtr(request.Phone)
+	}
+	if request.FirstName != nil {
+		updateFields["firstName"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.FirstName))
+	}
+	if request.LastName != nil {
+		updateFields["lastName"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.LastName))
+	}
+	if request.Status != nil {
+		updateFields["statusString"] = *request.Status
+		updateFields["userVerified"] = UserVerified
+	}
+	if request.Freeze != nil {
+		updateFields["freeze"] = utils.DerefBoolPtr(request.Freeze)
+	}
+	if request.Permissions != nil {
+		updateFields["permissions"] = *request.Permissions
+	}
+	if request.IsSupport != nil {
+		updateFields["isSupportOrAdmin"] = utils.DerefBoolPtr(request.IsSupport)
+	}
+	if request.PhoneVerify != nil {
+		updateFields["phoneVerified"] = utils.DerefBoolPtr(request.PhoneVerify)
+	}
+	if request.Reason != nil {
+		updateFields["reason"] = utils.DerefStringPtr(request.Reason)
+	}
+	if request.BalanceUSD != nil {
+		updateFields["wallet.balanceUSD"] = *request.BalanceUSD
+	}
+	if passwordSet {
+		updateFields["password"] = string(password)
 	}
 
 	userID, valid := utils.ValidateID(*request.UserID, c)
@@ -705,12 +730,9 @@ func SetUser(c *gin.Context) {
 		return
 	}
 
-	if passwordSet {
-		editedUser.Password = string(password)
-	}
 	_, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
 		"_id": userID,
-	}, bson.M{"$set": editedUser})
+	}, bson.M{"$set": updateFields})
 
 	if err != nil {
 		log.Println(err)
@@ -974,6 +996,7 @@ func SetDefineUser(c *gin.Context) {
 			StatusString:     *request.Status,
 			Reason:           *request.Reason,
 			CreatedAt:        time.Now(),
+			Wallet:           models.Wallet{BalanceUSD: *request.BalanceUSD},
 		}
 		_, err := db.Collection("users").InsertOne(context.Background(), newUser)
 		if err != nil {

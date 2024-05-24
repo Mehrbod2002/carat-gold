@@ -119,7 +119,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		adminRoutes.POST("/freeze_user", adminSetter.SetFreezeUser)
 		adminRoutes.POST("/unfreeze_user", adminSetter.SetUnFreezeUser)
 		adminRoutes.POST("/set_user_permissions", adminSetter.SetUserPermissions)
-		adminRoutes.POST("/edit_user", adminSetter.SetUser)
+		adminRoutes.POST("/edit_user", adminSetter.SetEditUser)
 		adminRoutes.POST("/get_users", adminView.ViewAllUsers)
 		adminRoutes.POST("/define_user", adminSetter.SetDefineUser)
 		adminRoutes.GET("/get_general_data", adminView.ViewGeneralData)
