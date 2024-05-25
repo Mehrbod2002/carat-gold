@@ -4,7 +4,6 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -573,29 +572,24 @@ func SetSymbols(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Bad type", "data": "bad_type"})
 		return
 	}
-	fmt.Println("etrd")
 
 	db, DBerr := utils.GetDB(c)
 	if DBerr != nil {
 		log.Println(DBerr)
 		return
 	}
-	fmt.Println("f")
 
 	var images []models.Image
 	photoID := primitive.NewObjectID()
 	valid := utils.UploadPhoto(c, photoID.Hex(), request.Image)
 	if !valid {
-		fmt.Println("14")
 		return
 	}
-	fmt.Println("e55")
 
 	images = append(images, models.Image{PhotoID: photoID})
 	var symbol models.Symbol
 	if err := db.Collection("symbols").FindOne(context.Background(),
 		bson.M{"name": request.Name}).Decode(&symbol); err != nil {
-		fmt.Println("e")
 		if err == mongo.ErrNoDocuments {
 			newSymbol := models.Symbol{
 				SymbolName: request.Name,
