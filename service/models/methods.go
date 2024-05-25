@@ -782,6 +782,18 @@ func (product *RequestSetProduct) Validate(c *gin.Context) bool {
 		utils.Method(c, "invalid description")
 		return false
 	}
+	if len(product.SubTitle) == 0 || len(product.SubTitle) > 100 {
+		utils.Method(c, "invalid name")
+		return false
+	}
+	if len(product.Faq) == 0 || len(product.Faq) > 100 {
+		utils.Method(c, "invalid name")
+		return false
+	}
+	if len(product.Answer) == 0 || len(product.Answer) == 200 {
+		utils.Method(c, "invalid name")
+		return false
+	}
 	if product.Width <= 0 {
 		utils.Method(c, "invalid width")
 		return false

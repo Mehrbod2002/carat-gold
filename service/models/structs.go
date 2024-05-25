@@ -320,6 +320,9 @@ type Products struct {
 	Images      []Image            `bson:"images" json:"images"`
 	Width       float64            `bson:"width" json:"width"`
 	Length      float64            `bson:"length" json:"length"`
+	SubTitle    string             `bson:"sub_title" json:"sub_title"`
+	Faq         string             `bson:"faq" json:"faq"`
+	Answer      string             `bson:"answer" json:"answer"`
 	WeightOZ    float64            `bson:"weight_oz" json:"weight_oz"`
 	WeightGramm float64            `bson:"weight_gramm" json:"weight_gramm"`
 	Purity      float64            `bson:"purity" json:"purity"`
@@ -503,6 +506,9 @@ type RequestSetProduct struct {
 	Hide        bool     `bson:"hide" json:"hide"`
 	Limited     bool     `bson:"limited" json:"limited"`
 	Amount      int      `bson:"amount" json:"amount"`
+	SubTitle    string   `bson:"sub_title" json:"sub_title"`
+	Faq         string   `bson:"faq" json:"faq"`
+	Answer      string   `bson:"answer" json:"answer"`
 }
 
 type RequestSetDeliveryMethod struct {

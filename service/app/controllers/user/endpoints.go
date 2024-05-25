@@ -5,6 +5,7 @@ import (
 	"carat-gold/utils"
 	"context"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -754,7 +755,7 @@ func CreateTranscations(c *gin.Context) {
 		return
 	}
 
-	pay, valid, errStr := models.CreateCryptoInvoice(c, request.TotalPrice+crypto.Vat, orderID)
+	pay, valid, errStr := models.CreateCryptoInvoice(c, request.TotalPrice, orderID)
 	if !valid {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -1182,6 +1183,32 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
+	result, valid := utils.GetRequest("get_last_price")
+	if !valid {
+		utils.InternalError(c)
+		return
+	}
+
+	lastGoldPrice := result["data"].(float64)
+
+	if user.Wallet.BalanceUSD < request.TotalPrice {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": utils.Cap("insufficient balance"),
+		})
+		return
+	}
+
+	lengths := float64(len(request.ProductIDs))
+	eachGoldBar := request.TotalPrice / lengths
+	if -10 < eachGoldBar-lastGoldPrice || eachGoldBar-lastGoldPrice > 10 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": utils.Cap("each gold bar price is more than 10 USD difference"),
+		})
+		return
+	}
+
 	if crypto.Disable {
 		c.JSON(http.StatusNotImplemented, gin.H{
 			"success": false,
@@ -1237,6 +1264,15 @@ func PayWithWallet(c *gin.Context) {
 	}
 
 	var orderID = primitive.NewObjectID().Hex()
+	mID, valid := utils.AutoOrder(request.TotalPrice)
+	if valid {
+		models.StoreMetatraderID(orderID, fmt.Sprintf("%d", mID))
+	}
+	if !valid {
+		utils.InternalError(c)
+		return
+	}
+
 	_, err = db.Collection("transactions").InsertOne(context.Background(),
 		models.Transaction{
 			OrderID:           orderID,
@@ -1248,8 +1284,8 @@ func PayWithWallet(c *gin.Context) {
 			DeliveryMethod:    request.DeliveryMethod,
 			TotalPrice:        request.TotalPrice,
 			Vat:               crypto.Vat,
-			PaymentCompletion: false,
-			PaymentStatus:     models.PendingStatus,
+			PaymentCompletion: true,
+			PaymentStatus:     models.ApprovedStatus,
 		})
 	if err != nil {
 		log.Println(err)
@@ -1257,18 +1293,20 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
-	pay, valid, errStr := models.CreateCryptoInvoice(c, request.TotalPrice+crypto.Vat, orderID)
-	if !valid {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": errStr,
-		})
+	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
+		"_id": authUser.ID,
+	}, bson.M{
+		"$inc": bson.M{
+			"wallet.balanceUSD": -request.TotalPrice,
+		},
+	}); err != nil {
+		utils.BadBinding(c)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "done",
-		"data":    map[string]string{"order_id": orderID, "url": pay.InvoiceURL},
+		"data":    map[string]string{"order_id": orderID},
 	})
 }

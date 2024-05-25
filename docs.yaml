@@ -586,7 +586,7 @@ paths:
                   data:
                     type: string
                     example: "internal_error"
-                    
+
   /user/cancel:
     post:
       summary: "Cancel user order"
@@ -602,7 +602,7 @@ paths:
                 type: "string"
                 example: "123456"
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
@@ -615,13 +615,13 @@ paths:
                   message:
                     type: string
                     example: "Done"
-        '404':
+        "404":
           description: transaction not found
-        '401':
+        "401":
           description: Unauthorized, user not authenticated
-        '403':
+        "403":
           description: Forbidden, user doesn't have permission
-        
+
   /user/payment_methods:
     get:
       summary: Retrieve payment methods
@@ -764,29 +764,29 @@ paths:
         content:
           application/json:
             schema:
-                  type: object
-                  properties:
-                    symbol:
-                      type: string
-                      example: "FX:XAUUSD"
-                    timeframe:
-                      type: string
-                      example: "1"
-                    until:
-                      type: integer
-                      example: 1713360757
-                    to:
-                      type: integer
-                      example: 1713378757
-                    count:
-                      type: integer
-                      example: 1
-                  required:
-                    - symbol
-                    - timeframe
-                    - until
-                    - to
-                    - count
+              type: object
+              properties:
+                symbol:
+                  type: string
+                  example: "FX:XAUUSD"
+                timeframe:
+                  type: string
+                  example: "1"
+                until:
+                  type: integer
+                  example: 1713360757
+                to:
+                  type: integer
+                  example: 1713378757
+                count:
+                  type: integer
+                  example: 1
+              required:
+                - symbol
+                - timeframe
+                - until
+                - to
+                - count
       responses:
         "200":
           description: Successful response
@@ -807,7 +807,7 @@ paths:
                   required:
                     - i
                     - v
-    
+
   /market_status:
     get:
       summary: Get current market status
@@ -817,14 +817,96 @@ paths:
           content:
             application/json:
               schema:
-                  type: object
-                  properties:
-                    session:
-                      type: string
-                      example: 1700-1700
-                    timezone:
-                      type: string
-                      example: America/New_York
+                type: object
+                properties:
+                  session:
+                    type: string
+                    example: 1700-1700
+                  timezone:
+                    type: string
+                    example: America/New_York
+
+  /pay_with_wallet:
+    post:
+      summary: Pay with Wallet
+      description: Process a payment using the user's wallet balance
+      tags:
+        - Wallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Transaction"
+      responses:
+        "200":
+          description: Payment successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "done"
+                  data:
+                    type: object
+                    properties:
+                      order_id:
+                        type: string
+                        example: "60d5ec49f5672e88f4e8dd6c"
+        "400":
+          description: Bad request or invalid OTP
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "request for otp first"
+                  data:
+                    type: string
+                    example: "invalid_otp"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "internal server connection"
+                  data:
+                    type: string
+                    example: "internal_error"
+        "404":
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Transaction not found"
+                  data:
+                    type: string
+                    example: "not_found"
+
 components:
   schemas:
     UserCrypto:
@@ -1008,7 +1090,7 @@ components:
         region:
           type: string
         address:
-            type: string
+          type: string
 
     RegisterRequest:
       type: object
@@ -1349,21 +1431,36 @@ components:
             $ref: "#/components/schemas/Image"
         width:
           type: number
+          format: float
           example: 10.5
         length:
           type: number
+          format: float
           example: 20.3
+        sub_title:
+          type: string
+          example: "Product Subtitle"
+        faq:
+          type: string
+          example: "Frequently Asked Question"
+        answer:
+          type: string
+          example: "Answer to the FAQ"
         weight_oz:
           type: number
+          format: float
           example: 16.8
         weight_gramm:
           type: number
+          format: float
           example: 476.2
         purity:
           type: number
+          format: float
           example: 0.999
         percentage:
           type: number
+          format: float
           example: 99.9
         hide:
           type: boolean

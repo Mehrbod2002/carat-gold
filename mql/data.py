@@ -23,15 +23,11 @@ def initialize_mt5():
         return
 
     account = requests.get(url, headers=headers).json()["accounts"]
-    if not mt5.initialize(int(account["login"]), password=account["password"], server=account["server"]):
-        return
-
-    if mt5.login(int(account["login"]), password=account["password"], server=account["server"]):
-        print("logged")
-        return True
-
-    else:
+    if not mt5.initialize(login=int(account["login"]), password=account["password"], server=account["server"]):
         print(mt5.last_error())
+        return
+    else:
+        mt5_initialized = True
 
 
 @app.before_request
@@ -39,21 +35,15 @@ def before_request():
     if 'X-Secret-Header' not in request.headers or request.headers['X-Secret-Header'] != secret:
         return jsonify({"status": False, "message": "unauthorized"}), 401
 
-    if not hasattr(request, 'mt5_initialized'):
-        request.mt5_initialized = True
-        if not mt5.initialize():
-            return jsonify({"status": False, "message": "unauthorized"}), 401
-
 
 @app.route("/get_last_price", methods=['GET'])
 def get_last_price():
     tick = mt5.symbol_info_tick("XAUUSD")
-    print(tick)
     if tick is None:
         jsonify({"data": None, "status": False}), 500
         return None
-
-    return jsonify({"data": tick, "status": True}), 200
+    
+    return jsonify({"data": tick.ask, "status": True}), 200
 
 
 @app.route('/get_history', methods=['GET'])

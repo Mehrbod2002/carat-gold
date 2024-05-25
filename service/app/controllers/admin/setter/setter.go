@@ -476,6 +476,9 @@ func SetEditProduct(c *gin.Context) {
 		Width:       request.Width,
 		Amount:      request.Amount,
 		Images:      images,
+		SubTitle:    request.SubTitle,
+		Answer:      request.Answer,
+		Faq:         request.Faq,
 	}
 
 	productId, valid := utils.ValidateID(*request.ProductID, c)
@@ -778,7 +781,7 @@ func SetDeleteProduct(c *gin.Context) {
 	}
 
 	for _, image := range product.Images {
-		path := filepath.Join("CDN", image.PhotoID.Hex()+".png")
+		path := filepath.Join("CDN", image.PhotoID.Hex()+".svg")
 		os.Remove(path)
 	}
 
@@ -1138,7 +1141,7 @@ func SetDeleteSymbol(c *gin.Context) {
 	}
 
 	for _, image := range symbol.Images {
-		path := filepath.Join("CDN", image.PhotoID.Hex()+".png")
+		path := filepath.Join("CDN", image.PhotoID.Hex()+".svg")
 		os.Remove(path)
 	}
 
