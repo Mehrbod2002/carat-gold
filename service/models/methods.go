@@ -275,6 +275,10 @@ func (req *RequestEdit) Validate(c *gin.Context) bool {
 			return false
 		}
 	}
+	if !IsValidEmail(*req.Email) {
+		utils.Method(c, "invalid email")
+		return false
+	}
 	if !IsValidPhoneNumber(req.Phone) {
 		utils.Method(c, "invalid phone")
 		return false

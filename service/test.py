@@ -3,7 +3,37 @@ import websockets
 import requests
 import datetime
 
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjI5NDRmMWMwODE4ZWMwYmI5ZWJhYzciLCJuYW1lIjoiIiwicGhvbmUiOiI5ODkxMzg3ODAyNzUiLCJlbWFpbCI6IiIsImNyZWF0ZWRfYXQiOiIwMDAxLTAxLTAxVDAwOjAwOjAwWiIsImV4cCI6MTcxNjU3MjcwNH0.Ej1devNLhmZCH8nMASnv5WutbDOEyf8-oFO_pkEyihE"
+token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjUxYjZlZmJhODA5NTkwNjIxMzkyMjYiLCJuYW1lIjoiIiwicGhvbmUiOiI5ODkxMzg3ODAyNzUiLCJlbWFpbCI6IiIsImNyZWF0ZWRfYXQiOiIwMDAxLTAxLTAxVDAwOjAwOjAwWiIsImV4cCI6MTcxOTIyMzQ2NX0.R_rJU7MhtVN9PvUfearTa8Ke2lGTa8S9B6b2KffyeVE"
+# edit_user = requests.post("https://goldshop24.co/api/auth/user/send_otp", json={
+#     "phone": "989138780275",
+# }, headers={
+#     "Authorization": token
+# })
+
+# edit_user = requests.post("http://127.0.0.1:3000/api/auth/user/register", json={
+#     "otp_code": 12345,
+#     "phone": "989138780275",
+# }, headers={
+#     "Authorization": token
+# })
+# print(edit_user)
+# print(edit_user.json())
+
+
+me = requests.get("http://127.0.0.1:3000/api/user/me", json={
+    "first_name": "Mehrbod man",
+    "last_name":"test",
+    "phone":"989138780275",
+    "email":"m9.akhlaghpour@gmail.com",
+    "address": [
+        {"address": "King bernam","label": "my home","city":"test","country":"iran","region":"T"},
+        {"address": "my queen nam bernam", "label": "my work","city":"test","country":"iran","region":"A"},
+    ]
+}, headers={
+    "Authorization": token
+})
+print(me)
+print(me.json())
 
 # edit_user = requests.post("http://127.0.0.1:3000/api/user/edit_user", json={
 #     "name": "Mehrbod man",
@@ -44,18 +74,18 @@ token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjI5NDRmMWMwODE4ZWMwYm
 #                 break
 
 # # asyncio.get_event_loop().run_until_complete(connect_to_websocket())
-data = {
-    'symbol': 'FX:XAUUSD',
-    # 'timeframe': '1',
-    # 'until': 1713360757,
-    # 'to': 1713378757,
-    # 'count': 1
-}
+# data = {
+#     'symbol': 'FX:XAUUSD',
+#     # 'timeframe': '1',
+#     # 'until': 1713360757,
+#     # 'to': 1713378757,
+#     # 'count': 1
+# }
 
-# data = requests.post("http://127.0.0.1:5000/history",json=data)
-data = requests.get("https://goldshop24.co/market_status",json=data)
+# # data = requests.post("http://127.0.0.1:5000/history",json=data)
+# data = requests.get("https://goldshop24.co/market_status",json=data)
 
-print(data.json())
+# print(data.json())
 # session_time = data.json()['session']
 # session_start, session_end = session_time.split('-')
 
