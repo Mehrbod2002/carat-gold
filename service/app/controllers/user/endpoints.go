@@ -369,6 +369,70 @@ func ViewProducts(c *gin.Context) {
 	})
 }
 
+func SetFeedback(c *gin.Context) {
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
+
+	var request struct {
+		FeedBack string `json:"feedback"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.BadBinding(c)
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		log.Println(DBerr)
+		return
+	}
+
+	if len(request.FeedBack) > 2000 {
+		c.AbortWithStatusJSON(400, gin.H{
+			"success": false,
+			"message": utils.Cap("allowed to send less than 2000 characters"),
+		})
+		return
+	}
+
+	if len(request.FeedBack) < 5 {
+		c.AbortWithStatusJSON(400, gin.H{
+			"success": false,
+			"message": utils.Cap("allowed to send more than 5 characters"),
+		})
+		return
+	}
+
+	if count, err := db.Collection("feedbacks").CountDocuments(context.Background(),
+		bson.M{
+			"user_id": authUser.ID,
+		}); err != nil {
+		utils.InternalError(c)
+		return
+	} else if count >= 10 {
+		c.AbortWithStatusJSON(400, gin.H{
+			"success": false,
+			"message": utils.Cap("you exceed the max feedbacks"),
+		})
+		return
+	}
+
+	if _, err := db.Collection("feedbacks").InsertOne(context.Background(), models.FeedBacks{
+		FeedBack: request.FeedBack,
+		UserID:   authUser.ID,
+	}); err != nil {
+		utils.BadBinding(c)
+		return
+	}
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": utils.Cap("done"),
+	})
+}
+
 func EditUser(c *gin.Context) {
 	authUser, valid := models.ValidateSession(c)
 	if !valid {
@@ -378,7 +442,6 @@ func EditUser(c *gin.Context) {
 	var request models.RequestEdit
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		log.Println(err)
 		utils.BadBinding(c)
 		return
 	}
@@ -394,16 +457,27 @@ func EditUser(c *gin.Context) {
 		return
 	}
 
+	updateFields := bson.M{}
+	if request.FirstName != nil {
+		updateFields["first_name"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.FirstName))
+	}
+	if request.LastName != nil {
+		updateFields["last_name"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.LastName))
+	}
+	if request.Email != nil {
+		updateFields["email"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.Email))
+	}
+	if request.Phone != nil {
+		updateFields["phone"] = request.Phone
+	}
+	if request.Address != nil {
+		updateFields["address"] = request.Address
+	}
+
 	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
 		"_id": authUser.ID,
 	}, bson.M{
-		"$set": bson.M{
-			"phone":      request.Phone,
-			"address":    request.Address,
-			"first_name": utils.TrimAndLowerCase(request.FirstName),
-			"last_name":  utils.TrimAndLowerCase(request.LastName),
-			"email":      utils.TrimAndLowerCase(*request.Email),
-		},
+		"$set": updateFields,
 	}); err != nil {
 		utils.BadBinding(c)
 		return

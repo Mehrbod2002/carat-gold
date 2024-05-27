@@ -95,6 +95,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		userRoutes.GET("/payment_methods", user.UserPaymentMethods)
 		userRoutes.POST("/get_single_transaction", user.GetSingelTransaction)
 		userRoutes.POST("/pay_with_wallet", user.PayWithWallet)
+		userRoutes.POST("/feedback", user.SetFeedback)
 	}
 
 	supportRoutes := apis.Group("/support")
@@ -155,6 +156,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		adminRoutes.GET("/get_user", adminView.ViewUser)
 		adminRoutes.POST("/set_aed", adminSetter.SetAedExchange)
 		adminRoutes.POST("/update_fcm", user.UpdateFcm)
+		authRoutes.POST("/get_user_feedbacks", adminView.GetUsersFeedBacks)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {

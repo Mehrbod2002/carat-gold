@@ -14,6 +14,35 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func GetUsersFeedBacks(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
+		return
+	}
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	var feedbacks []models.FeedBacks
+	cursor, err := db.Collection("feedbacks").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &feedbacks); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+		"data":    feedbacks,
+	})
+}
+
 func ViewAllUsers(c *gin.Context) {
 	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return

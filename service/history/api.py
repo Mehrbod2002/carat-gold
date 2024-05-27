@@ -6,7 +6,7 @@ import random
 import string
 import re
 
-import pytz
+import requests
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
@@ -125,80 +125,113 @@ def get_data():
 
 @app.route('/market_status', methods=['GET'])
 def get_status():
-    data = {"symbol": "FX:XAUUSD"}
+    try:
+        url = "https://api.tradinghours.com/v3/markets/status?fin_id=us.nyse&timezone=utc"
 
-    headers = json.dumps({
-        'Origin': 'https://data.tradingview.com'
-    })
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer 1UgpHDBNPiXbr9mrp873nf7NV5JVQHjOPiRlyWGRbbacfb84"
+        }
 
-    ws = create_connection(
-        'wss://data.tradingview.com/socket.io/websocket', headers=headers)
-    session = generateSession()
-    chart_session = generateChartSession()
+        response = requests.get(url, headers=headers)
 
-    sendMessage(ws, "set_auth_token", ["unauthorized_user_token"])
-    sendMessage(ws, "chart_create_session", [chart_session, ""])
-    sendMessage(ws, "quote_create_session", [session])
-    sendMessage(ws, "quote_set_fields", [session, "ch", "chp", "current_session", "description", "local_description", "language", "exchange", "fractional", "is_tradable",
-                "lp", "lp_time", "minmov", "minmove2", "original_name", "pricescale", "pro_name", "short_name", "type", "update_mode", "volume", "currency_code", "rchp", "rtc"])
-    sendMessage(ws, "resolve_symbol", [
-                chart_session, "symbol_1", "={\"symbol\":\""+data['symbol']+"\",\"adjustment\":\"splits\"}"])
+        data = response.json()
 
-    while True:
-        try:
-            result = ws.recv()
-            pattern = re.compile("~m~\d+~m~~h~\d+$")
-            if pattern.match(result):
-                ws.recv()
-                ws.send(result)
+        market_data = data['data']['US.NYSE']
+        status = market_data['status']
+        next_bell_utc = market_data['next_bell']
 
-            for i in result.split("~m~"):
-                if "error" in i:
-                    err = json.loads(i)
-                    if err["m"] == "critical_error":
-                        response = jsonify({"status": False, "m": err["p"][1]})
-                        return make_response(response, 500)
-                    if err["m"] == "symbol_error":
-                        response = jsonify({"status": False, "m": err["p"][2]})
-                        return make_response(response, 500)
-                    if err["m"] == "series_error":
-                        response = jsonify({"status": False, "m": err["p"][3]})
-                        return make_response(response, 500)
+        next_bell_utc = datetime.strptime(next_bell_utc, "%Y-%m-%dT%H:%M:%S%z")
+        utc_time = datetime.strptime(data['meta']['utc_time'], "%Y-%m-%dT%H:%M:%S%z")
 
-            if "symbol_resolved" in str(result):
-                for i in result.split("~m~"):
-                    if "symbol_resolved" in i:
-                        loadData = json.loads(i)
-                        payload = {
-                            "timezone": loadData['p'][2]["timezone"], "session": loadData['p'][2]["session"]}
+        status = False
+        if utc_time >= next_bell_utc:
+            status = True
 
-                        session_times = payload['session'].split('-')
-                        timezone = payload['timezone']
+        response = jsonify({"status": True, "data": {
+            "open": status,
+            "next":int(next_bell_utc.timestamp())
+        }})
+        return make_response(response, 200)
+    except:
+        response = jsonify({"status": False, "m": "internal_error"})
+        return make_response(response, 500)
+    
 
-                        local_tz = pytz.timezone(timezone)
+    # data = {"symbol": "FX:XAUUSD"}
 
-                        today = datetime.now(local_tz).date()
+    # headers = json.dumps({
+    #     'Origin': 'https://data.tradingview.com'
+    # })
 
-                        time_format = "%H%M"
-                        start_time_str = session_times[0]
-                        end_time_str = session_times[1]
+    # ws = create_connection(
+    #     'wss://data.tradingview.com/socket.io/websocket', headers=headers)
+    # session = generateSession()
+    # chart_session = generateChartSession()
 
-                        start_time_today = local_tz.localize(datetime.strptime(
-                            f"{today} {start_time_str}", f"%Y-%m-%d {time_format}"))
-                        end_time_tomorrow = local_tz.localize(datetime.strptime(
-                            f"{today + timedelta(days=1)} {end_time_str}", f"%Y-%m-%d {time_format}"))
+    # sendMessage(ws, "set_auth_token", ["unauthorized_user_token"])
+    # sendMessage(ws, "chart_create_session", [chart_session, ""])
+    # sendMessage(ws, "quote_create_session", [session])
+    # sendMessage(ws, "quote_set_fields", [session, "ch", "chp", "current_session", "description", "local_description", "language", "exchange", "fractional", "is_tradable",
+    #             "lp", "lp_time", "minmov", "minmove2", "original_name", "pricescale", "pro_name", "short_name", "type", "update_mode", "volume", "currency_code", "rchp", "rtc"])
+    # sendMessage(ws, "resolve_symbol", [
+    #             chart_session, "symbol_1", "={\"symbol\":\""+data['symbol']+"\",\"adjustment\":\"splits\"}"])
 
-                        start_time_utc = start_time_today.astimezone(pytz.utc)
-                        end_time_utc = end_time_tomorrow.astimezone(pytz.utc)
+    # while True:
+    #     try:
+    #         result = ws.recv()
+    #         pattern = re.compile("~m~\d+~m~~h~\d+$")
+    #         if pattern.match(result):
+    #             ws.recv()
+    #             ws.send(result)
 
-                        response = jsonify(
-                            {"start": start_time_utc, "end": end_time_utc})
+    #         for i in result.split("~m~"):
+    #             if "error" in i:
+    #                 err = json.loads(i)
+    #                 if err["m"] == "critical_error":
+    #                     response = jsonify({"status": False, "m": err["p"][1]})
+    #                     return make_response(response, 500)
+    #                 if err["m"] == "symbol_error":
+    #                     response = jsonify({"status": False, "m": err["p"][2]})
+    #                     return make_response(response, 500)
+    #                 if err["m"] == "series_error":
+    #                     response = jsonify({"status": False, "m": err["p"][3]})
+    #                     return make_response(response, 500)
 
-                        return make_response(response, 200)
-        except Exception as e:
-            print(e)
-            response = jsonify({"status": False, "m": "internal_error"})
-            return make_response(response, 500)
+    #         if "symbol_resolved" in str(result):
+    #             for i in result.split("~m~"):
+    #                 if "symbol_resolved" in i:
+    #                     loadData = json.loads(i)
+    #                     payload = {
+    #                         "timezone": loadData['p'][2]["timezone"], "session": loadData['p'][2]["session"]}
+
+    #                     session_times = payload['session'].split('-')
+    #                     timezone = payload['timezone']
+
+    #                     local_tz = pytz.timezone(timezone)
+
+    #                     today = datetime.now(local_tz).date()
+
+    #                     time_format = "%H%M"
+    #                     start_time_str = session_times[0]
+    #                     end_time_str = session_times[1]
+
+    #                     start_time_today = local_tz.localize(datetime.strptime(
+    #                         f"{today} {start_time_str}", f"%Y-%m-%d {time_format}"))
+    #                     end_time_tomorrow = local_tz.localize(datetime.strptime(
+    #                         f"{today + timedelta(days=1)} {end_time_str}", f"%Y-%m-%d {time_format}"))
+
+    #                     start_time_utc = start_time_today.astimezone(pytz.utc)
+    #                     end_time_utc = end_time_tomorrow.astimezone(pytz.utc)
+
+    #                     response = jsonify(
+    #                         {"start": start_time_utc, "end": end_time_utc})
+
+    #                     return make_response(response, 200)
+    #     except Exception as e:
+    #         print(e)
+    #         response = jsonify({"status": False, "m": "internal_error"})
+    #         return make_response(response, 500)
 
 
 if __name__ == '__main__':

@@ -261,27 +261,30 @@ func IsValidPassowrd(password string, c *gin.Context) bool {
 }
 
 func (req *RequestEdit) Validate(c *gin.Context) bool {
-	if len(req.FirstName) > 20 || len(req.FirstName) < 4 {
-		utils.Method(c, "invalid first name")
-		return false
+	if req.FirstName != nil {
+		if len(*req.FirstName) > 20 || len(*req.FirstName) < 4 {
+			utils.Method(c, "invalid first name")
+			return false
+		}
 	}
-	if len(req.LastName) > 20 || len(req.LastName) < 4 {
-		utils.Method(c, "invalid last name ")
-		return false
+	if req.LastName != nil && *req.LastName != "" {
+		if len(*req.LastName) > 20 || len(*req.LastName) < 4 {
+			utils.Method(c, "invalid last name ")
+			return false
+		}
 	}
+
 	if req.Email != nil && *req.Email != "" {
 		if !IsValidEmail(*req.Email) {
 			utils.Method(c, "invalid email")
 			return false
 		}
 	}
-	if !IsValidEmail(*req.Email) {
-		utils.Method(c, "invalid email")
-		return false
-	}
-	if !IsValidPhoneNumber(req.Phone) {
-		utils.Method(c, "invalid phone")
-		return false
+	if req.Phone != nil && *req.Phone != "" {
+		if !IsValidPhoneNumber(*req.Phone) {
+			utils.Method(c, "invalid phone")
+			return false
+		}
 	}
 	if req.Address != nil && len(*req.Address) != 0 {
 		for _, address := range *req.Address {

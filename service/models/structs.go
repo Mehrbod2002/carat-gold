@@ -244,12 +244,18 @@ type User struct {
 	RefreshToken     string             `bson:"refresh_token" json:"-"`
 }
 
+type FeedBacks struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	UserID   primitive.ObjectID `bson:"user_id" json:"user_id,omitempty"`
+	FeedBack string             `bson:"feedback" json:"feedback"`
+}
+
 type RequestEdit struct {
-	FirstName string     `json:"first_name"`
-	LastName  string     `json:"last_name"`
+	FirstName *string    `json:"first_name"`
+	LastName  *string    `json:"last_name"`
 	Address   *[]Address `json:"address"`
 	Email     *string    `json:"email"`
-	Phone     string     `json:"phone"`
+	Phone     *string    `json:"phone"`
 }
 
 type Permission struct {

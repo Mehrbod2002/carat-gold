@@ -819,14 +819,92 @@ paths:
               schema:
                 type: object
                 properties:
-                  session:
+                  status:
+                    type: boolean
+                    description: Indicates whether the market is open.
+                  data:
+                    type: object
+                    properties:
+                      open:
+                        type: boolean
+                        description: Indicates whether the market is open.
+                        example: true
+                      next:
+                        type: integer
+                        format: int64
+                        description: Timestamp of the next market open.
+                        example: 1735488600
+  /user/feedback:
+    post:
+      summary: Submit feedback
+      description: Allows an authenticated user to submit feedback.
+      tags:
+        - Feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                feedback:
+                  type: string
+                  example: This is a sample feedback
+      responses:
+        '200':
+          description: Feedback submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
                     type: string
-                    example: 1700-1700
-                  timezone:
+                    example: done
+        '400':
+          description: Invalid input or feedback limit exceeded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
                     type: string
-                    example: America/New_York
+                    example: you exceed the max feedbacks
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: unauthorized
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: internal server error
 
-  /pay_with_wallet:
+  /user/pay_with_wallet:
     post:
       summary: Pay with Wallet
       description: Process a payment using the user's wallet balance
