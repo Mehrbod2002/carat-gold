@@ -65,6 +65,7 @@ const (
 	CryptoPayment PaymentMethod = "CRYPTO"
 	DebitPayment  PaymentMethod = "DEBIT"
 	PayPalPayment PaymentMethod = "PAYPAL"
+	WalletPayment PaymentMethod = "WALLET"
 )
 
 const (

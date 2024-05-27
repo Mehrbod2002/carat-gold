@@ -44,9 +44,8 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	})
 
 	r.Use(sessions.Sessions("token", store))
-	r.Static("/static", "./CDN")
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://0.0.0.0:3001", "http://localhost:3001", "http://127.0.0.1:5173", "https://admin.goldshop24.co", "https://goldshop24.co"},
+		AllowOrigins:     []string{"http://0.0.0.0:3001", "http://localhost:3001", "http://127.0.0.1:5173", "https://admin.goldshop24.co", "https://goldshop24.co", "https://server.goldshop24.co"},
 		AllowMethods:     []string{"PUT", "PATCH", "GET", "POST", "HEAD", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Set-Cookie", "Cookie", "Authorization", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length", "Set-Cookie", "Cookie"},
@@ -54,9 +53,10 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		AllowOriginFunc: func(origin string) bool {
 			return origin == "http://0.0.0.0:3001" || origin == "http://localhost:3001" ||
 				origin == "http://127.0.0.1:5173" || origin == "https://goldshop24.co" ||
-				origin == "https://admin.goldshop24.co"
+				origin == "https://admin.goldshop24.co" || origin == "https://server.goldshop24.co"
 		},
 	}))
+	r.Static("/static", "./CDN")
 
 	apis := r.Group("/api")
 	apis.POST("/crisp/hooks", user.Crisp)
@@ -156,7 +156,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		adminRoutes.GET("/get_user", adminView.ViewUser)
 		adminRoutes.POST("/set_aed", adminSetter.SetAedExchange)
 		adminRoutes.POST("/update_fcm", user.UpdateFcm)
-		authRoutes.POST("/get_user_feedbacks", adminView.GetUsersFeedBacks)
+		adminRoutes.POST("/get_user_feedbacks", adminView.GetUsersFeedBacks)
 	}
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -650,6 +650,7 @@ func AdminAuthMiddleware() gin.HandlerFunc {
 		session := sessions.Default(c)
 		token := session.Get("token_admins")
 		tokenString := c.GetHeader("Authorization")
+
 		if token == nil && tokenString == "" {
 			utils.Unauthorized(c)
 			c.Abort()

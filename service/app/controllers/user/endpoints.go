@@ -1209,7 +1209,7 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
-	if request.PaymentMethod != models.CryptoPayment {
+	if request.PaymentMethod != models.CryptoPayment && request.PaymentMethod != models.WalletPayment {
 		c.JSON(http.StatusNotImplemented, gin.H{
 			"success": false,
 			"message": utils.Cap("not implement just yet."),

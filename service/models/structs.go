@@ -498,23 +498,23 @@ type Image struct {
 }
 
 type RequestSetProduct struct {
-	ProductID   *string  `json:"product_id"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Images      []string `json:"images"`
-	Width       float64  `json:"width"`
-	Length      float64  `json:"length"`
-	WeightOZ    float64  `json:"weight_oz"`
-	WeightGramm float64  `json:"weight_gramm"`
-	Purity      float64  `json:"purity"`
-	PriceGramm  float64  `json:"price_gramm"`
-	Percentage  float64  `json:"percentage"`
-	Hide        bool     `bson:"hide" json:"hide"`
-	Limited     bool     `bson:"limited" json:"limited"`
-	Amount      int      `bson:"amount" json:"amount"`
-	SubTitle    string   `bson:"sub_title" json:"sub_title"`
-	Faq         string   `bson:"faq" json:"faq"`
-	Answer      string   `bson:"answer" json:"answer"`
+	ProductID   *string   `json:"product_id"`
+	Name        *string   `json:"name"`
+	Description *string   `json:"description"`
+	Images      *[]string `json:"images"`
+	Width       *float64  `json:"width"`
+	Length      *float64  `json:"length"`
+	WeightOZ    *float64  `json:"weight_oz"`
+	WeightGramm *float64  `json:"weight_gramm"`
+	Purity      *float64  `json:"purity"`
+	PriceGramm  *float64  `json:"price_gramm"`
+	Percentage  *float64  `json:"percentage"`
+	Hide        *bool     `bson:"hide" json:"hide"`
+	Limited     *bool     `bson:"limited" json:"limited"`
+	Amount      *int      `bson:"amount" json:"amount"`
+	SubTitle    *string   `bson:"sub_title" json:"sub_title"`
+	Faq         *string   `bson:"faq" json:"faq"`
+	Answer      *string   `bson:"answer" json:"answer"`
 }
 
 type RequestSetDeliveryMethod struct {

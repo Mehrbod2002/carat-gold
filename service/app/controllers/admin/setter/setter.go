@@ -454,7 +454,7 @@ func SetEditProduct(c *gin.Context) {
 		return
 	}
 
-	for _, photo := range request.Images {
+	for _, photo := range *request.Images {
 		photoID := primitive.NewObjectID()
 		valid := utils.UploadPhoto(c, photoID.Hex(), photo)
 		if !valid {
@@ -464,20 +464,45 @@ func SetEditProduct(c *gin.Context) {
 		images = append(images, models.Image{PhotoID: photoID})
 	}
 
-	editedUser := models.Products{
-		Percentage:  request.Percentage,
-		Name:        request.Name,
-		Description: request.Description,
-		WeightOZ:    request.WeightOZ,
-		WeightGramm: request.WeightGramm,
-		Purity:      request.Purity,
-		Length:      request.Length,
-		Width:       request.Width,
-		Amount:      request.Amount,
-		Images:      images,
-		SubTitle:    request.SubTitle,
-		Answer:      request.Answer,
-		Faq:         request.Faq,
+	editedUser := models.Products{}
+	if len(images) != 0 {
+		editedUser.Images = images
+	}
+	if request.Percentage != nil {
+		editedUser.Percentage = *request.Percentage
+	}
+	if request.Name != nil {
+		editedUser.Name = *request.Name
+	}
+	if request.Description != nil {
+		editedUser.Description = *request.Description
+	}
+	if request.WeightOZ != nil {
+		editedUser.WeightOZ = *request.WeightOZ
+	}
+	if request.WeightGramm != nil {
+		editedUser.WeightGramm = *request.WeightGramm
+	}
+	if request.Purity != nil {
+		editedUser.Purity = *request.Purity
+	}
+	if request.Length != nil {
+		editedUser.Length = *request.Length
+	}
+	if request.Width != nil {
+		editedUser.Width = *request.Width
+	}
+	if request.Amount != nil {
+		editedUser.Amount = *request.Amount
+	}
+	if request.SubTitle != nil {
+		editedUser.SubTitle = *request.SubTitle
+	}
+	if request.Answer != nil {
+		editedUser.Answer = *request.Answer
+	}
+	if request.Faq != nil {
+		editedUser.Faq = *request.Faq
 	}
 
 	productId, valid := utils.ValidateID(*request.ProductID, c)
@@ -521,7 +546,7 @@ func SetProduct(c *gin.Context) {
 	}
 
 	var images []models.Image
-	for _, photo := range request.Images {
+	for _, photo := range *request.Images {
 		photoID := primitive.NewObjectID()
 		valid := utils.UploadPhoto(c, photoID.Hex(), photo)
 		if !valid {
@@ -533,16 +558,16 @@ func SetProduct(c *gin.Context) {
 
 	_, err := db.Collection("products").InsertOne(context.Background(),
 		models.Products{
-			Name:        request.Name,
-			Description: request.Description,
-			WeightOZ:    request.WeightOZ,
-			WeightGramm: request.WeightGramm,
-			Purity:      request.Purity,
-			Length:      request.Length,
-			Width:       request.Width,
-			Percentage:  request.Percentage,
+			Name:        *request.Name,
+			Description: *request.Description,
+			WeightOZ:    *request.WeightOZ,
+			WeightGramm: *request.WeightGramm,
+			Purity:      *request.Purity,
+			Length:      *request.Length,
+			Width:       *request.Width,
+			Percentage:  *request.Percentage,
 			Images:      images,
-			Amount:      request.Amount,
+			Amount:      *request.Amount,
 			WhoDefine:   user.Email,
 			CreatedAt:   time.Now(),
 		})

@@ -514,7 +514,6 @@ func ValidateSession(c *gin.Context) (*User, bool) {
 					session.Delete("token")
 					err = session.Save()
 					if err != nil {
-						log.Println(err)
 						return nil, false
 					}
 					return nil, false
@@ -533,7 +532,6 @@ func ReceiveSession(c *gin.Context) *User {
 	cookie_token, err := c.Request.Cookie("token")
 	tokenString := c.GetHeader("Authorization")
 	if token == nil && tokenString == "" && err != nil {
-		log.Println(err)
 		return nil
 	}
 	if token == nil {
@@ -768,7 +766,7 @@ func (order *RequestSetCancelTrade) Validate(c *gin.Context) bool {
 }
 
 func (product *RequestSetProduct) Validate(c *gin.Context) bool {
-	for _, i := range product.Images {
+	for _, i := range *product.Images {
 		decodedFile, err := base64.StdEncoding.DecodeString(strings.Split(i, ",")[1])
 		if err != nil {
 			utils.Method(c, "invalid file format")
@@ -781,49 +779,53 @@ func (product *RequestSetProduct) Validate(c *gin.Context) bool {
 		}
 	}
 
-	if len(product.Name) == 0 {
+	if len(*product.Name) == 0 {
 		utils.Method(c, "invalid name")
 		return false
 	}
-	if len(product.Description) == 0 {
+	if len(*product.Description) == 0 {
 		utils.Method(c, "invalid description")
 		return false
 	}
-	if len(product.SubTitle) == 0 || len(product.SubTitle) > 100 {
+	if len(*product.SubTitle) == 0 || len(*product.SubTitle) > 100 {
 		utils.Method(c, "invalid name")
 		return false
 	}
-	if len(product.Faq) == 0 || len(product.Faq) > 100 {
+	if len(*product.Faq) == 0 || len(*product.Faq) > 100 {
 		utils.Method(c, "invalid name")
 		return false
 	}
-	if len(product.Answer) == 0 || len(product.Answer) == 200 {
+	if len(*product.Answer) == 0 || len(*product.Answer) == 200 {
 		utils.Method(c, "invalid name")
 		return false
 	}
-	if product.Width <= 0 {
+	if *product.Width <= 0 {
 		utils.Method(c, "invalid width")
 		return false
 	}
-	if product.Length <= 0 {
+	if *product.Length <= 0 {
 		utils.Method(c, "invalid length")
 		return false
 	}
-	if product.WeightOZ <= 0 {
+	if *product.WeightOZ <= 0 {
 		utils.Method(c, "invalid weight oz")
 		return false
 	}
-	if product.WeightGramm <= 0 {
+	if *product.WeightGramm <= 0 {
 		utils.Method(c, "invalid weight gramm")
 		return false
 	}
-	if product.Purity <= 0 {
-		utils.Method(c, "invalid name")
-		return false
+	if product.Purity != nil {
+		if *product.Purity <= 0 {
+			utils.Method(c, "invalid name")
+			return false
+		}
 	}
-	if product.Percentage <= 0 {
-		utils.Method(c, "invalid percentage")
-		return false
+	if product.Percentage != nil {
+		if *product.Percentage <= 0 {
+			utils.Method(c, "invalid percentage")
+			return false
+		}
 	}
 	return true
 }
