@@ -131,7 +131,7 @@ import requests
 from datetime import datetime, timedelta
 import pytz
 
-url = "https://api.tradinghours.com/v3/markets/status?fin_id=AE.DFM&timezone=utc"
+url = "https://api.tradinghours.com/v3/markets/status?fin_id=XNYS&timezone=utc"
 # url = "https://api.tradinghours.com/v3/markets?group=all"
 headers = {
     "Content-Type": "application/json",
@@ -141,6 +141,7 @@ headers = {
 response = requests.get(url, headers=headers)
 
 data = response.json()
+print(data)
 # for i in data["data"]:
 #     try:
 #         if i["fin_id"] != None:

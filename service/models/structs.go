@@ -426,8 +426,8 @@ type DocumentShots struct {
 
 type Documents struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	UserID    primitive.ObjectID `bson:"user_id" bson:"user_id,omitempty"`
-	Documents DocumentShots      `json:"documents" bson:"documents"`
+	UserID    primitive.ObjectID `bson:"user_id" json:"user_id,omitempty"`
+	Documents DocumentShots      `bson:"documents" json:"documents"`
 }
 
 type DataMeta struct {

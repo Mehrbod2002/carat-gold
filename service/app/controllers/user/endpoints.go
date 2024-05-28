@@ -459,10 +459,14 @@ func EditUser(c *gin.Context) {
 
 	updateFields := bson.M{}
 	if request.FirstName != nil {
-		updateFields["first_name"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.FirstName))
+		if len(*request.LastName) != 0 {
+			updateFields["first_name"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.FirstName))
+		}
 	}
 	if request.LastName != nil {
-		updateFields["last_name"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.LastName))
+		if len(*request.LastName) != 0 {
+			updateFields["last_name"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.LastName))
+		}
 	}
 	if request.Email != nil {
 		updateFields["email"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.Email))
@@ -1249,7 +1253,7 @@ func PayWithWallet(c *gin.Context) {
 
 	result, valid := utils.GetRequest("get_last_price")
 	if !valid {
-		utils.InternalError(c)
+		utils.AdminError(c)
 		return
 	}
 
@@ -1333,7 +1337,8 @@ func PayWithWallet(c *gin.Context) {
 		models.StoreMetatraderID(orderID, fmt.Sprintf("%d", mID))
 	}
 	if !valid {
-		utils.InternalError(c)
+		fmt.Println("Set order")
+		utils.AdminError(c)
 		return
 	}
 

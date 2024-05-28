@@ -262,15 +262,19 @@ func IsValidPassowrd(password string, c *gin.Context) bool {
 
 func (req *RequestEdit) Validate(c *gin.Context) bool {
 	if req.FirstName != nil {
-		if len(*req.FirstName) > 20 || len(*req.FirstName) < 4 {
-			utils.Method(c, "invalid first name")
-			return false
+		if len(*req.FirstName) != 0 {
+			if len(*req.FirstName) > 20 || len(*req.FirstName) < 4 {
+				utils.Method(c, "invalid first name")
+				return false
+			}
 		}
 	}
 	if req.LastName != nil && *req.LastName != "" {
-		if len(*req.LastName) > 20 || len(*req.LastName) < 4 {
-			utils.Method(c, "invalid last name ")
-			return false
+		if len(*req.LastName) != 0 {
+			if len(*req.LastName) > 20 || len(*req.LastName) < 4 {
+				utils.Method(c, "invalid last name ")
+				return false
+			}
 		}
 	}
 

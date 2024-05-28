@@ -126,7 +126,7 @@ def get_data():
 @app.route('/market_status', methods=['GET'])
 def get_status():
     try:
-        url = "https://api.tradinghours.com/v3/markets/status?fin_id=AE.DFM&timezone=utc"
+        url = "https://api.tradinghours.com/v3/markets/status?fin_id=XNYS&timezone=utc"
 
         headers = {
             "Content-Type": "application/json",
@@ -138,18 +138,13 @@ def get_status():
         data = response.json()
 
         market_data = data['data']['US.NYSE']
-        status = market_data['status']
+        status_market = market_data['status']
         next_bell_utc = market_data['next_bell']
 
         next_bell_utc = datetime.strptime(next_bell_utc, "%Y-%m-%dT%H:%M:%S%z")
-        utc_time = datetime.strptime(data['meta']['utc_time'], "%Y-%m-%dT%H:%M:%S%z")
-
-        status = False
-        if utc_time >= next_bell_utc:
-            status = True
 
         response = jsonify({"status": True, "data": {
-            "open": status,
+            "open": status_market == "Open",
             "next":int(next_bell_utc.timestamp())
         }})
         return make_response(response, 200)
@@ -157,7 +152,7 @@ def get_status():
         response = jsonify({"status": False, "m": "internal_error"})
         return make_response(response, 500)
     
-
+""
     # data = {"symbol": "FX:XAUUSD"}
 
     # headers = json.dumps({

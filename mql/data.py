@@ -42,7 +42,7 @@ def get_last_price():
     if tick is None:
         jsonify({"data": None, "status": False}), 500
         return None
-    
+
     return jsonify({"data": tick.ask, "status": True}), 200
 
 
@@ -86,14 +86,12 @@ def get_history():
 @app.route('/reinitialize', methods=['POST'])
 def trigger_reinitialize():
     if request.method == 'POST':
-        if mt5_initialized == False:
-            if not mt5.initialize():
-                return
         account = requests.get(url, headers=headers).json()["accounts"]
-        if mt5.login(int(account["login"]), password=account["password"], server=account["server"]):
-            return jsonify({"status": True, "message": "MetaTrader 5 reinitialized successfully"}), 200
-        else:
-            return jsonify({"status": False, "message": "Failed to reinitialize MetaTrader 5"}), 500
+        if mt5_initialized == False:
+            if not mt5.initialize(login=int(account["login"]), password=account["password"], server=account["server"]):
+                print(mt5.last_error())
+                return
+        return jsonify({"status": True, "message": "MetaTrader 5 reinitialized successfully"}), 200
     else:
         return jsonify({"status": False, "message": "Invalid request method"}), 405
 
@@ -145,9 +143,9 @@ def send_order():
     if result == None:
         return jsonify({"status": False, "message": "Order send failed", "data": str(mt5.last_error()[1])}), 400
     else:
-        if result.retcode != 1009 and result.retcode != 1008:
+        if result.retcode != 10009 and result.retcode != 10008:
             return jsonify({"status": False, "message": "Order send failed", "data": result.comment}), 400
-        return jsonify({"status": True, "message": "Order placed successfully", "data": result.order}), 200
+        return jsonify({"status": True, "message": "Order placed successfully", "data": str(result.order)}), 200
 
 
 @app.route('/cancel_order', methods=['POST'])

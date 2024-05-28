@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -45,6 +46,14 @@ func InternalError(c *gin.Context) {
 	c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 		"success": false,
 		"message": Cap("internal server connection"),
+		"data":    "internal_error",
+	})
+}
+
+func AdminError(c *gin.Context) {
+	c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{
+		"success": false,
+		"message": Cap("Currenctly we don't get new payments"),
 		"data":    "internal_error",
 	})
 }
@@ -237,28 +246,43 @@ func UploadPhoto(c *gin.Context, id string, photo string, doc bool) bool {
 }
 
 func AutoOrder(price float64) (*uint64, bool) {
-	volume := price - (price / 10)
+	result, valid := GetRequest("get_last_price")
+
+	if !valid {
+		return nil, false
+	}
+	if !result["status"].(bool) {
+		return nil, false
+	}
+
+	// volumn := result["data"].(float64) / price
+	// fmt.Println(volumn)
 	payload := map[string]interface{}{
 		"comment":   "User Payment Stream",
 		"symbol":    "XAUUSD",
 		"type":      1,
-		"volume":    volume,
+		"volume":    0.1,
 		"deviation": 0,
 		"sl":        0,
 		"tp":        0,
 		"stoplimit": 0,
 	}
-	result, valid := PostRequest(payload, "send_order")
+	result, valid = PostRequest(payload, "send_order")
 
-	if !valid || result["status"] == false {
+	status := result["status"].(bool)
+	if !valid || !status {
 		return nil, false
 	}
 
-	orderID, ok := result["data"].(uint64)
+	dataString, ok := result["data"].(string)
 	if !ok {
 		return nil, false
 	}
 
+	orderID, err := strconv.ParseUint(dataString, 10, 64)
+	if err != nil {
+		return nil, false
+	}
 	return &orderID, true
 }
 
