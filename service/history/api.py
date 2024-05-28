@@ -126,7 +126,7 @@ def get_data():
 @app.route('/market_status', methods=['GET'])
 def get_status():
     try:
-        url = "https://api.tradinghours.com/v3/markets/status?fin_id=us.nyse&timezone=utc"
+        url = "https://api.tradinghours.com/v3/markets/status?fin_id=AE.DFM&timezone=utc"
 
         headers = {
             "Content-Type": "application/json",

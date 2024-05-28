@@ -487,7 +487,7 @@ func ViewUser(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := db.Collection("user").FindOne(context.Background(),
+	if err := db.Collection("users").FindOne(context.Background(),
 		bson.M{"_id": userID}).Decode(&user); err != nil && err != mongo.ErrNoDocuments {
 		log.Println(err)
 		utils.InternalError(c)

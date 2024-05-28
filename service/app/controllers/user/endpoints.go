@@ -546,7 +546,7 @@ func SendDocuments(c *gin.Context) {
 	}
 
 	if user.StatusString == models.PendingStatus {
-		c.JSON(http.StatusUnauthorized, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": utils.Cap("user in processing"),
 			"data":    "already_registered",
@@ -555,7 +555,7 @@ func SendDocuments(c *gin.Context) {
 	}
 
 	if user.UserVerified {
-		c.JSON(http.StatusUnauthorized, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": utils.Cap("user already verified"),
 			"data":    "already_registered",
@@ -593,7 +593,7 @@ func SendDocuments(c *gin.Context) {
 	}
 	frontBase64 := base64.StdEncoding.EncodeToString(frontData)
 	photoIDFront := primitive.NewObjectID()
-	valid = utils.UploadPhoto(c, photoIDFront.Hex(), frontBase64)
+	valid = utils.UploadPhoto(c, photoIDFront.Hex(), frontBase64, true)
 	if !valid {
 		return
 	}
@@ -605,26 +605,16 @@ func SendDocuments(c *gin.Context) {
 		return
 	}
 	backBase64 := base64.StdEncoding.EncodeToString(backData)
-
 	photoIDBack := primitive.NewObjectID()
-	valid = utils.UploadPhoto(c, photoIDBack.Hex(), backBase64)
+	valid = utils.UploadPhoto(c, photoIDBack.Hex(), backBase64, true)
 	if !valid {
 		return
 	}
 
 	update := bson.M{
-		"documents": models.Documents{
-			Back: struct {
-				Shot string "json:\"shot\" bson:\"shot\""
-			}{
-				Shot: photoIDBack.Hex(),
-			},
-			Front: struct {
-				Shot string "json:\"shot\" bson:\"shot\""
-			}{
-				Shot: photoIDFront.Hex(),
-			},
-		},
+		"user_id":              authUser.ID,
+		"documents.back.shot":  photoIDBack.Hex(),
+		"documents.front.shot": photoIDFront.Hex(),
 	}
 
 	if _, err := db.Collection("documents").

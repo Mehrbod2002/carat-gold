@@ -199,24 +199,35 @@ func DerefIntPtr(ptr *int) int {
 	return 0
 }
 
-func UploadPhoto(c *gin.Context, id string, photo string) bool {
+func UploadPhoto(c *gin.Context, id string, photo string, doc bool) bool {
 	svgPath := filepath.Join("CDN", id+".svg")
+	if doc {
+		svgPath = filepath.Join("CDN", id+".png")
+	}
 
 	var photoData string
+	var decoded []byte
 	if strings.Contains(photo, "base64,") {
 		photoData = strings.Split(photo, ",")[1]
 	} else {
-		InternalError(c)
-		return false
+		decodedData, err := base64.StdEncoding.DecodeString(photo)
+		if err != nil {
+			InternalError(c)
+			return false
+		}
+		decoded = decodedData
 	}
 
-	decodedData, err := base64.StdEncoding.DecodeString(photoData)
-	if err != nil {
-		InternalError(c)
-		return false
+	if len(decoded) == 0 {
+		decodedData, err := base64.StdEncoding.DecodeString(photoData)
+		if err != nil {
+			InternalError(c)
+			return false
+		}
+		decoded = decodedData
 	}
 
-	err = os.WriteFile(svgPath, decodedData, 0644)
+	err := os.WriteFile(svgPath, decoded, 0644)
 	if err != nil {
 		InternalError(c)
 		return false

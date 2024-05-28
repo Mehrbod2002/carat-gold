@@ -415,15 +415,19 @@ type RegisterRequest struct {
 	OtpCode     *int   `json:"otp_code" binding:"required"`
 }
 
+type Shot struct {
+	Shot string `json:"shot" bson:"shot"`
+}
+
+type DocumentShots struct {
+	Back  Shot `json:"back" bson:"back"`
+	Front Shot `json:"front" bson:"front"`
+}
+
 type Documents struct {
-	ID     primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	UserID primitive.ObjectID `json:"user_id" bson:"user_id,omitempty"`
-	Back   struct {
-		Shot string `json:"shot" bson:"shot"`
-	} `json:"back" bson:"back"`
-	Front struct {
-		Shot string `json:"shot" bson:"shot"`
-	} `json:"front" bson:"front"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	UserID    primitive.ObjectID `bson:"user_id" bson:"user_id,omitempty"`
+	Documents DocumentShots      `json:"documents" bson:"documents"`
 }
 
 type DataMeta struct {

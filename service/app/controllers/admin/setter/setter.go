@@ -456,7 +456,7 @@ func SetEditProduct(c *gin.Context) {
 
 	for _, photo := range *request.Images {
 		photoID := primitive.NewObjectID()
-		valid := utils.UploadPhoto(c, photoID.Hex(), photo)
+		valid := utils.UploadPhoto(c, photoID.Hex(), photo, false)
 		if !valid {
 			return
 		}
@@ -548,7 +548,7 @@ func SetProduct(c *gin.Context) {
 	var images []models.Image
 	for _, photo := range *request.Images {
 		photoID := primitive.NewObjectID()
-		valid := utils.UploadPhoto(c, photoID.Hex(), photo)
+		valid := utils.UploadPhoto(c, photoID.Hex(), photo, false)
 		if !valid {
 			return
 		}
@@ -606,7 +606,7 @@ func SetSymbols(c *gin.Context) {
 
 	var images []models.Image
 	photoID := primitive.NewObjectID()
-	valid := utils.UploadPhoto(c, photoID.Hex(), request.Image)
+	valid := utils.UploadPhoto(c, photoID.Hex(), request.Image, false)
 	if !valid {
 		return
 	}

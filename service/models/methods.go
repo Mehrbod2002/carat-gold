@@ -686,7 +686,7 @@ func (registerRequest *RegisterRequest) Validate(c *gin.Context) bool {
 }
 
 func (body *Documents) Validate(c *gin.Context) bool {
-	decodedFileFront, err := base64.StdEncoding.DecodeString(body.Front.Shot)
+	decodedFileFront, err := base64.StdEncoding.DecodeString(body.Documents.Front.Shot)
 	if err != nil {
 		utils.Method(c, "invalid front file format")
 		return false
@@ -697,7 +697,7 @@ func (body *Documents) Validate(c *gin.Context) bool {
 		return false
 	}
 
-	decodedFile, err := base64.StdEncoding.DecodeString(body.Back.Shot)
+	decodedFile, err := base64.StdEncoding.DecodeString(body.Documents.Back.Shot)
 	if err != nil {
 		utils.Method(c, "invalid front file format")
 		return false
