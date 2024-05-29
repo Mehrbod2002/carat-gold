@@ -821,7 +821,14 @@ func (product *RequestSetProduct) Validate(c *gin.Context) bool {
 	}
 	if product.Purity != nil {
 		if *product.Purity <= 0 {
-			utils.Method(c, "invalid name")
+			utils.Method(c, "invalid purity")
+			return false
+		}
+	}
+
+	if product.PurityStr != nil {
+		if len(*product.PurityStr) == 0 {
+			utils.Method(c, "invalid purity string")
 			return false
 		}
 	}

@@ -490,6 +490,9 @@ func SetEditProduct(c *gin.Context) {
 	if request.Length != nil {
 		editedUser.Length = *request.Length
 	}
+	if request.PurityStr != nil {
+		editedUser.PurityStr = *request.PurityStr
+	}
 	if request.Width != nil {
 		editedUser.Width = *request.Width
 	}
@@ -569,6 +572,7 @@ func SetProduct(c *gin.Context) {
 			Percentage:  *request.Percentage,
 			Images:      images,
 			Amount:      *request.Amount,
+			PurityStr:   *request.PurityStr,
 			WhoDefine:   user.Email,
 			CreatedAt:   time.Now(),
 		})

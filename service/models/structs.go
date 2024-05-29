@@ -332,6 +332,7 @@ type Products struct {
 	WeightOZ    float64            `bson:"weight_oz" json:"weight_oz"`
 	WeightGramm float64            `bson:"weight_gramm" json:"weight_gramm"`
 	Purity      float64            `bson:"purity" json:"purity"`
+	PurityStr   string             `bson:"purity_string" json:"purity_string"`
 	Percentage  float64            `bson:"percentage" json:"percentage"`
 	Hide        bool               `bson:"hide" json:"hide"`
 	Limited     bool               `bson:"limited" json:"limited"`
@@ -517,6 +518,7 @@ type RequestSetProduct struct {
 	Hide        *bool     `bson:"hide" json:"hide"`
 	Limited     *bool     `bson:"limited" json:"limited"`
 	Amount      *int      `bson:"amount" json:"amount"`
+	PurityStr   *string   `bson:"purity_string" json:"purity_string"`
 	SubTitle    *string   `bson:"sub_title" json:"sub_title"`
 	Faq         *string   `bson:"faq" json:"faq"`
 	Answer      *string   `bson:"answer" json:"answer"`

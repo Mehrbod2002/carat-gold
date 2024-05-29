@@ -1251,13 +1251,12 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
-	result, valid := utils.GetRequest("get_last_price")
-	if !valid {
-		utils.AdminError(c)
-		return
+	if request.TotalPrice == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": utils.Cap("invalid price"),
+		})
 	}
-
-	lastGoldPrice := result["data"].(float64)
 	if user.Wallet.BalanceUSD < request.TotalPrice {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -1265,16 +1264,22 @@ func PayWithWallet(c *gin.Context) {
 		})
 		return
 	}
-
-	var generalData models.GeneralData
-	err = db.Collection("general_data").FindOne(context.Background(), bson.M{}).Decode(&generalData)
-	if err != nil && err != mongo.ErrNoDocuments {
-		log.Println(err)
-		utils.InternalError(c)
+	result, valid := utils.GetRequest("get_last_price")
+	if !valid {
+		utils.AdminError(c)
 		return
 	}
 
+	lastGoldPrice := result["data"].(float64)
 	if request.IsAED {
+		var generalData models.GeneralData
+		err = db.Collection("general_data").FindOne(context.Background(), bson.M{}).Decode(&generalData)
+		if err != nil && err != mongo.ErrNoDocuments {
+			log.Println(err)
+			utils.InternalError(c)
+			return
+		}
+
 		request.TotalPrice = request.TotalPrice / generalData.AedUsd
 	}
 
@@ -1349,6 +1354,7 @@ func PayWithWallet(c *gin.Context) {
 		models.StoreMetatraderID(orderID, fmt.Sprintf("%d", mID))
 	}
 	if !valid {
+		fmt.Println(valid, mID, 123)
 		utils.AdminError(c)
 		return
 	}
@@ -1380,29 +1386,36 @@ func PayWithWallet(c *gin.Context) {
 			"wallet.balance": -request.TotalPrice,
 		},
 	}); err != nil {
-		utils.BadBinding(c)
+		utils.InternalError(c)
 		return
 	}
 
+	if user.Wallet.Purchased == nil {
+		user.Wallet.Purchased = []models.Purchased{}
+	}
+
+	newPurchase := models.Purchased{
+		PaymentStatus:  models.ApprovedStatus,
+		PaymentMethd:   request.PaymentMethod,
+		CreatePayment:  time.Now(),
+		CreatedAt:      time.Now(),
+		StatusDelivery: "",
+		Product:        request.ProductIDs,
+		OrderID:        orderID,
+	}
+
+	user.Wallet.Purchased = append(user.Wallet.Purchased, newPurchase)
+
 	update := bson.M{
 		"$set": bson.M{
-			"$push": bson.M{
-				"wallet.purchased": models.Purchased{
-					PaymentStatus:  models.ApprovedStatus,
-					PaymentMethd:   request.PaymentMethod,
-					CreatePayment:  time.Now(),
-					CreatedAt:      time.Now(),
-					StatusDelivery: "",
-					Product:        request.ProductIDs,
-					OrderID:        orderID,
-				},
-			},
+			"wallet": user.Wallet,
 		},
 	}
 
 	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
 		"_id": authUser.ID,
 	}, update); err != nil {
+		fmt.Println(err)
 		utils.InternalError(c)
 		return
 	}
