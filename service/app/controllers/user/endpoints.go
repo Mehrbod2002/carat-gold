@@ -1266,6 +1266,18 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
+	var generalData models.GeneralData
+	err = db.Collection("general_data").FindOne(context.Background(), bson.M{}).Decode(&generalData)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+
+	if request.IsAED {
+		request.TotalPrice = request.TotalPrice / generalData.AedUsd
+	}
+
 	lengths := float64(len(request.ProductIDs))
 	eachGoldBar := request.TotalPrice / lengths
 	if (-10 < eachGoldBar-lastGoldPrice || eachGoldBar-lastGoldPrice > 10) &&

@@ -375,6 +375,7 @@ type Transaction struct {
 	Symbol            string               `bson:"symbol" json:"symbol"`
 	TotalPrice        float64              `bson:"total_price" json:"total_price"`
 	Vat               float64              `bson:"vat" json:"vat"`
+	IsAED             bool                 `bson:"is_aed" json:"is_aed"`
 	PaymentStatus     UserStatus           `bson:"payment_status" json:"payment_status"`
 	IsDebit           bool                 `bson:"is_debit" json:"is_debit"`
 	ExternalData      map[string]string    `bson:"external_data" json:"external_data"`
