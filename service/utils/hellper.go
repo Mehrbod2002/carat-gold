@@ -260,7 +260,7 @@ func AutoOrder(price float64) (*uint64, bool) {
 	payload := map[string]interface{}{
 		"comment":   "User Payment Stream",
 		"symbol":    "XAUUSD",
-		"type":      1,
+		"type":      0,
 		"volume":    0.1,
 		"deviation": 0,
 		"sl":        0,

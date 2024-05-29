@@ -552,7 +552,7 @@ func SendDocuments(c *gin.Context) {
 	if user.StatusString == models.PendingStatus {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": utils.Cap("user in processing"),
+			"message": utils.Cap("user is awaiting for admin"),
 			"data":    "already_registered",
 		})
 		return
@@ -1258,7 +1258,6 @@ func PayWithWallet(c *gin.Context) {
 	}
 
 	lastGoldPrice := result["data"].(float64)
-
 	if user.Wallet.BalanceUSD < request.TotalPrice {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -1269,7 +1268,8 @@ func PayWithWallet(c *gin.Context) {
 
 	lengths := float64(len(request.ProductIDs))
 	eachGoldBar := request.TotalPrice / lengths
-	if -10 < eachGoldBar-lastGoldPrice || eachGoldBar-lastGoldPrice > 10 {
+	if (-10 < eachGoldBar-lastGoldPrice || eachGoldBar-lastGoldPrice > 10) &&
+		request.TotalPrice != 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": utils.Cap("each gold bar price is more than 10 USD difference"),
@@ -1337,7 +1337,6 @@ func PayWithWallet(c *gin.Context) {
 		models.StoreMetatraderID(orderID, fmt.Sprintf("%d", mID))
 	}
 	if !valid {
-		fmt.Println("Set order")
 		utils.AdminError(c)
 		return
 	}
@@ -1366,10 +1365,33 @@ func PayWithWallet(c *gin.Context) {
 		"_id": authUser.ID,
 	}, bson.M{
 		"$inc": bson.M{
-			"wallet.balanceUSD": -request.TotalPrice,
+			"wallet.balance": -request.TotalPrice,
 		},
 	}); err != nil {
 		utils.BadBinding(c)
+		return
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"$push": bson.M{
+				"wallet.purchased": models.Purchased{
+					PaymentStatus:  models.ApprovedStatus,
+					PaymentMethd:   request.PaymentMethod,
+					CreatePayment:  time.Now(),
+					CreatedAt:      time.Now(),
+					StatusDelivery: "",
+					Product:        request.ProductIDs,
+					OrderID:        orderID,
+				},
+			},
+		},
+	}
+
+	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
+		"_id": authUser.ID,
+	}, update); err != nil {
+		utils.InternalError(c)
 		return
 	}
 

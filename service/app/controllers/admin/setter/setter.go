@@ -4,6 +4,7 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -667,6 +668,7 @@ func SetUserPermissions(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
 }
+
 func SetEditUser(c *gin.Context) {
 	if !models.AllowedAction(c, models.ActionWrite) {
 		return
@@ -713,17 +715,20 @@ func SetEditUser(c *gin.Context) {
 		updateFields["email"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.Email))
 	}
 	if request.Phone != nil {
-		updateFields["phoneNumber"] = utils.DerefStringPtr(request.Phone)
+		updateFields["phone_number"] = utils.DerefStringPtr(request.Phone)
 	}
 	if request.FirstName != nil {
-		updateFields["firstName"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.FirstName))
+		updateFields["first_name"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.FirstName))
 	}
 	if request.LastName != nil {
-		updateFields["lastName"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.LastName))
+		updateFields["last_name"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.LastName))
 	}
 	if request.Status != nil {
-		updateFields["statusString"] = *request.Status
-		updateFields["userVerified"] = UserVerified
+		updateFields["status_string"] = *request.Status
+		updateFields["user_verified"] = UserVerified
+		if UserVerified {
+			updateFields["user_status"] = models.ApprovedStatus
+		}
 	}
 	if request.Freeze != nil {
 		updateFields["freeze"] = utils.DerefBoolPtr(request.Freeze)
@@ -732,16 +737,18 @@ func SetEditUser(c *gin.Context) {
 		updateFields["permissions"] = *request.Permissions
 	}
 	if request.IsSupport != nil {
-		updateFields["isSupportOrAdmin"] = utils.DerefBoolPtr(request.IsSupport)
+		updateFields["support_or_admin"] = utils.DerefBoolPtr(request.IsSupport)
 	}
 	if request.PhoneVerify != nil {
-		updateFields["phoneVerified"] = utils.DerefBoolPtr(request.PhoneVerify)
+		updateFields["phone_verified"] = utils.DerefBoolPtr(request.PhoneVerify)
 	}
 	if request.Reason != nil {
 		updateFields["reason"] = utils.DerefStringPtr(request.Reason)
 	}
+	fmt.Println(request.BalanceUSD)
 	if request.BalanceUSD != nil {
-		updateFields["wallet.balanceUSD"] = *request.BalanceUSD
+		fmt.Println(*request.BalanceUSD)
+		updateFields["wallet.balance"] = *request.BalanceUSD
 	}
 	if passwordSet {
 		updateFields["password"] = string(password)
