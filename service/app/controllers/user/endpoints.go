@@ -1264,13 +1264,7 @@ func PayWithWallet(c *gin.Context) {
 		})
 		return
 	}
-	result, valid := utils.GetRequest("get_last_price")
-	if !valid {
-		utils.AdminError(c)
-		return
-	}
 
-	lastGoldPrice := result["data"].(float64)
 	if request.IsAED {
 		var generalData models.GeneralData
 		err = db.Collection("general_data").FindOne(context.Background(), bson.M{}).Decode(&generalData)
@@ -1283,16 +1277,22 @@ func PayWithWallet(c *gin.Context) {
 		request.TotalPrice = request.TotalPrice / generalData.AedUsd
 	}
 
-	lengths := float64(len(request.ProductIDs))
-	eachGoldBar := request.TotalPrice / lengths
-	if (-10 < eachGoldBar-lastGoldPrice || eachGoldBar-lastGoldPrice > 10) &&
-		request.TotalPrice != 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": utils.Cap("each gold bar price is more than 10 USD difference"),
-		})
-		return
-	}
+	// result, valid := utils.GetRequest("get_last_price")
+	// if !valid {
+	// 	utils.AdminError(c)
+	// 	return
+	// }
+	// lastGoldPrice := result["data"].(float64)
+	// lengths := float64(len(request.ProductIDs))
+	// eachGoldBar := request.TotalPrice / lengths
+	// if (-10 < eachGoldBar-lastGoldPrice || eachGoldBar-lastGoldPrice > 10) &&
+	// 	request.TotalPrice != 0 {
+	// 	c.JSON(http.StatusBadRequest, gin.H{
+	// 		"success": false,
+	// 		"message": utils.Cap("each gold bar price is more than 10 USD difference"),
+	// 	})
+	// 	return
+	// }
 
 	if crypto.Disable {
 		c.JSON(http.StatusNotImplemented, gin.H{
