@@ -145,14 +145,13 @@ def get_status():
 
         response = jsonify({"status": True, "data": {
             "open": status_market == "Open",
-            "next":int(next_bell_utc.timestamp())
+            "next": int(next_bell_utc.timestamp())
         }})
         return make_response(response, 200)
     except:
         response = jsonify({"status": False, "m": "internal_error"})
         return make_response(response, 500)
-    
-""
+
     # data = {"symbol": "FX:XAUUSD"}
 
     # headers = json.dumps({
