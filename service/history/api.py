@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from flask import Flask, jsonify, request, make_response
 from websocket import create_connection
 from flask_cors import CORS
@@ -5,9 +6,9 @@ import json
 import random
 import string
 import re
+import pytz
 
-import requests
-from datetime import datetime, timedelta
+tehran_tz = pytz.timezone('Asia/Tehran')
 
 app = Flask(__name__)
 CORS(app, resources={r"/history": {"origins": "*"}})
@@ -125,33 +126,50 @@ def get_data():
 
 @app.route('/market_status', methods=['GET'])
 def get_status():
-    try:
-        url = "https://api.tradinghours.com/v3/markets/status?fin_id=XNYS&timezone=utc"
+    now = datetime.now(tehran_tz)
+    day_of_week = now.weekday()
+    hour = now.hour
+    minute = now.minute
 
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer 1UgpHDBNPiXbr9mrp873nf7NV5JVQHjOPiRlyWGRbbacfb84"
+    market_closures = [
+        {"start": (5, 1, 0), "end": (0, 2, 0)},
+        {"start": (6, 1, 0), "end": (0, 2, 0)},
+        {"start": (6, 3, 0), "end": (6, 4, 30)},
+    ]
+
+    market_open = True
+    next_open = None
+
+    for closure in market_closures:
+        start_day, start_hour, start_minute = closure["start"]
+        end_day, end_hour, end_minute = closure["end"]
+
+        start_time = tehran_tz.localize(datetime(
+            now.year, now.month, now.day, start_hour, start_minute)) + timedelta(days=(start_day - now.weekday()) % 7)
+        end_time = tehran_tz.localize(datetime(
+            now.year, now.month, now.day, end_hour, end_minute)) + timedelta(days=(end_day - now.weekday()) % 7)
+
+        if start_time <= now < end_time:
+            market_open = False
+            next_open = end_time
+            break
+
+    if market_open:
+        next_close_period = min(
+            (tehran_tz.localize(datetime(now.year, now.month, now.day, start_hour, start_minute)) + timedelta(days=(start_day - now.weekday()) % 7)
+             for closure in market_closures),
+            key=lambda x: (x - now).total_seconds()
+        )
+        next_open = next_close_period
+
+    response = jsonify({
+        "status": True,
+        "data": {
+            "open": market_open,
+            "next": int(next_open.astimezone(pytz.UTC).timestamp())
         }
-
-        response = requests.get(url, headers=headers)
-
-        data = response.json()
-
-        market_data = data['data']['US.NYSE']
-        status_market = market_data['status']
-        next_bell_utc = market_data['next_bell']
-
-        next_bell_utc = datetime.strptime(next_bell_utc, "%Y-%m-%dT%H:%M:%S%z")
-
-        response = jsonify({"status": True, "data": {
-            "open": status_market == "Open",
-            "next": int(next_bell_utc.timestamp())
-        }})
-        return make_response(response, 200)
-    except:
-        response = jsonify({"status": False, "m": "internal_error"})
-        return make_response(response, 500)
-
+    })
+    make_response(response, 200)
     # data = {"symbol": "FX:XAUUSD"}
 
     # headers = json.dumps({
