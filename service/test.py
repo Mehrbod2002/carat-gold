@@ -1,6 +1,6 @@
 # import asyncio
 # import websockets
-# import requests
+import requests
 # import datetime
 
 # token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjUxYjZlZmJhODA5NTkwNjIxMzkyMjYiLCJuYW1lIjoiIiwicGhvbmUiOiI5ODkxMzg3ODAyNzUiLCJlbWFpbCI6IiIsImNyZWF0ZWRfYXQiOiIwMDAxLTAxLTAxVDAwOjAwOjAwWiIsImV4cCI6MTcxOTIyMzQ2NX0.R_rJU7MhtVN9PvUfearTa8Ke2lGTa8S9B6b2KffyeVE"
@@ -83,7 +83,7 @@
 # # }
 
 # # # data = requests.post("http://127.0.0.1:5000/history",json=data)
-# # data = requests.get("https://goldshop24.co/market_status",json=data)
+data = requests.get("https://goldshop24.co/market_status")
 
 # # print(data.json())
 # # session_time = data.json()['session']
