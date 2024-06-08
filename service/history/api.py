@@ -125,7 +125,7 @@ def get_data():
 
 
 @app.route('/market_status', methods=['GET'])
-def get_status():
+def market_status():
     now = datetime.now(tehran_tz)
     day_of_week = now.weekday()
     hour = now.hour
@@ -169,6 +169,7 @@ def get_status():
             "next": int(next_open.astimezone(pytz.UTC).timestamp())
         }
     })
+    print(response)
     make_response(response, 200)
     # data = {"symbol": "FX:XAUUSD"}
 
