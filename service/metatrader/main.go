@@ -17,9 +17,10 @@ func main() {
 	stop := make(chan struct{})
 	var wg sync.WaitGroup
 
-	wg.Add(2)
+	wg.Add(3)
 	go startServerWSS(errors, &wg, 5050, dataChannel)
 	go startServerMetaTrader(errors, &wg, dataChannel, stop)
+	go startKeepAlive(dataChannel)
 
 	wg.Wait()
 	close(errors)
