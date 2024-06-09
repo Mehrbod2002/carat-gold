@@ -169,7 +169,6 @@ def market_status():
             "next": int(next_open.astimezone(pytz.UTC).timestamp())
         }
     })
-
     return make_response(response, 200)
     # data = {"symbol": "FX:XAUUSD"}
 

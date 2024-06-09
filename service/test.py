@@ -84,7 +84,7 @@ import requests
 
 # # # data = requests.post("http://127.0.0.1:5000/history",json=data)
 data = requests.get("https://goldshop24.co/market_status")
-
+print(data.json())
 # # print(data.json())
 # # session_time = data.json()['session']
 # # session_start, session_end = session_time.split('-')
@@ -127,38 +127,38 @@ data = requests.get("https://goldshop24.co/market_status")
 
 #!/usr/bin/env python3
 
-import requests
-from datetime import datetime, timedelta
-import pytz
+# import requests
+# from datetime import datetime, timedelta
+# import pytz
 
-url = "https://api.tradinghours.com/v3/markets/status?fin_id=XNYS&timezone=utc"
-# url = "https://api.tradinghours.com/v3/markets?group=all"
-headers = {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer 1UgpHDBNPiXbr9mrp873nf7NV5JVQHjOPiRlyWGRbbacfb84"
-}
+# url = "https://api.tradinghours.com/v3/markets/status?fin_id=XNYS&timezone=utc"
+# # url = "https://api.tradinghours.com/v3/markets?group=all"
+# headers = {
+#     "Content-Type": "application/json",
+#     "Authorization": "Bearer 1UgpHDBNPiXbr9mrp873nf7NV5JVQHjOPiRlyWGRbbacfb84"
+# }
 
-response = requests.get(url, headers=headers)
+# response = requests.get(url, headers=headers)
 
-data = response.json()
-print(data)
-# for i in data["data"]:
-#     try:
-#         if i["fin_id"] != None:
-#             if "AE." in (i["fin_id"]):
-#                 print(i)
-#     except:
-#         pass
-market_data = data['data']['US.NYSE']
-status = market_data['status']
-next_bell_utc = market_data['next_bell']
+# data = response.json()
+# print(data)
+# # for i in data["data"]:
+# #     try:
+# #         if i["fin_id"] != None:
+# #             if "AE." in (i["fin_id"]):
+# #                 print(i)
+# #     except:
+# #         pass
+# market_data = data['data']['US.NYSE']
+# status = market_data['status']
+# next_bell_utc = market_data['next_bell']
 
-next_bell_utc = datetime.strptime(next_bell_utc, "%Y-%m-%dT%H:%M:%S%z")
-utc_time = datetime.strptime(data['meta']['utc_time'], "%Y-%m-%dT%H:%M:%S%z")
+# next_bell_utc = datetime.strptime(next_bell_utc, "%Y-%m-%dT%H:%M:%S%z")
+# utc_time = datetime.strptime(data['meta']['utc_time'], "%Y-%m-%dT%H:%M:%S%z")
 
-if utc_time >= next_bell_utc:
-    status = 'Open'
-else:
-    status = 'Closed'
+# if utc_time >= next_bell_utc:
+#     status = 'Open'
+# else:
+#     status = 'Closed'
 
-print(f"Market status based on UTC time: {status} {int(next_bell_utc.timestamp())}")
+# print(f"Market status based on UTC time: {status} {int(next_bell_utc.timestamp())}")

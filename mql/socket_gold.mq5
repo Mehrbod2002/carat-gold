@@ -3,8 +3,8 @@ int socket;
 ENUM_TIMEFRAMES timeframes[] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_H1, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
 
 string DataSymbol(string symbolName, string type) {
-    double ask = SymbolInfoDouble(symbolName, SYMBOL_BID);
-    double bid = SymbolInfoDouble(symbolName, SYMBOL_ASK);
+    double ask = SymbolInfoDouble(symbolName, SYMBOL_ASK);
+    double bid = SymbolInfoDouble(symbolName, SYMBOL_BID);
     double high = iHigh(symbolName, PERIOD_CURRENT, 0);
     double low = iLow(symbolName, PERIOD_CURRENT, 0);
     double open = iOpen(symbolName, PERIOD_CURRENT, 0);
@@ -12,9 +12,14 @@ string DataSymbol(string symbolName, string type) {
     ENUM_TIMEFRAMES timeframe = Period();
     long currentDateTimeString = TimeCurrent() * 1000;
 
+    if (ask == 0 || bid == 0 || high == 0 || low == 0 || open == 0 || close == 0) {
+        PrintFormat("Error retrieving data for %s. Ask: %f, Bid: %f, High: %f, Low: %f, Open: %f, Close: %f", 
+                    symbolName, ask, bid, high, low, open, close);
+    }
+
     return StringFormat(
         "{\"time\":\"%d\",\"symbol\":\"%s\",\"ask\":%f,\"bid\":%f,\"high\":%f,\"low\":%f,\"open\":%f,\"close\":%f,\"timeframe\":\"%s\",\"type\":\"%s\"}",
-        currentDateTimeString, symbolName, bid, ask, high, low, open, close, EnumToString(timeframe), type
+        currentDateTimeString, symbolName, ask, bid, high, low, open, close, EnumToString(timeframe), type
     );
 }
 
@@ -35,19 +40,21 @@ int OnInit() {
     while (retryCount < maxRetries) {
         socket = SocketCreate();
 
-        if (maxRetries == retryCount) {
+        if (retryCount == maxRetries) {
             Print("Connection failed after ", maxRetries, " retries");
             return(INIT_FAILED);
         }
 
         if (SocketConnect(socket, serverAddress, serverPort, 1000)) {
-            EventSetMillisecondTimer(100);
+            EventSetTimer(5);
             Print("Connected to the first server");
+
+            GetSymbolList1();
             return(INIT_SUCCEEDED);
         }
 
         int error = GetLastError();
-        Print("Retry attempt (Server 1): ", retryCount + 1," error : ", error);
+        Print("Retry attempt (Server 1): ", retryCount + 1, " error : ", error);
         retryCount++;
 
         Sleep(1000);
@@ -58,6 +65,7 @@ int OnInit() {
 
 void OnDeinit(const int reason) {
     SocketClose(socket);
+    EventKillTimer();
 }
 
 void ConnectionAndTick() {
@@ -83,4 +91,3 @@ void OnTick() {
 void OnTimer() {
     ConnectionAndTick();
 }
-

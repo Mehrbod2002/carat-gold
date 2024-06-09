@@ -24,11 +24,13 @@ type DataMeta struct {
 	ProfitWeek float64 `json:"profit_week" bson:"profit_week"`
 }
 
-var lastData DataMeta
-var lastDataMutex sync.Mutex
-var lastUpdateTime time.Time
+var (
+	lastData       DataMeta
+	lastDataMutex  sync.Mutex
+	lastUpdateTime time.Time
+)
 
-func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel chan<- DataMeta, stop chan struct{}) {
+func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel chan DataMeta, stop chan struct{}) {
 	defer wg.Done()
 
 	listener, err := net.Listen("tcp", serverAddress)
@@ -49,7 +51,7 @@ func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel 
 	}
 }
 
-func handleConnection(conn net.Conn, dataChannel chan<- DataMeta, errors chan<- error, stop chan struct{}) {
+func handleConnection(conn net.Conn, dataChannel chan DataMeta, errors chan<- error, stop chan struct{}) {
 	defer conn.Close()
 
 	decoder := json.NewDecoder(conn)
@@ -67,7 +69,7 @@ func handleConnection(conn net.Conn, dataChannel chan<- DataMeta, errors chan<- 
 					continue
 				} else {
 					errors <- err
-					break
+					return
 				}
 			}
 
@@ -81,13 +83,14 @@ func handleConnection(conn net.Conn, dataChannel chan<- DataMeta, errors chan<- 
 	}
 }
 
-func startKeepAlive(dataChannel chan<- DataMeta) {
+func startKeepAlive(dataChannel chan DataMeta) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
 		lastDataMutex.Lock()
 		if time.Since(lastUpdateTime) > 5*time.Second {
+			lastData.Time = fmt.Sprintf("%d", time.Now().UTC().Unix())
 			dataChannel <- lastData
 		}
 		lastDataMutex.Unlock()
