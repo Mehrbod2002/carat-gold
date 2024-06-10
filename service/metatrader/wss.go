@@ -2,21 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
-
-	"github.com/gorilla/websocket"
 )
-
-var wssClients = make(map[*websocket.Conn]struct{})
-var wssClientsLock sync.Mutex
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
 
 func startServerWSS(errors chan<- error, wg *sync.WaitGroup, port int, dataChannel <-chan DataMeta) {
 	defer wg.Done()
@@ -34,6 +23,7 @@ func startServerWSS(errors chan<- error, wg *sync.WaitGroup, port int, dataChann
 func handleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan DataMeta) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		log.Printf("WebSocket upgrade error: %v", err)
 		return
 	}
 
@@ -56,6 +46,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan 
 			case data := <-dataChannel:
 				err := conn.WriteJSON(data)
 				if err != nil {
+					log.Printf("WebSocket write error: %v", err)
 					return
 				}
 			case <-closeSignal:

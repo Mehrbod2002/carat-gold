@@ -13,15 +13,6 @@ type DataMeta struct {
 	Symbol string  `json:"symbol" bson:"symbol"`
 	Ask    float64 `json:"ask" bson:"ask"`
 	Bid    float64 `json:"bid" bson:"bid"`
-	// High       float64 `json:"high" bson:"high"`
-	// Low        float64 `json:"low" bson:"low"`
-	// Open       float64 `json:"open" bson:"open"`
-	// Close      float64 `json:"close" bson:"close"`
-	// Type       string  `json:"type" bson:"type"`
-	// Timeframe  string  `json:"timeframe" bson:"timeframe"`
-	// ProfitDay  float64 `json:"profit_day" bson:"profit_day"`
-	// Profithour float64 `json:"profit_hour" bson:"profit_hour"`
-	// ProfitWeek float64 `json:"profit_week" bson:"profit_week"`
 }
 
 func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel chan DataMeta, stop chan struct{}) {
@@ -29,7 +20,7 @@ func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel 
 
 	listener, err := net.Listen("tcp", serverAddress)
 	if err != nil {
-		errors <- err
+		errors <- fmt.Errorf("failed to start MetaTrader server: %v", err)
 		return
 	}
 	defer listener.Close()
@@ -37,7 +28,12 @@ func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel 
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			errors <- err
+			select {
+			case <-stop:
+				return
+			default:
+				errors <- fmt.Errorf("failed to accept connection: %v", err)
+			}
 			continue
 		}
 
@@ -61,10 +57,9 @@ func handleConnection(conn net.Conn, dataChannel chan DataMeta, errors chan<- er
 			if err != nil {
 				if _, ok := err.(*json.SyntaxError); ok {
 					continue
-				} else {
-					errors <- err
-					return
 				}
+				errors <- fmt.Errorf("failed to decode JSON data: %v", err)
+				return
 			}
 
 			data.Time = fmt.Sprintf("%d", time.Now().UTC().Unix())

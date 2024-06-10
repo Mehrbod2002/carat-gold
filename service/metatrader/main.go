@@ -2,12 +2,24 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 var (
-	serverAddress = ":5741"
+	serverAddress  = ":5741"
+	wssClients     = make(map[*websocket.Conn]struct{})
+	wssClientsLock sync.Mutex
+	upgrader       = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
 )
 
 func main() {
