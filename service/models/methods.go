@@ -792,15 +792,15 @@ func (product *RequestSetProduct) Validate(c *gin.Context) bool {
 		return false
 	}
 	if len(*product.SubTitle) == 0 || len(*product.SubTitle) > 100 {
-		utils.Method(c, "invalid name")
+		utils.Method(c, "invalid sub name")
 		return false
 	}
 	if len(*product.Faq) == 0 || len(*product.Faq) > 100 {
-		utils.Method(c, "invalid name")
+		utils.Method(c, "invalid faq name")
 		return false
 	}
 	if len(*product.Answer) == 0 || len(*product.Answer) == 200 {
-		utils.Method(c, "invalid name")
+		utils.Method(c, "invalid answer")
 		return false
 	}
 	if *product.Width <= 0 {
@@ -820,8 +820,8 @@ func (product *RequestSetProduct) Validate(c *gin.Context) bool {
 		return false
 	}
 	if product.Purity != nil {
-		if *product.Purity <= 0 {
-			utils.Method(c, "invalid purity")
+		if *product.Purity != 999 && *product.Purity != 995 {
+			utils.Method(c, "invalid purity,not 995 either 999")
 			return false
 		}
 	}
@@ -833,7 +833,7 @@ func (product *RequestSetProduct) Validate(c *gin.Context) bool {
 		}
 	}
 	if product.Percentage != nil {
-		if *product.Percentage <= 0 {
+		if *product.Percentage < 0 {
 			utils.Method(c, "invalid percentage")
 			return false
 		}

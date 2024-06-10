@@ -13,14 +13,13 @@ var (
 func main() {
 	log.SetOutput(os.Stdout)
 	errors := make(chan error)
-	dataChannel := make(chan DataMeta)
+	dataChannel := make(chan DataMeta, 100)
 	stop := make(chan struct{})
 	var wg sync.WaitGroup
 
-	wg.Add(3)
+	wg.Add(2)
 	go startServerWSS(errors, &wg, 5050, dataChannel)
 	go startServerMetaTrader(errors, &wg, dataChannel, stop)
-	go startKeepAlive(dataChannel)
 
 	wg.Wait()
 	close(errors)
