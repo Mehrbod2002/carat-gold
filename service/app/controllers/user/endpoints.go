@@ -1256,8 +1256,12 @@ func PayWithWallet(c *gin.Context) {
 			"success": false,
 			"message": utils.Cap("invalid price"),
 		})
+		return
 	}
-	if user.Wallet.BalanceUSD < request.TotalPrice {
+
+	if (user.Wallet.BalanceUSD < request.TotalPrice) &&
+		request.TotalPrice != 0 &&
+		user.Wallet.BalanceUSD != 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": utils.Cap("insufficient balance"),
@@ -1354,7 +1358,6 @@ func PayWithWallet(c *gin.Context) {
 		models.StoreMetatraderID(orderID, fmt.Sprintf("%d", mID))
 	}
 	if !valid {
-		fmt.Println(valid, mID, 123)
 		utils.AdminError(c)
 		return
 	}
@@ -1415,12 +1418,11 @@ func PayWithWallet(c *gin.Context) {
 	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
 		"_id": authUser.ID,
 	}, update); err != nil {
-		fmt.Println(err)
 		utils.InternalError(c)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	c.AbortWithStatusJSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "done",
 		"data":    map[string]string{"order_id": orderID},

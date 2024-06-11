@@ -4,7 +4,6 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -749,9 +748,7 @@ func SetEditUser(c *gin.Context) {
 	if request.Reason != nil {
 		updateFields["reason"] = utils.DerefStringPtr(request.Reason)
 	}
-	fmt.Println(request.BalanceUSD)
 	if request.BalanceUSD != nil {
-		fmt.Println(*request.BalanceUSD)
 		updateFields["wallet.balance"] = *request.BalanceUSD
 	}
 	if passwordSet {
