@@ -74,6 +74,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	public := apis.Group("/public")
 	{
 		public.GET("/get_products", user.ViewProducts)
+		public.GET("/aed", adminView.ViewAEDUSD)
 	}
 
 	userRoutes := apis.Group("/user")

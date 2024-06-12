@@ -13,6 +13,10 @@ type DataMeta struct {
 	Symbol string  `json:"symbol" bson:"symbol"`
 	Ask    float64 `json:"ask" bson:"ask"`
 	Bid    float64 `json:"bid" bson:"bid"`
+	High   float64 `json:"high" bson:"high"`
+	Low    float64 `json:"low" bson:"low"`
+	Open   float64 `json:"open" bson:"open"`
+	Close  float64 `json:"close" bson:"close"`
 }
 
 func startServerMetaTrader(errors chan<- error, wg *sync.WaitGroup, dataChannel chan DataMeta, stop chan struct{}) {

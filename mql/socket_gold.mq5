@@ -1,12 +1,19 @@
 int socket;
 
 string DataSymbol(string symbolName) {
-    double ask = SymbolInfoDouble(symbolName, SYMBOL_ASK);
-    double bid = SymbolInfoDouble(symbolName, SYMBOL_BID);
+    double ask = SymbolInfoDouble(symbolName, SYMBOL_BID);
+    double bid = SymbolInfoDouble(symbolName, SYMBOL_ASK);
+    double high = iHigh(symbolName, PERIOD_CURRENT, 0);
+    double low = iLow(symbolName, PERIOD_CURRENT, 0);
+    double open = iOpen(symbolName, PERIOD_CURRENT, 0);
+    double close = iClose(symbolName, PERIOD_CURRENT, 0);
+    ENUM_TIMEFRAMES timeframe = Period();
+    long currentDateTimeString = TimeCurrent() * 1000;
+
 
     return StringFormat(
-        "{\"symbol\":\"%s\",\"ask\":%f,\"bid\":%f}",
-        symbolName, ask, bid
+        "{\"symbol\":\"%s\",\"ask\":%f,\"bid\":%f,\"high\":%f,\"low\":%f,\"open\":%f,\"close\":%f}",
+        symbolName, bid, ask, high, low, open, close
     );
 }
 

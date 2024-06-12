@@ -628,3 +628,27 @@ func ViewMetaTraderFromWindows(c *gin.Context) {
 		"accounts": metaTraderAccounts,
 	})
 }
+
+func ViewAEDUSD(c *gin.Context) {
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	var generalData []models.GeneralData
+	cursor, err := db.Collection("general_data").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &generalData); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"aed": generalData[len(generalData)-1].AedUsd,
+	})
+}
