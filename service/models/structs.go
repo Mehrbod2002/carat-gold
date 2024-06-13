@@ -536,7 +536,7 @@ type RequestSetDeliveryMethod struct {
 }
 
 type RequestSetCancelTrade struct {
-	Ticket string `json:"ticket_id"`
+	Ticket int `json:"ticket_id"`
 }
 
 type RequestSetFANDQ struct {

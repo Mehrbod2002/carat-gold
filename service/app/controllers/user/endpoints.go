@@ -794,7 +794,7 @@ func CreateTranscations(c *gin.Context) {
 			})
 		}
 
-		if !product.Hide {
+		if product.Hide {
 			c.JSON(http.StatusNotFound, gin.H{
 				"success": false,
 				"message": utils.Cap("invalid product"),
@@ -1342,7 +1342,7 @@ func PayWithWallet(c *gin.Context) {
 			})
 		}
 
-		if !product.Hide {
+		if product.Hide {
 			c.JSON(http.StatusNotFound, gin.H{
 				"success": false,
 				"message": utils.Cap("invalid product"),

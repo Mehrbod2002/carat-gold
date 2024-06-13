@@ -23,7 +23,10 @@ def initialize_mt5():
         return
 
     account = requests.get(url, headers=headers).json()["accounts"]
-    if not mt5.initialize(login=int(account["login"]), password=account["password"], server=account["server"]):
+    if not mt5.initialize(path="C:\\Users\\Administrator\\Downloads\\terminal64.exe",
+                      login=int(account["login"]),
+                      password=account["password"],
+                      server=account["server"]):
         print(mt5.last_error())
         return
     else:
@@ -88,7 +91,10 @@ def trigger_reinitialize():
     if request.method == 'POST':
         account = requests.get(url, headers=headers).json()["accounts"]
         if mt5_initialized == False:
-            if not mt5.initialize(login=int(account["login"]), password=account["password"], server=account["server"]):
+            if not mt5.initialize(path="C:\\Users\\Administrator\\Downloads\\terminal64.exe",
+                      login=int(account["login"]),
+                      password=account["password"],
+                      server=account["server"]):
                 print(mt5.last_error())
                 return
         return jsonify({"status": True, "message": "MetaTrader 5 reinitialized successfully"}), 200
@@ -158,34 +164,7 @@ def cancel_order():
             break
 
     if position:
-        side = 0
-        if position.type == mt5.ORDER_TYPE_BUY:
-            side = mt5.ORDER_TYPE_SELL
-        elif position.type == mt5.ORDER_TYPE_SELL:
-            side = mt5.ORDER_TYPE_BUY
-        elif position.type == mt5.ORDER_TYPE_BUY_LIMIT:
-            side = mt5.ORDER_TYPE_SELL_LIMIT
-        elif position.type == mt5.ORDER_TYPE_SELL_LIMIT:
-            side = mt5.ORDER_TYPE_BUY_LIMIT
-        elif position.type == mt5.ORDER_TYPE_BUY_STOP:
-            side = mt5.ORDER_TYPE_SELL_STOP
-        elif position.type == mt5.ORDER_TYPE_SELL_STOP:
-            side = mt5.ORDER_TYPE_BUY_STOP
-        elif position.type == mt5.ORDER_TYPE_BUY_STOP_LIMIT:
-            side = mt5.ORDER_TYPE_SELL_STOP_LIMIT
-        elif position.type == mt5.ORDER_TYPE_SELL_STOP_LIMIT:
-            side = mt5.ORDER_TYPE_BUY_STOP_LIMIT
-        requestMt5 = {
-            "action": mt5.TRADE_ACTION_CLOSE_BY,
-            "position_by": ticket_id,
-            "symbol": position.symbol,
-            "volume": position.volume,
-            "type": side,
-            "tp": position.tp,
-            "sl": position.sl,
-            "price": mt5.symbol_info_tick(position.symbol).bid,
-        }
-        result = mt5.order_send(requestMt5)
+        result = mt5.Close(symbol=position.symbol,ticket=ticket_id)
         if result.retcode == mt5.TRADE_RETCODE_DONE:
             return jsonify({"status": False, "data": "Position closed successfully", "ticket_id": ticket_id}), 200
         else:
