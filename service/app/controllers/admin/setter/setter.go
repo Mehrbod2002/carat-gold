@@ -1279,8 +1279,8 @@ func SetCancelOrder(c *gin.Context) {
 	payload := map[string]interface{}{
 		"ticket_id": request.Ticket,
 	}
-	result, valid := utils.PostRequest(payload, "cancel_order")
-	if !valid || result["status"] == false {
+	result, _ := utils.PostRequest(payload, "cancel_order")
+	if result["data"] != "Position closed successfully" {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": result["data"], "data": result["data"]})
 		return
 	}

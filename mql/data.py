@@ -165,7 +165,7 @@ def cancel_order():
 
     if position:
         result = mt5.Close(symbol=position.symbol,ticket=ticket_id)
-        if result.retcode == mt5.TRADE_RETCODE_DONE:
+        if result:
             return jsonify({"status": False, "data": "Position closed successfully", "ticket_id": ticket_id}), 200
         else:
             return jsonify({"status": False, "data": result.comment, "result": str(result)}), 400
