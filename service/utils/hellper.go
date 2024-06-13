@@ -245,29 +245,28 @@ func UploadPhoto(c *gin.Context, id string, photo string, doc bool) bool {
 	return true
 }
 
-func AutoOrder(price float64) (*uint64, bool) {
-	result, valid := GetRequest("get_last_price")
+func AutoOrder(volumn float64) (*uint64, bool) {
+	// result, valid := GetRequest("get_last_price")
 
-	if !valid {
-		return nil, false
-	}
-	if !result["status"].(bool) {
-		return nil, false
-	}
+	// if !valid {
+	// 	return nil, false
+	// }
+	// if !result["status"].(bool) {
+	// 	return nil, false
+	// }
 
 	// volumn := result["data"].(float64) / price
-	// fmt.Println(volumn)
 	payload := map[string]interface{}{
 		"comment":   "User Payment Stream",
 		"symbol":    "XAUUSD",
 		"type":      0,
-		"volume":    0.1,
+		"volume":    volumn,
 		"deviation": 0,
 		"sl":        0,
 		"tp":        0,
 		"stoplimit": 0,
 	}
-	result, valid = PostRequest(payload, "send_order")
+	result, valid := PostRequest(payload, "send_order")
 
 	status := result["status"].(bool)
 	if !valid || !status {
