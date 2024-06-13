@@ -1251,13 +1251,13 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
-	if request.TotalPrice == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": utils.Cap("invalid price"),
-		})
-		return
-	}
+	// if request.TotalPrice == 0 {
+	// 	c.JSON(http.StatusBadRequest, gin.H{
+	// 		"success": false,
+	// 		"message": utils.Cap("invalid price"),
+	// 	})
+	// 	return
+	// }
 
 	if (user.Wallet.BalanceUSD < request.TotalPrice) &&
 		request.TotalPrice != 0 &&
@@ -1281,22 +1281,22 @@ func PayWithWallet(c *gin.Context) {
 		request.TotalPrice = request.TotalPrice / generalData.AedUsd
 	}
 
-	result, valid := utils.GetRequest("get_last_price")
-	if !valid {
-		utils.AdminError(c)
-		return
-	}
-	lastGoldPrice := result["data"].(float64)
-	lengths := float64(len(request.ProductIDs))
-	eachGoldBar := request.TotalPrice / lengths
-	if (-10 < eachGoldBar-lastGoldPrice || eachGoldBar-lastGoldPrice > 10) &&
-		request.TotalPrice != 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": utils.Cap("there is more than 1$ difference between realtime price"),
-		})
-		return
-	}
+	// result, valid := utils.GetRequest("get_last_price")
+	// if !valid {
+	// 	utils.AdminError(c)
+	// 	return
+	// }
+	// lastGoldPrice := result["data"].(float64)
+	// lengths := float64(len(request.ProductIDs))
+	// eachGoldBar := request.TotalPrice / lengths
+	// if (-10 < eachGoldBar-lastGoldPrice || eachGoldBar-lastGoldPrice > 10) &&
+	// 	request.TotalPrice != 0 {
+	// 	c.JSON(http.StatusBadRequest, gin.H{
+	// 		"success": false,
+	// 		"message": utils.Cap("there is more than 1$ difference between realtime price"),
+	// 	})
+	// 	return
+	// }
 
 	if crypto.Disable {
 		c.JSON(http.StatusNotImplemented, gin.H{
@@ -1307,9 +1307,7 @@ func PayWithWallet(c *gin.Context) {
 	}
 
 	var products []models.Products
-	cursor, err = db.Collection("products").Find(context.Background(), bson.M{
-		"_id": request,
-	})
+	cursor, err = db.Collection("products").Find(context.Background(), bson.M{})
 	if err != nil {
 		log.Println(err)
 		utils.InternalError(c)
@@ -1366,8 +1364,7 @@ func PayWithWallet(c *gin.Context) {
 	mID, valid := utils.AutoOrder(totalVolumn)
 	if valid {
 		models.StoreMetatraderID(orderID, fmt.Sprintf("%d", mID))
-	}
-	if !valid {
+	} else {
 		utils.AdminError(c)
 		return
 	}

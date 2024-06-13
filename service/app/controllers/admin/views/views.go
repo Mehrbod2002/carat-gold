@@ -583,7 +583,6 @@ func ViewCurrentOrders(c *gin.Context) {
 	}
 
 	response, valid := utils.GetRequest("positions")
-
 	if !valid {
 		utils.InternalError(c)
 		return
