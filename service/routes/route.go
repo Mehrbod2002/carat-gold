@@ -45,7 +45,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 
 	r.Use(sessions.Sessions("token", store))
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://0.0.0.0:3001", "http://ali-asgari.com", "https://ali-asgari.com", "http://localhost:3001", "http://127.0.0.1:5173", "https://admin.goldshop24.co", "https://goldshop24.co", "https://server.goldshop24.co"},
+		AllowOrigins:     []string{"https://9999gold.ae", "http://0.0.0.0:3001", "http://ali-asgari.com", "https://ali-asgari.com", "http://localhost:3001", "http://127.0.0.1:5173", "https://admin.goldshop24.co", "https://goldshop24.co", "https://server.goldshop24.co"},
 		AllowMethods:     []string{"PUT", "PATCH", "GET", "POST", "HEAD", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Set-Cookie", "Cookie", "Authorization", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length", "Set-Cookie", "Cookie"},
@@ -54,7 +54,8 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 			return origin == "http://0.0.0.0:3001" || origin == "http://localhost:3001" ||
 				origin == "http://127.0.0.1:5173" || origin == "https://goldshop24.co" ||
 				origin == "https://admin.goldshop24.co" || origin == "https://server.goldshop24.co" ||
-				origin == "https://ali-asgari.com" || origin == "http://ali-asgari.com"
+				origin == "https://ali-asgari.com" || origin == "http://ali-asgari.com" ||
+				origin == "https://9999gold.ae"
 		},
 	}))
 	r.Static("/static", "./CDN")
