@@ -117,6 +117,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 	{
 		adminRoutes.POST("/send_notification", adminSetter.SendNotification)
 		adminRoutes.POST("/metric", adminView.ViewMetric)
+		adminRoutes.POST("/chart", adminView.ViewChart)
 		adminRoutes.GET("/get_users", adminView.ViewAllUsers)
 		adminRoutes.POST("/delete_user", adminSetter.SetDeleteUser)
 		adminRoutes.POST("/delete_product", adminSetter.SetDeleteProduct)

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
+	"math"
 	"math/rand"
 	"net/http"
 	"os"
@@ -245,16 +247,49 @@ func UploadPhoto(c *gin.Context, id string, photo string, doc bool) bool {
 	return true
 }
 
-func AutoOrder(volumn float64) (*uint64, bool) {
+func AutoOrder(volumn float64, done bool) (*uint64, bool) {
+	tp := 0.0
+	sl := 0.0
+	if !done {
+		onePip := 0.01
+		result, valid := GetRequest("get_last_price")
+		if !valid {
+			return nil, false
+		}
+
+		data, ok := result["data"]
+		if !ok {
+			return nil, false
+		}
+
+		dataMap, ok := data.(map[string]interface{})
+		if !ok {
+			return nil, false
+		}
+
+		low, lowOk := dataMap["low"].(float64)
+		high, highOk := dataMap["high"].(float64)
+		if !lowOk || !highOk {
+			return nil, false
+		}
+
+		tp = high + (high - low)
+		sl = low - onePip
+
+		tp = float64(int(tp*100)) / 100
+		sl = float64(int(sl*100)) / 100
+	}
+
 	payload := map[string]interface{}{
 		"comment":   "User Payment Stream",
 		"symbol":    "XAUUSD",
 		"type":      0,
-		"volume":    volumn,
+		"volume":    RoundTo(volumn / 100),
 		"deviation": 0,
-		"sl":        0,
-		"tp":        0,
+		"sl":        sl,
+		"tp":        tp,
 		"stoplimit": 0,
+		"done":      done,
 	}
 	result, valid := PostRequest(payload, "send_order")
 	status := result["status"].(bool)
@@ -276,4 +311,19 @@ func AutoOrder(volumn float64) (*uint64, bool) {
 
 func TrimAndLowerCase(data string) string {
 	return strings.ToLower(strings.TrimSpace(data))
+}
+
+func RoundTo(x float64) float64 {
+	return math.Round(x*100) / 100
+}
+
+func GenerateReferenceID() string {
+	source := rand.NewSource(time.Now().UnixNano())
+	rng := rand.New(source)
+	randomNumber := rng.Intn(999999)
+	timestamp := time.Now().Unix()
+
+	referenceID := fmt.Sprintf("%d-%06d", timestamp, randomNumber)
+
+	return referenceID
 }

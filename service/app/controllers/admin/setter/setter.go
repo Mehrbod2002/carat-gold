@@ -1245,14 +1245,28 @@ func SetOrders(c *gin.Context) {
 	}
 
 	payload := map[string]interface{}{
-		"comment":   *request.Comment,
-		"symbol":    request.SymbolName,
-		"type":      request.Operation,
-		"volume":    request.Volumn,
-		"deviation": *request.Deviation,
-		"sl":        *request.StopLoss,
-		"tp":        *request.TakeProfit,
-		"stoplimit": *request.Stoplimit,
+		"symbol": request.SymbolName,
+		"type":   request.Operation,
+		"volume": request.Volumn / 100,
+	}
+
+	if request.Comment != nil {
+		payload["comment"] = *request.Comment
+	}
+	if request.Deviation != nil {
+		payload["deviation"] = *request.Deviation
+	}
+	if request.StopLoss != nil {
+		payload["sl"] = *request.StopLoss
+	}
+	if request.TakeProfit != nil {
+		payload["tp"] = *request.TakeProfit
+	}
+	if request.Stoplimit != nil {
+		payload["stoplimit"] = *request.Stoplimit
+	}
+	if request.CloseAndDone != nil {
+		payload["done"] = *request.CloseAndDone
 	}
 	result, valid := utils.PostRequest(payload, "send_order")
 

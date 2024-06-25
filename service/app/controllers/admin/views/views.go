@@ -6,6 +6,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -337,6 +338,50 @@ func ViewGeneralData(c *gin.Context) {
 	})
 }
 
+func ViewChart(c *gin.Context) {
+	if !models.AllowedAction(c, models.ActionReadOnly) {
+		return
+	}
+
+	db, err := utils.GetDB(c)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	var transactions []models.Transaction
+	cursor, err := db.Collection("transactions").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+	if err := cursor.All(context.Background(), &transactions); err != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	months := []string{
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+	}
+
+	bars := make(map[string]int)
+	for _, month := range months {
+		bars[month] = 0
+	}
+
+	for _, t := range transactions {
+		month := t.CreatedAt.Month().String()[:3]
+		bars[month]++
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":   true,
+		"message":   "done",
+		"gold_bars": bars,
+	})
+}
+
 func ViewMetric(c *gin.Context) {
 	if !models.AllowedAction(c, models.ActionReadOnly) {
 		return
@@ -384,7 +429,8 @@ func ViewMetric(c *gin.Context) {
 	var rangedUsers []models.User
 	var totalBars int = 0
 	for _, u := range users {
-		if u.CreatedAt.Hour() <= request.RangeTime {
+		diffHours := int(time.Since(u.CreatedAt).Hours())
+		if diffHours <= request.RangeTime {
 			rangedUsers = append(rangedUsers, u)
 		}
 
@@ -408,13 +454,11 @@ func ViewMetric(c *gin.Context) {
 	var aed float64 = 0
 	var usd float64 = 0
 	for _, t := range transactions {
-		if t.CreatedAt.Hour() <= request.RangeTime && t.PaymentCompletion {
+		diffHours := int(time.Since(t.CreatedAt).Hours())
+		if diffHours <= request.RangeTime && t.PaymentCompletion {
 			if !t.IsDebit {
 				aed += t.TotalPrice * generalData.AedUsd
-
-				if t.PaymentMethod == models.CryptoPayment {
-					usd += t.TotalPrice
-				}
+				usd += t.TotalPrice
 			}
 		}
 	}
@@ -422,7 +466,7 @@ func ViewMetric(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success":   true,
 		"message":   "done",
-		"users":     rangedUsers,
+		"users":     len(rangedUsers),
 		"gold_bars": totalBars,
 		"aed":       aed,
 		"usd":       usd,

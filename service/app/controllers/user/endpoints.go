@@ -615,6 +615,15 @@ func SendDocuments(c *gin.Context) {
 		return
 	}
 
+	validDocument := models.ValidateUser(user.FirstName, user.LastName, utils.GenerateReferenceID(), frontBase64, backBase64)
+	if !validDocument {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": utils.Cap("invalid document"),
+		})
+		return
+	}
+
 	update := bson.M{
 		"user_id":              authUser.ID,
 		"documents.back.shot":  photoIDBack.Hex(),
@@ -984,12 +993,6 @@ func Cancel(c *gin.Context) {
 
 func RevalidateToken(c *gin.Context) {
 	session := sessions.Default(c)
-	authUser, valid := models.ValidateSession(c)
-
-	if !valid {
-		return
-	}
-
 	var request struct {
 		RefreshToken string `json:"refresh_token"`
 	}
@@ -1007,7 +1010,6 @@ func RevalidateToken(c *gin.Context) {
 
 	var user models.User
 	if err = db.Collection("users").FindOne(context.Background(), bson.M{
-		"_id":           authUser.ID,
 		"refresh_token": request.RefreshToken,
 	}).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -1361,7 +1363,7 @@ func PayWithWallet(c *gin.Context) {
 		}
 	}
 
-	mID, valid := utils.AutoOrder(totalVolumn)
+	mID, valid := utils.AutoOrder(totalVolumn, true)
 	if valid {
 		models.StoreMetatraderID(orderID, fmt.Sprintf("%d", mID))
 	} else {

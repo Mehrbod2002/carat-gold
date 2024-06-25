@@ -902,7 +902,7 @@ func (delivery *RequestSetDeliveryMethod) Validate(c *gin.Context) bool {
 			return false
 		}
 	}
-	if delivery.Fee == 0 {
+	if delivery.Fee < 0 {
 		utils.Method(c, "invalid Fee")
 		return false
 	}
@@ -1036,7 +1036,7 @@ func HandleIPN(c *gin.Context) {
 		transaction := GetTransaction(payment.OrderID)
 		if transaction != nil {
 			if !transaction.IsDebit {
-				mID, valid := utils.AutoOrder(transaction.TotalPrice)
+				mID, valid := utils.AutoOrder(transaction.TotalPrice, false)
 				if valid {
 					StoreMetatraderID(transaction.OrderID, fmt.Sprintf("%d", mID))
 				}
@@ -1320,4 +1320,63 @@ func Cancel(orderIDInterface interface{}) (bool, bool) {
 
 	Notification(transaction.ID, "Invoice", "Payments cancelled with #"+transaction.OrderID)
 	return true, transaction.IsDebit
+}
+
+func ValidateUser(name, lastName, id, front, back string) bool {
+	requestBody := RequestKYC{
+		Reference:   "1234561",
+		CallbackURL: "https://9999gold.ae",
+		Email:       "fasih@icloud.com",
+		Country:     "EU",
+		Language:    "EN",
+		EKYC: EKYC{
+			DocumentTwo: DocumentTwo{
+				Proof:           front,
+				AdditionalProof: back,
+				Name: Name{
+					FirstName:  name,
+					MiddleName: "",
+					LastName:   lastName,
+				},
+			},
+		},
+	}
+
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		return false
+	}
+
+	req, err := http.NewRequest("POST", os.Getenv("KYCUrl"), bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return false
+	}
+
+	credentials := os.Getenv("KYCClient") + ":" + os.Getenv("KYCSecret")
+	encodedCredentials := base64.StdEncoding.EncodeToString([]byte(credentials))
+	authorizationHeader := "Basic " + encodedCredentials
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Basic "+authorizationHeader)
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return false
+	}
+	defer res.Body.Close()
+
+	responseBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return false
+	}
+
+	var response ResponseKYC
+	err = json.Unmarshal([]byte(responseBody), &response)
+	if err != nil {
+		return false
+	}
+
+	verificationResult := response.VerificationResult.EKYC
+	return verificationResult == 1
 }

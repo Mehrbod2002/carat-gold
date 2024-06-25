@@ -273,6 +273,7 @@ func SendOTP(c *gin.Context) {
 			user.OtpCode = &otp_code
 			user.ReTryOtp = 0
 			user.OtpValid = time.Now().UTC()
+			user.CreatedAt = time.Now().UTC()
 			_, err := db.Collection("users").InsertOne(context.Background(), user)
 			if err != nil {
 				log.Println(err)

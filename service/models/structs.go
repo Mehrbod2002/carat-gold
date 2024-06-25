@@ -489,14 +489,15 @@ type MetaTraderAdmin struct {
 }
 
 type RequestSetTrade struct {
-	SymbolName string   `json:"name"`
-	Volumn     float64  `json:"volumn"`
-	Operation  int      `json:"operation"`
-	StopLoss   *float64 `json:"stoploss"`
-	TakeProfit *float64 `json:"takeprofit"`
-	Comment    *string  `json:"comment"`
-	Deviation  *float64 `json:"deviation"`
-	Stoplimit  *float64 `json:"stop_limit"`
+	SymbolName   string   `json:"name"`
+	Volumn       float64  `json:"volumn"`
+	Operation    int      `json:"operation"`
+	StopLoss     *float64 `json:"stoploss"`
+	TakeProfit   *float64 `json:"takeprofit"`
+	Comment      *string  `json:"comment"`
+	Deviation    *float64 `json:"deviation"`
+	Stoplimit    *float64 `json:"stop_limit"`
+	CloseAndDone *bool    `json:"close_and_done"`
 }
 
 type Image struct {
@@ -618,4 +619,88 @@ type UserDebitCard struct {
 	Token     string             `bson:"token" json:"-"`
 	WhoDefine string             `bson:"who_define" json:"-"`
 	Disable   bool               `bson:"disable" json:"-"`
+}
+
+type ResponseKYC struct {
+	Reference        string `json:"reference"`
+	Event            string `json:"event"`
+	Email            string `json:"email"`
+	Country          string `json:"country"`
+	VerificationData struct {
+		EKYC []interface{} `json:"ekyc"`
+	} `json:"verification_data"`
+	VerificationResult struct {
+		EKYC int `json:"ekyc"`
+	} `json:"verification_result"`
+	Info struct {
+		Agent struct {
+			IsDesktop    bool   `json:"is_desktop"`
+			IsPhone      bool   `json:"is_phone"`
+			UserAgent    string `json:"useragent"`
+			DeviceName   string `json:"device_name"`
+			BrowserName  string `json:"browser_name"`
+			PlatformName string `json:"platform_name"`
+		} `json:"agent"`
+		Geolocation struct {
+			Host          string `json:"host"`
+			IP            string `json:"ip"`
+			RDNS          string `json:"rdns"`
+			ASN           string `json:"asn"`
+			ISP           string `json:"isp"`
+			CountryName   string `json:"country_name"`
+			CountryCode   string `json:"country_code"`
+			RegionName    string `json:"region_name"`
+			RegionCode    string `json:"region_code"`
+			City          string `json:"city"`
+			PostalCode    string `json:"postal_code"`
+			ContinentName string `json:"continent_name"`
+			ContinentCode string `json:"continent_code"`
+			Latitude      string `json:"latitude"`
+			Longitude     string `json:"longitude"`
+			MetroCode     string `json:"metro_code"`
+			Timezone      string `json:"timezone"`
+			IPType        string `json:"ip_type"`
+			Capital       string `json:"capital"`
+			Currency      string `json:"currency"`
+		} `json:"geolocation"`
+	} `json:"info"`
+	DeclinedReason        string   `json:"declined_reason"`
+	DeclinedCodes         []string `json:"declined_codes"`
+	ServicesDeclinedCodes struct {
+		EKYC []string `json:"ekyc"`
+	} `json:"services_declined_codes"`
+}
+
+type RequestKYC struct {
+	Reference   string `json:"reference"`
+	CallbackURL string `json:"callback_url"`
+	Email       string `json:"email"`
+	Country     string `json:"country"`
+	Language    string `json:"language"`
+	EKYC        EKYC   `json:"ekyc"`
+}
+
+type EKYC struct {
+	NationalID  string      `json:"national_id"`
+	DocumentTwo DocumentTwo `json:"document_two"`
+}
+
+type DocumentTwo struct {
+	Proof           string   `json:"proof"`
+	AdditionalProof string   `json:"additional_proof"`
+	Name            Name     `json:"name"`
+	DOB             string   `json:"dob"`
+	Age             int      `json:"age"`
+	IssueDate       string   `json:"issue_date"`
+	ExpiryDate      string   `json:"expiry_date"`
+	DocumentNumber  string   `json:"document_number"`
+	SelectedType    []string `json:"selected_type"`
+	SupportedTypes  []string `json:"supported_types"`
+	Gender          string   `json:"gender"`
+}
+
+type Name struct {
+	FirstName  string `json:"first_name"`
+	MiddleName string `json:"middle_name"`
+	LastName   string `json:"last_name"`
 }
