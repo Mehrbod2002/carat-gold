@@ -992,6 +992,12 @@ func Cancel(c *gin.Context) {
 }
 
 func RevalidateToken(c *gin.Context) {
+	_, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
+
 	session := sessions.Default(c)
 	var request struct {
 		RefreshToken string `json:"refresh_token"`
