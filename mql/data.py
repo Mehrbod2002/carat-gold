@@ -41,12 +41,29 @@ def before_request():
 
 @app.route("/get_last_price", methods=['GET'])
 def get_last_price():
-    tick = mt5.symbol_info_tick("XAUUSD")
+    symbol = "XAUUSD"
+    
+    tick = mt5.symbol_info_tick(symbol)
     if tick is None:
-        jsonify({"data": None, "status": False}), 500
-        return None
+        return jsonify({"data": None, "status": False}), 500
 
-    return jsonify({"data": tick.ask, "status": True}), 200
+    rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M1, 0, 1)
+    if rates is None or len(rates) == 0:
+        return jsonify({"data": None, "status": False}), 500
+    
+    current_bar = rates[0]
+    current_price_info = {
+        "symbol": symbol,
+        "bid": float(tick.bid),
+        "ask": float(tick.ask),
+        "last": float(tick.last) if tick.last else None,
+        "high": float(current_bar['high']),
+        "low": float(current_bar['low']),
+        "close": float(current_bar['close']),
+        "open": float(current_bar['open']),
+        "time": int(current_bar['time'])
+    }
+    return jsonify({"data": current_price_info, "status": True}), 200
 
 
 @app.route('/get_history', methods=['GET'])
@@ -105,8 +122,7 @@ def trigger_reinitialize():
 @app.route('/positions', methods=['GET'])
 def positions():
     orders = mt5.positions_get()
-
-    parameter_names = [
+    parameter_names = [ 
         "ticket", "magic_number", "order_id", "position_id", "position_by_id",
         "volume", "position_time", "position_time_msc", "type", "volume_initial",
         "price_open", "sl", "tp", "price_current", "swap", "profit", "symbol",
@@ -129,6 +145,7 @@ def send_order():
     lot = request.json.get('volume')
     deviation = request.json.get('deviation', 20)
     type = request.json.get('type')
+    done = request.json.get("done")
 
     if mt5.symbol_info_tick(symbol) == None:
         return jsonify({"status": False, "message": "Invalid symbol", "data": "invalid symbol"}), 400
@@ -151,8 +168,30 @@ def send_order():
     else:
         if result.retcode != 10009 and result.retcode != 10008:
             return jsonify({"status": False, "message": "Order send failed", "data": result.comment}), 400
-        return jsonify({"status": True, "message": "Order placed successfully", "data": str(result.order)}), 200
 
+        if done:
+            position_ticket = result.order
+            close_request = {
+                "action": mt5.TRADE_ACTION_DEAL,
+                "symbol": symbol,
+                "volume": float(lot),
+                "type": mt5.ORDER_TYPE_SELL if type == mt5.ORDER_TYPE_BUY else mt5.ORDER_TYPE_BUY,
+                "position": position_ticket,
+                "price": mt5.symbol_info_tick(symbol).bid if type == mt5.ORDER_TYPE_BUY else mt5.symbol_info_tick(symbol).ask,
+                "deviation": deviation,
+                "magic": 12345,
+                "comment": "close order",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": mt5.ORDER_FILLING_FOK,
+            }
+
+            close_result = mt5.order_send(close_request)
+            if close_result is None or close_result.retcode != 10009:
+                return jsonify({"status": False, "message": "Failed to close position", "data": str(mt5.last_error()[1])}), 400
+
+            return jsonify({"status": True, "message": "Order placed and closed successfully", "data": str(result.order)}), 200
+        else:
+            return jsonify({"status": True, "message": "Order placed successfully", "data": str(result.order)}), 200
 
 @app.route('/cancel_order', methods=['POST'])
 def cancel_order():
