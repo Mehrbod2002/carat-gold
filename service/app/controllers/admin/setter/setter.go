@@ -4,10 +4,12 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -679,6 +681,7 @@ func SetEditUser(c *gin.Context) {
 
 	var request models.RequestSetDefineUser
 	if err := c.ShouldBindJSON(&request); err != nil {
+		fmt.Println(err)
 		utils.BadBinding(c)
 		return
 	}
@@ -749,7 +752,8 @@ func SetEditUser(c *gin.Context) {
 		updateFields["reason"] = utils.DerefStringPtr(request.Reason)
 	}
 	if request.BalanceUSD != nil {
-		updateFields["wallet.balance"] = *request.BalanceUSD
+		balance, _ := strconv.ParseFloat(*request.BalanceUSD, 64)
+		updateFields["wallet.balance"] = balance
 	}
 	if passwordSet {
 		updateFields["password"] = string(password)
@@ -1010,6 +1014,7 @@ func SetDefineUser(c *gin.Context) {
 		UserVerified = true
 	}
 
+	balance, _ := strconv.ParseFloat(*request.BalanceUSD, 64)
 	if len(users) == 0 {
 		newUser := models.User{
 			Email:            utils.TrimAndLowerCase(*request.Email),
@@ -1026,7 +1031,7 @@ func SetDefineUser(c *gin.Context) {
 			StatusString:     *request.Status,
 			Reason:           *request.Reason,
 			CreatedAt:        time.Now(),
-			Wallet:           models.Wallet{BalanceUSD: *request.BalanceUSD},
+			Wallet:           models.Wallet{BalanceUSD: balance},
 		}
 		_, err := db.Collection("users").InsertOne(context.Background(), newUser)
 		if err != nil {

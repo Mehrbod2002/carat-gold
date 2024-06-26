@@ -396,7 +396,7 @@ type RequestSetDefineUser struct {
 	Status      *UserStatus `json:"status"`
 	Reason      *string     `json:"reason"`
 	Permissions *Permission `json:"permissions"`
-	BalanceUSD  *float64    `json:"balance"`
+	BalanceUSD  *string     `json:"balance"`
 }
 
 type LoginDataStep1 struct {

@@ -16,6 +16,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -331,7 +332,8 @@ func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
 		}
 	}
 	if req.BalanceUSD != nil {
-		if *req.BalanceUSD < 0 {
+		balance, _ := strconv.ParseFloat(*req.BalanceUSD, 64)
+		if balance < 0 {
 			utils.Method(c, "invalid balance")
 			return false
 		}
