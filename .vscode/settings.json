@@ -1,5 +1,8 @@
 {
     "yaml.schemas": {
         "kubernetes://schema/v1%40service": "file:///home/mehrbod/golang/carat-gold/service/deployment.yaml"
+    },
+    "files.associations": {
+        "*.mq5": "c"
     }
 }

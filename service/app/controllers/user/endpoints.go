@@ -181,7 +181,6 @@ func Crisp(c *gin.Context) {
 
 	// sessionID := payload["data"].(map[string]interface{})["session_id"].(string)
 	// if payload["event"] == "message:notify:unread:received" {
-	// 	fmt.Printf("Received Crisp webhook payload: %+v\n", payload)
 	// }
 
 	// key := "887b6563dcda97bc5aa17be53af827ebaa3c36326527b249f456394c3bbe4c42"
@@ -193,14 +192,10 @@ func Crisp(c *gin.Context) {
 	// if callCenter.LiveChat != nil &&
 	// 	len(*callCenter.LiveChat) != 0 &&
 	// 	len(sessionID) != 0 {
-	// 	// fmt.Println(*callCenter.LiveChat, sessionID, 123)
 	// 	// a, b, f := client.GetMessagesInConversationLast(*callCenter.LiveChat, sessionID)
 	// 	if f != nil {
-	// 		// fmt.Println(a, b, f)
 	// 	}
 	// }
-	// fmt.Println(endpoint)
-	// fmt.Println("event: ", payload.Payload.Event, payload.Payload.Data.User.UserID, payload.Payload.Data.Type)
 }
 
 func GetProducts(c *gin.Context) {
@@ -780,20 +775,20 @@ func CreateTranscations(c *gin.Context) {
 		return
 	}
 
-	// accepted := false
-	// for _, i := range deliveryMethods {
-	// 	if request.DeliveryMethod == models.DeliveryMethod(i.Title) {
-	// 		accepted = true
-	// 	}
-	// }
+	accepted := false
+	for _, i := range deliveryMethods {
+		if request.DeliveryMethod == models.DeliveryMethod(i.Title) {
+			accepted = true
+		}
+	}
 
-	// if !accepted {
-	// 	c.JSON(http.StatusNotFound, gin.H{
-	// 		"success": false,
-	// 		"message": utils.Cap("invalid delivery method"),
-	// 	})
-	// 	return
-	// }
+	if !accepted {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": utils.Cap("invalid delivery method"),
+		})
+		return
+	}
 
 	for _, product := range products {
 		if product.Amount == 0 {
@@ -1259,17 +1254,17 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
-	// if request.TotalPrice == 0 {
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"success": false,
-	// 		"message": utils.Cap("invalid price"),
-	// 	})
-	// 	return
-	// }
+	if request.TotalPrice == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": utils.Cap("invalid price"),
+		})
+		return
+	}
 
-	if (user.Wallet.BalanceUSD < request.TotalPrice) &&
-		request.TotalPrice != 0 &&
-		user.Wallet.BalanceUSD != 0 {
+	if (user.Wallet.BalanceUSD < request.TotalPrice) ||
+		request.TotalPrice == 0 ||
+		user.Wallet.BalanceUSD == 0 || (user.Wallet.BalanceUSD -request.TotalPrice) < 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": utils.Cap("insufficient balance"),
@@ -1294,7 +1289,9 @@ func PayWithWallet(c *gin.Context) {
 	// 	utils.AdminError(c)
 	// 	return
 	// }
-	// lastGoldPrice := result["data"].(float64)
+
+	// lastGoldMap := result["data"].(map[string]interface{})
+	// lastGoldPrice := lastGoldMap["close"].(float64)
 	// lengths := float64(len(request.ProductIDs))
 	// eachGoldBar := request.TotalPrice / lengths
 	// if (-10 < eachGoldBar-lastGoldPrice || eachGoldBar-lastGoldPrice > 10) &&
@@ -1397,17 +1394,6 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
-	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
-		"_id": authUser.ID,
-	}, bson.M{
-		"$inc": bson.M{
-			"wallet.balance": -request.TotalPrice,
-		},
-	}); err != nil {
-		utils.InternalError(c)
-		return
-	}
-
 	if user.Wallet.Purchased == nil {
 		user.Wallet.Purchased = []models.Purchased{}
 	}
@@ -1417,13 +1403,13 @@ func PayWithWallet(c *gin.Context) {
 		PaymentMethd:   request.PaymentMethod,
 		CreatePayment:  time.Now(),
 		CreatedAt:      time.Now(),
-		StatusDelivery: "",
+		StatusDelivery: models.OnShipment,
 		Product:        request.ProductIDs,
 		OrderID:        orderID,
 	}
 
 	user.Wallet.Purchased = append(user.Wallet.Purchased, newPurchase)
-
+	user.Wallet.BalanceUSD -= request.TotalPrice
 	update := bson.M{
 		"$set": bson.M{
 			"wallet": user.Wallet,

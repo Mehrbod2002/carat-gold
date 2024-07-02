@@ -4,7 +4,6 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -624,6 +623,7 @@ func SetSymbols(c *gin.Context) {
 		if err == mongo.ErrNoDocuments {
 			newSymbol := models.Symbol{
 				SymbolName: request.Name,
+				SymbolMetaName: request.SymbolMetaName,
 				Images:     images,
 				CreatedAt:  time.Now(),
 				SymbolType: request.Type,
@@ -681,7 +681,6 @@ func SetEditUser(c *gin.Context) {
 
 	var request models.RequestSetDefineUser
 	if err := c.ShouldBindJSON(&request); err != nil {
-		fmt.Println(err)
 		utils.BadBinding(c)
 		return
 	}

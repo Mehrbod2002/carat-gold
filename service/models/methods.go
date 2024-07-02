@@ -732,6 +732,10 @@ func (requestSymbol *RequestSetSymbol) Validate(c *gin.Context) bool {
 		utils.Method(c, "symbol name is short")
 		return false
 	}
+	if len(requestSymbol.SymbolMetaName) == 0 {
+		utils.Method(c, "symbol name is invalid")
+		return false
+	}
 	return true
 }
 

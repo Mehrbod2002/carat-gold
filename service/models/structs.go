@@ -199,10 +199,8 @@ type Purchased struct {
 }
 
 type Wallet struct {
-	ID         primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	UserID     primitive.ObjectID `bson:"user_id,omitempty" json:"user_id"`
-	BalanceUSD float64            `bson:"balance" json:"balance"`
-	Purchased  []Purchased        `bson:"purchased" json:"purchased"`
+	BalanceUSD float64     `bson:"balance" json:"balance"`
+	Purchased  []Purchased `bson:"purchased" json:"purchased"`
 }
 
 type Address struct {
@@ -342,12 +340,13 @@ type Products struct {
 }
 
 type Symbol struct {
-	ID         primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	SymbolName string             `bson:"name" json:"name"`
-	SymbolType SymbolType         `bson:"type" json:"type"`
-	SymbolSide SymbolSide         `bson:"side" json:"side"`
-	Images     []Image            `bson:"images" json:"images"`
-	CreatedAt  time.Time          `bson:"created_at" json:"created_at"`
+	ID             primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	SymbolName     string             `bson:"name" json:"name"`
+	SymbolMetaName string             `bson:"symbol_meta_name" json:"symbol_meta_name"`
+	SymbolType     SymbolType         `bson:"type" json:"type"`
+	SymbolSide     SymbolSide         `bson:"side" json:"side"`
+	Images         []Image            `bson:"images" json:"images"`
+	CreatedAt      time.Time          `bson:"created_at" json:"created_at"`
 }
 
 type DeliveryMethods struct {
@@ -472,9 +471,10 @@ type OperationMetaTrader struct {
 }
 
 type RequestSetSymbol struct {
-	Name  string     `json:"symbol_name"`
-	Image string     `json:"image"`
-	Type  SymbolType `json:"type"`
+	Name           string     `json:"symbol_name"`
+	Image          string     `json:"image"`
+	Type           SymbolType `json:"type"`
+	SymbolMetaName string     `json:"symbol_meta_name"`
 }
 
 type RequestSetGeneralData struct {

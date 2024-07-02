@@ -3,107 +3,23 @@ int socket;
 ENUM_TIMEFRAMES timeframes[] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_H1, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
 
 string forexSymbols[] = {
-    "EURUSD",
-    "GBPUSD",
-    "AUDUSD",
-    "GBPJPY",
-    "USDJPY",
-    "NZDUSD",
-    "EURGBP",
-    "AUDCHF",
-    "AUDJPY",
-    "AUDNZD",
-    "CADCHF",
-    "CADJPY",
-    "CHFJPY",
-    "EURAUD",
-    "EURCAD",
-    "EURCHF",
-    "EYRJPY",
-    "EURNOK",
-    "EURNZD",
-    "EURSEK",
-    "GBPAUD",
-    "GBPCAD",
-    "GBPCHF",
-    "GBPNZD",
-    "NZDCAD",
-    "NZDCHF",
-    "NZDJPY",
-    "AUDCAD",
-    "USDTRY",
-    "SGDJPY",
-    "USDCAD",
-    "USDCHF",
-    "USDCNH",
-    "USDHKD",
-    "USDMXN",
-    "USDNOK",
-    "USDSEK",
-    "USDSGD",
-    "USDZAR",
-    "EURCZK",
-    "EURHUF",
-    "EURPLN",
-    "USDCZK",
-    "USDHUF",
-    "USDPLN",
-    "ZARJPY",
-    "TRYJPY",
-    "EURTRY"
+    "TESLA_CFD",
+    "APPLE_CFD",
+    "PAYPAL_HOLDINGS_CFD",
+    "META_PLATFORMS_CFD",
+    "AMAZON_CFD",
 };
 
 string cryptoSymbols[] = {
-    "BTCUSD",
-    "BNBUSD",
-    "BCHUSD",
-    "DOGEUSD",
-    "DOTUSD",
-    "EOSUSD",
-    "ETHUSD",
-    "LINKUSD",
-    "ADAUSD",
-    "LTCUSD",
-    "MATICUSD",
-    "UNIUSD",
-    "XLMUSD",
-    "XTZUSD",
-    "AVAXUSD",
-    "KSMUSD",
-    "GLMRUSD",
-    "SOLUSD"
-};
-
-string indexesSymbols[] = {
-    "UK100",
-    "US100",
-    "US200",
-    "US30",
-    "US500",
-    "CHINA50",
-    "FRA40",
-    "HK50",
-    "JP225",
-    "NL25",
-    "SING30",
-    "AUD200",
-    "ES35",
-    "CH20",
-    "CHINAH",
-    "GER30"
+    "BITCOIN",
+    "ETHEREUM",
+    "BNB",
+    "DOGECOIN",
 };
 
 string commoditiesSymbols[] = {
-    "XAUUSD",
-    "XAGUSD",
-    "UKOIL",
-    "USOIL",
-    "NATAGAS",
-    "SOYBEANS",
-    "COPPER",
-    "SUGAR",
-    "CORN",
-    "WHEAT"
+    "EURUSD",
+    "GBPUSD",
 };
 
 string DataSymbol(string symbolName, string type) {
@@ -128,12 +44,6 @@ void GetSymbolList() {
         uchar byteArray1[];
         StringToCharArray(jsonData1, byteArray1);
         int sentBytes = SocketSend(socket, byteArray1, StringLen(jsonData1));
-    }
-    for (int i = 0; i < ArraySize(indexesSymbols); i++) {
-        string jsonData2 = DataSymbol(indexesSymbols[i], "index");
-        uchar byteArray2[];
-        StringToCharArray(jsonData2, byteArray2);
-        int sentBytes = SocketSend(socket, byteArray2, StringLen(jsonData2));
     }
     for (int i = 0; i < ArraySize(commoditiesSymbols); i++) {
         string jsonData3 = DataSymbol(commoditiesSymbols[i], "commodity");
@@ -165,7 +75,7 @@ int OnInit() {
         }
 
         if (SocketConnect(socket, serverAddress, serverPort, 1000)) {
-            EventSetMillisecondTimer(100);
+            EventSetMillisecondTimer(3);
             Print("Connected to the first server");
             return(INIT_SUCCEEDED);
         }
@@ -198,10 +108,6 @@ void ConnectionAndTick() {
     }
 
     GetSymbolList();
-}
-
-void OnTick() {
-    ConnectionAndTick();
 }
 
 void OnTimer() {

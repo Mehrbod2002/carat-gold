@@ -269,11 +269,13 @@ func SendOTP(c *gin.Context) {
 			// 	return
 			// }
 			var user models.User
+			user.Email = ""
 			user.PhoneNumber = sendOTPData.PhoneNumber
 			user.OtpCode = &otp_code
 			user.ReTryOtp = 0
 			user.OtpValid = time.Now().UTC()
 			user.CreatedAt = time.Now().UTC()
+			user.PhoneVerified = false
 			_, err := db.Collection("users").InsertOne(context.Background(), user)
 			if err != nil {
 				log.Println(err)
@@ -391,14 +393,8 @@ func Register(c *gin.Context) {
 	}
 	if existingUser.PhoneVerified {
 		newRegister = true
-		// c.JSON(400, gin.H{
-		// 	"success": false,
-		// 	"message": "already registered with this phone number",
-		// 	"data":    "phone_already_registered",
-		// })
-		// return
 	}
-	if time.Since(existingUser.OtpValid) > time.Minute*5 { // Test
+	if time.Since(existingUser.OtpValid) > time.Minute*5 {
 		c.JSON(400, gin.H{
 			"success": false,
 			"message": utils.Cap("otp expired"),
@@ -417,6 +413,7 @@ func Register(c *gin.Context) {
 
 	if newRegister {
 		newUser := models.User{
+			Email:         "",
 			PhoneNumber:   registerData.PhoneNumber,
 			CreatedAt:     time.Now(),
 			Currency:      "USD",
@@ -424,6 +421,7 @@ func Register(c *gin.Context) {
 			UserVerified:  true,
 			StatusString:  models.ApprovedStatus,
 			OtpCode:       nil,
+			Reason: "",
 		}
 		_, errs := db.Collection("users").UpdateOne(context.Background(), bson.M{
 			"phone": registerData.PhoneNumber,
