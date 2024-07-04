@@ -3,23 +3,18 @@ int socket;
 ENUM_TIMEFRAMES timeframes[] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_H1, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
 
 string forexSymbols[] = {
-    "TESLA_CFD",
-    "APPLE_CFD",
-    "PAYPAL_HOLDINGS_CFD",
-    "META_PLATFORMS_CFD",
-    "AMAZON_CFD",
+    "APPLE CFD",
 };
 
 string cryptoSymbols[] = {
     "BITCOIN",
     "ETHEREUM",
-    "BNB",
-    "DOGECOIN",
 };
 
 string commoditiesSymbols[] = {
     "EURUSD",
     "GBPUSD",
+    "AUDUSD",
 };
 
 string DataSymbol(string symbolName, string type) {

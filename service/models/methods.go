@@ -34,6 +34,48 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+func GenerateTransactionID(name, last string, products int) string {
+	if len(name) == 0 {
+		name = "NN"
+	}
+	if len(last) == 0 {
+		last = "NN"
+	}
+
+	formatted := fmt.Sprintf("%04d", products)
+	rand := fmt.Sprintf("%d", utils.GenerateRandomCode())
+
+	result := string(name[0]) + string(last[0]) + "-GB8-" + formatted + "-" + rand[0:3]
+	return result
+}
+
+func GenerateOrderID(c *gin.Context) (*string, error) {
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		return nil, DBerr
+	}
+
+	var lastOrderID LastOrderID
+	err := db.Collection("last_order_id").FindOne(context.Background(), bson.M{}).Decode(&lastOrderID)
+	if err != nil && err != mongo.ErrNoDocuments {
+		return nil, err
+	}
+
+	var rand string
+	if err == mongo.ErrNoDocuments {
+		rand = "603155"
+	} else {
+		numberDig, err := strconv.Atoi(lastOrderID.OrderID)
+		if err != nil {
+			return nil, err
+		}
+
+		rand = fmt.Sprintf("%d", numberDig+1)
+	}
+
+	return &rand, nil
+}
+
 func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoice, bool, string) {
 	url := "https://api.nowpayments.io/v1/invoice"
 

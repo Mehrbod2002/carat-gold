@@ -188,14 +188,26 @@ type PaymentResponse struct {
 	ExpirationEstimateDate string      `json:"expiration_estimate_date"`
 }
 
+type LastOrderID struct {
+	ID      primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
+	OrderID string             `bson:"order_id" json:"order_id"`
+}
+
 type Purchased struct {
-	Product        []primitive.ObjectID `bson:"product" json:"product"`
-	StatusDelivery DeliveryStatus       `bson:"status_delivery" json:"status_delivery"`
-	PaymentStatus  UserStatus           `bson:"payment_status" json:"payment_status"`
-	PaymentMethd   PaymentMethod        `bson:"payment_method" json:"payment_method"`
-	CreatedAt      time.Time            `bson:"created_at" json:"created_at"`
-	CreatePayment  time.Time            `bson:"created_payment" json:"created_payment"`
-	OrderID        string               `bson:"order_id" json:"order_id"`
+	Product           []primitive.ObjectID `bson:"product" json:"product"`
+	StatusDelivery    DeliveryStatus       `bson:"status_delivery" json:"status_delivery"`
+	DeliveryMethod    DeliveryMethod       `bson:"delivery_method" json:"delivery_method"`
+	PaymentStatus     UserStatus           `bson:"payment_status" json:"payment_status"`
+	PaymentMethd      PaymentMethod        `bson:"payment_method" json:"payment_method"`
+	CreatedAt         time.Time            `bson:"created_at" json:"created_at"`
+	CreatePayment     time.Time            `bson:"created_payment" json:"created_payment"`
+	OrderID           string               `bson:"order_id" json:"order_id"`
+	IDD               string               `bson:"transaction_id" json:"transaction_id,omitempty"`
+	TotalPrice        float64              `bson:"total_price" json:"total_price,omitempty"`
+	Vat               float64              `bson:"vat" json:"vat,omitempty"`
+	PaymentCompletion bool                 `bson:"payment_completion" json:"payment_completion,omitempty"`
+	DeliveryFee       float64              `bson:"delivery_fee" json:"delivery_fee,omitempty"`
+	PriceOz           float64              `bson:"price_oz" json:"price_oz,omitempty"`
 }
 
 type Wallet struct {
@@ -364,6 +376,8 @@ type DeliveryMethods struct {
 
 type Transaction struct {
 	ID                primitive.ObjectID   `bson:"_id,omitempty" json:"_id"`
+	PriceOz           float64              `bson:"price_oz" json:"price_oz"`
+	IDD               string               `bson:"transaction_id" json:"transaction_id,omitempty"`
 	OrderID           string               `bson:"order_id" json:"order_id,omitempty"`
 	ProductIDs        []primitive.ObjectID `bson:"product_ids" json:"product_ids"`
 	UserID            primitive.ObjectID   `bson:"user_id" json:"user_id,omitempty"`
@@ -380,6 +394,7 @@ type Transaction struct {
 	IsDebit           bool                 `bson:"is_debit" json:"is_debit"`
 	ExternalData      map[string]string    `bson:"external_data" json:"external_data"`
 	MetatraderID      string               `bson:"metatrader_id" json:"metatrader_id"`
+	DeliveryFee       float64              `bson:"delivery_fee" json:"delivery_fee,omitempty"`
 }
 
 type RequestSetDefineUser struct {

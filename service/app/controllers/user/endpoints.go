@@ -1222,6 +1222,14 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
+	if request.PriceOz <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": utils.Cap("invalid price"),
+		})
+		return
+	}
+
 	var deliveryMethods []models.UserDeliveryMethods
 	cursor, err := db.Collection("delivery_methods").Find(context.Background(), bson.M{})
 	if err != nil && err != mongo.ErrNoDocuments {
@@ -1264,7 +1272,7 @@ func PayWithWallet(c *gin.Context) {
 
 	if (user.Wallet.BalanceUSD < request.TotalPrice) ||
 		request.TotalPrice == 0 ||
-		user.Wallet.BalanceUSD == 0 || (user.Wallet.BalanceUSD -request.TotalPrice) < 0 {
+		user.Wallet.BalanceUSD == 0 || (user.Wallet.BalanceUSD-request.TotalPrice) < 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": utils.Cap("insufficient balance"),
@@ -1325,9 +1333,11 @@ func PayWithWallet(c *gin.Context) {
 	}
 
 	accepted := false
+	deliveryFee := 0.0
 	for _, i := range deliveryMethods {
 		if request.DeliveryMethod == models.DeliveryMethod(i.Title) {
 			accepted = true
+			deliveryFee = float64(i.Fee)
 		}
 	}
 
@@ -1355,7 +1365,12 @@ func PayWithWallet(c *gin.Context) {
 		}
 	}
 
-	var orderID = primitive.NewObjectID().Hex()
+	orderID, err := models.GenerateOrderID(c)
+	if err != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
 
 	var totalVolumn float64 = 0
 	for _, i := range request.ProductIDs {
@@ -1374,9 +1389,12 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
+	IDD := models.GenerateTransactionID(user.FirstName, user.LastName, len(request.ProductIDs))
+	fmt.Println(IDD, "49G-"+*orderID, "orderid ")
 	_, err = db.Collection("transactions").InsertOne(context.Background(),
 		models.Transaction{
-			OrderID:           orderID,
+			OrderID:           "49G-" + *orderID,
+			IDD:               IDD,
 			UserID:            authUser.ID,
 			CreatedAt:         time.Now(),
 			StatusDelivery:    request.StatusDelivery,
@@ -1384,9 +1402,10 @@ func PayWithWallet(c *gin.Context) {
 			ProductIDs:        request.ProductIDs,
 			DeliveryMethod:    request.DeliveryMethod,
 			TotalPrice:        request.TotalPrice,
-			Vat:               crypto.Vat,
+			Vat:               (request.TotalPrice * 5) / 100,
 			PaymentCompletion: true,
 			PaymentStatus:     models.ApprovedStatus,
+			DeliveryFee:       deliveryFee,
 		})
 	if err != nil {
 		log.Println(err)
@@ -1399,13 +1418,19 @@ func PayWithWallet(c *gin.Context) {
 	}
 
 	newPurchase := models.Purchased{
-		PaymentStatus:  models.ApprovedStatus,
-		PaymentMethd:   request.PaymentMethod,
-		CreatePayment:  time.Now(),
-		CreatedAt:      time.Now(),
-		StatusDelivery: models.OnShipment,
-		Product:        request.ProductIDs,
-		OrderID:        orderID,
+		PaymentStatus:     models.ApprovedStatus,
+		PaymentMethd:      request.PaymentMethod,
+		CreatePayment:     time.Now(),
+		CreatedAt:         time.Now(),
+		StatusDelivery:    models.OnShipment,
+		Product:           request.ProductIDs,
+		OrderID:           "49G-" + *orderID,
+		DeliveryMethod:    request.DeliveryMethod,
+		TotalPrice:        request.TotalPrice,
+		Vat:               (request.TotalPrice * 5) / 100,
+		PaymentCompletion: true,
+		PriceOz:           request.PriceOz,
+		DeliveryFee:       deliveryFee,
 	}
 
 	user.Wallet.Purchased = append(user.Wallet.Purchased, newPurchase)
@@ -1423,9 +1448,15 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
+	db.Collection("last_order_id").UpdateOne(context.Background(), bson.M{}, bson.M{
+		"$set": bson.M{
+			"order_id": orderID,
+		},
+	}, options.Update().SetUpsert(true))
+
 	c.AbortWithStatusJSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "done",
-		"data":    map[string]string{"order_id": orderID},
+		"data":    map[string]string{"order_id": "49G-" + *orderID},
 	})
 }
