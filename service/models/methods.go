@@ -90,8 +90,8 @@ func CreateCryptoInvoice(c *gin.Context, price float64, orderID string) (*Invoic
 		CancelURL        string  `json:"cancel_url"`
 	}{
 		PriceAmount:      price,
-		PriceCurrency:    "usdtbsc",
-		PayCurrency:      "btc",
+		PriceCurrency:    "usd",
+		PayCurrency:      "usdtbsc",
 		IPNCallbackURL:   os.Getenv("BASE_HOST") + os.Getenv("CALLBACK"),
 		OrderID:          orderID,
 		OrderDescription: "Fasih Products",
