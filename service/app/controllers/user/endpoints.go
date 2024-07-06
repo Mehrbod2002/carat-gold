@@ -1349,19 +1349,26 @@ func PayWithWallet(c *gin.Context) {
 		return
 	}
 
+	images := make(map[primitive.ObjectID][]models.Image)
 	for _, product := range products {
-		if product.Amount == 0 {
-			c.JSON(http.StatusNotFound, gin.H{
-				"success": false,
-				"message": utils.Cap("there is no more product left"),
-			})
-		}
+		for _, reqProduct := range request.ProductIDs {
+			if reqProduct == product.ID {
+				if product.Amount == 0 {
+					c.JSON(http.StatusNotFound, gin.H{
+						"success": false,
+						"message": utils.Cap("there is no more product left"),
+					})
+				}
 
-		if product.Hide {
-			c.JSON(http.StatusNotFound, gin.H{
-				"success": false,
-				"message": utils.Cap("invalid product"),
-			})
+				if product.Hide {
+					c.JSON(http.StatusNotFound, gin.H{
+						"success": false,
+						"message": utils.Cap("invalid product"),
+					})
+				}
+
+				images[reqProduct] = product.Images
+			}
 		}
 	}
 
@@ -1418,6 +1425,7 @@ func PayWithWallet(c *gin.Context) {
 	}
 
 	newPurchase := models.Purchased{
+		Images:            images,
 		PaymentStatus:     models.ApprovedStatus,
 		PaymentMethd:      request.PaymentMethod,
 		CreatePayment:     time.Now(),
