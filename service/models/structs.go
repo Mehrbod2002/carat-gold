@@ -195,7 +195,7 @@ type LastOrderID struct {
 
 type Purchased struct {
 	Product           []primitive.ObjectID           `bson:"product" json:"product"`
-	Images            map[primitive.ObjectID][]Image `bson:"images" json:"imagess"`
+	Images            map[primitive.ObjectID][]Image `bson:"images" json:"images"`
 	StatusDelivery    DeliveryStatus                 `bson:"status_delivery" json:"status_delivery"`
 	DeliveryMethod    DeliveryMethod                 `bson:"delivery_method" json:"delivery_method"`
 	PaymentStatus     UserStatus                     `bson:"payment_status" json:"payment_status"`
