@@ -1397,7 +1397,6 @@ func PayWithWallet(c *gin.Context) {
 	}
 
 	IDD := models.GenerateTransactionID(user.FirstName, user.LastName, len(request.ProductIDs))
-	fmt.Println(IDD, "49G-"+*orderID, "orderid ")
 	_, err = db.Collection("transactions").InsertOne(context.Background(),
 		models.Transaction{
 			OrderID:           "49G-" + *orderID,
