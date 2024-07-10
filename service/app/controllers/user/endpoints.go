@@ -1271,7 +1271,7 @@ func PayWithWallet(c *gin.Context) {
 	}
 
 	if (user.Wallet.BalanceUSD < request.TotalPrice) ||
-		request.TotalPrice == 0 ||
+		request.TotalPrice == 0 || request.PriceOz == 0 ||
 		user.Wallet.BalanceUSD == 0 || (user.Wallet.BalanceUSD-request.TotalPrice) < 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -1292,24 +1292,23 @@ func PayWithWallet(c *gin.Context) {
 		request.TotalPrice = request.TotalPrice / generalData.AedUsd
 	}
 
-	// result, valid := utils.GetRequest("get_last_price")
-	// if !valid {
-	// 	utils.AdminError(c)
-	// 	return
-	// }
+	result, valid := utils.GetRequest("get_last_price")
+	if !valid {
+		utils.AdminError(c)
+		return
+	}
 
-	// lastGoldMap := result["data"].(map[string]interface{})
-	// lastGoldPrice := lastGoldMap["close"].(float64)
-	// lengths := float64(len(request.ProductIDs))
-	// eachGoldBar := request.TotalPrice / lengths
-	// if (-10 < eachGoldBar-lastGoldPrice || eachGoldBar-lastGoldPrice > 10) &&
-	// 	request.TotalPrice != 0 {
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"success": false,
-	// 		"message": utils.Cap("there is more than 1$ difference between realtime price"),
-	// 	})
-	// 	return
-	// }
+	lastGoldMap := result["data"].(map[string]interface{})
+	lastGoldPrice := lastGoldMap["close"].(float64)
+
+	if ((request.PriceOz-lastGoldPrice)*-1 < -1) &&
+		request.TotalPrice != 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": utils.Cap("there is more than 1$ difference between realtime price"),
+		})
+		return
+	}
 
 	if crypto.Disable {
 		c.JSON(http.StatusNotImplemented, gin.H{
