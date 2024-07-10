@@ -323,7 +323,7 @@ func (req *RequestEdit) Validate(c *gin.Context) bool {
 
 	if req.Email != nil && *req.Email != "" {
 		if !IsValidEmail(*req.Email) {
-			utils.Method(c, "invalid email")
+			utils.Method(c, "invalid email address")
 			return false
 		}
 	}
@@ -394,7 +394,7 @@ func (req *RequestSetDefineUser) Validate(c *gin.Context, Edit bool) bool {
 			return false
 		}
 		if !IsValidEmail(*req.Email) {
-			utils.Method(c, "invalid email")
+			utils.Method(c, "invalid email address")
 			return false
 		}
 		if !Edit {
@@ -663,6 +663,7 @@ func AllowedAction(c *gin.Context, action Action) bool {
 }
 
 func (user *User) GenerateToken() (string, error) {
+	fmt.Println("ff:", user.PhoneNumber)
 	claims := &Claims{
 		ID:          user.ID.Hex(),
 		Email:       user.Email,
@@ -992,7 +993,7 @@ func (req *RequestSetPayment) Validate(c *gin.Context) bool {
 func (req *RequestSetCallCenter) Validate(c *gin.Context) bool {
 	if len(*req.Email) != 0 {
 		if !IsValidEmail(*req.Email) {
-			utils.Method(c, "invalid email")
+			utils.Method(c, "invalid email address")
 			return false
 		}
 	}

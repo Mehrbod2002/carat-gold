@@ -4,6 +4,7 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -421,7 +422,7 @@ func Register(c *gin.Context) {
 			UserVerified:  true,
 			StatusString:  models.ApprovedStatus,
 			OtpCode:       nil,
-			Reason: "",
+			Reason:        "",
 		}
 		_, errs := db.Collection("users").UpdateOne(context.Background(), bson.M{
 			"phone": registerData.PhoneNumber,
@@ -442,6 +443,7 @@ func Register(c *gin.Context) {
 		}
 		newUser.ID = existingUser.ID
 
+		fmt.Println("Create token", newUser.PhoneNumber)
 		token, er := newUser.GenerateToken()
 		if er != nil {
 			log.Println(errs)

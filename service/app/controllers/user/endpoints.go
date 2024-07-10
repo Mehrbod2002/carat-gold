@@ -452,6 +452,27 @@ func EditUser(c *gin.Context) {
 		return
 	}
 
+	var user models.User
+	exist := db.Collection("users").FindOne(context.Background(), bson.M{"$and": []bson.M{
+		{"_id": authUser.ID},
+	}}).Decode(&user)
+	if exist != nil {
+		if exist == mongo.ErrNoDocuments {
+			utils.Unauthorized(c)
+			return
+		}
+		log.Println(exist)
+		utils.InternalError(c)
+		return
+	}
+
+	if *request.Phone != user.PhoneNumber {
+		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{
+			"success": false,
+			"message": utils.Cap("not able to change the phone number")})
+		return
+	}
+
 	updateFields := bson.M{}
 	if request.FirstName != nil {
 		if len(*request.LastName) != 0 {
@@ -466,9 +487,9 @@ func EditUser(c *gin.Context) {
 	if request.Email != nil {
 		updateFields["email"] = utils.TrimAndLowerCase(utils.DerefStringPtr(request.Email))
 	}
-	if request.Phone != nil {
-		updateFields["phone"] = request.Phone
-	}
+	// if request.Phone != nil {
+	// 	updateFields["phone"] = request.Phone
+	// }
 	if request.Address != nil {
 		updateFields["address"] = request.Address
 	}

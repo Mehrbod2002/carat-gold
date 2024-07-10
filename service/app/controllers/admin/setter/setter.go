@@ -622,11 +622,11 @@ func SetSymbols(c *gin.Context) {
 		bson.M{"name": request.Name}).Decode(&symbol); err != nil {
 		if err == mongo.ErrNoDocuments {
 			newSymbol := models.Symbol{
-				SymbolName: request.Name,
+				SymbolName:     request.Name,
 				SymbolMetaName: request.SymbolMetaName,
-				Images:     images,
-				CreatedAt:  time.Now(),
-				SymbolType: request.Type,
+				Images:         images,
+				CreatedAt:      time.Now(),
+				SymbolType:     request.Type,
 			}
 			_, err := db.Collection("symbols").InsertOne(context.Background(), newSymbol)
 			if err != nil {
