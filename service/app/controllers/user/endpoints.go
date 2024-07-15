@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -705,6 +706,111 @@ func UpdateFcm(c *gin.Context) {
 		},
 	}); err != nil {
 		utils.BadBinding(c)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "done",
+	})
+}
+
+func DeliverGold(c *gin.Context) {
+	authUser, valid := models.ValidateSession(c)
+	if !valid {
+		utils.Unauthorized(c)
+		return
+	}
+
+	var request models.DeliveGold
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.BadBinding(c)
+		return
+	}
+
+	db, DBerr := utils.GetDB(c)
+	if DBerr != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	var deliveryMethods []models.DeliveryMethods
+	cursor, err := db.Collection("delivery_methods").Find(context.Background(), bson.M{})
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	defer cursor.Close(context.Background())
+
+	if err := cursor.All(context.Background(), &deliveryMethods); err != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	var user models.User
+	err = db.Collection("users").FindOne(context.Background(), bson.M{
+		"_id": authUser.ID,
+	}).Decode(&user)
+	if err != nil {
+		utils.InternalError(c)
+		return
+	}
+
+	purchaseFound := false
+	for i, purchase := range user.Wallet.Purchased {
+		if purchase.OrderID == request.OrderID {
+			if purchase.StatusDelivery == models.Hold {
+				c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{
+					"success": false,
+					"message": utils.Cap("purchase is already on hold"),
+				})
+				return
+			}
+
+			accepted := false
+			var deliveryMethod models.DeliveryMethods
+			for _, dm := range deliveryMethods {
+				if request.DeliveryMethod == models.DeliveryMethod(dm.Title) {
+					accepted = true
+					deliveryMethod = dm
+					break
+				}
+			}
+
+			if !accepted || strings.Contains(string(request.DeliveryMethod), "HOLD") {
+				c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+					"success": false,
+					"message": utils.Cap("invalid delivery method"),
+				})
+				return
+			}
+
+			user.Wallet.Purchased[i].DeliveryMethod = models.DeliveryMethod(deliveryMethod.Title)
+			purchaseFound = true
+			break
+		}
+	}
+
+	if !purchaseFound {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": utils.Cap("invalid order id"),
+		})
+		return
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"wallet": user.Wallet,
+		},
+	}
+
+	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
+		"_id": authUser.ID,
+	}, update); err != nil {
+		log.Println(err)
+		utils.InternalError(c)
 		return
 	}
 

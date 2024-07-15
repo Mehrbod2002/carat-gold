@@ -92,6 +92,7 @@ func SetupRouter(dataChannel chan interface{}) *gin.Engine {
 		userRoutes.GET("/get_fandq", user.GetFANDQ)
 		userRoutes.GET("/get_symbol", user.GetSymbol)
 		userRoutes.POST("/create_transaction", user.CreateTranscations)
+		userRoutes.POST("/deliver_gold", user.DeliverGold)
 		userRoutes.POST("/make_deposit", user.MakeDepositTransaction)
 		userRoutes.GET("/get_transaction", user.GetTransactions)
 		userRoutes.GET("/delivery_methods", user.UserDeliveryMethods)

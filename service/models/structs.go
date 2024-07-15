@@ -193,6 +193,11 @@ type LastOrderID struct {
 	OrderID string             `bson:"order_id" json:"order_id"`
 }
 
+type DeliveGold struct {
+	DeliveryMethod DeliveryMethod `bson:"delivery_method" json:"delivery_method"`
+	OrderID        string         `bson:"order_id" json:"order_id"`
+}
+
 type Purchased struct {
 	Product           []primitive.ObjectID           `bson:"product" json:"product"`
 	Images            map[primitive.ObjectID][]Image `bson:"images" json:"images"`
