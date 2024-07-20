@@ -85,8 +85,8 @@ func GetTransactions(c *gin.Context) {
 	var transactions []models.Transaction
 	cursor, err := db.Collection("transactions").Find(context.Background(), bson.M{
 		"user_id": authUser.ID,
-	})
-	if err != nil && err != mongo.ErrNoDocuments {
+	}, options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}}))
+	if err != nil {
 		log.Println(err)
 		utils.InternalError(c)
 		return
