@@ -93,6 +93,11 @@ func GenerateRandomCode() int {
 	return rander.Intn(90000) + 10000
 }
 
+func GenerateRandomReference() int {
+	rander := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return rander.Intn(900000) + 100000
+}
+
 func ValidateAdmin(token string) bool {
 	jwtSecret := os.Getenv("SESSION_SECRET")
 	if jwtSecret == "" {

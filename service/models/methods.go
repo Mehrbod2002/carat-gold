@@ -306,7 +306,7 @@ func IsValidPassowrd(password string, c *gin.Context) bool {
 func (req *RequestEdit) Validate(c *gin.Context) bool {
 	if req.FirstName != nil {
 		if len(*req.FirstName) != 0 {
-			if len(*req.FirstName) > 20 || len(*req.FirstName) < 2 {
+			if len(*req.FirstName) > 50 || len(*req.FirstName) < 2 {
 				utils.Method(c, "invalid first name")
 				return false
 			}
@@ -314,7 +314,7 @@ func (req *RequestEdit) Validate(c *gin.Context) bool {
 	}
 	if req.LastName != nil && *req.LastName != "" {
 		if len(*req.LastName) != 0 {
-			if len(*req.LastName) > 20 || len(*req.LastName) < 2 {
+			if len(*req.LastName) > 50 || len(*req.LastName) < 2 {
 				utils.Method(c, "invalid last name ")
 				return false
 			}
@@ -335,11 +335,11 @@ func (req *RequestEdit) Validate(c *gin.Context) bool {
 	}
 	if req.Address != nil && len(*req.Address) != 0 {
 		for _, address := range *req.Address {
-			if len(address.City) > 20 || len(address.City) == 0 {
+			if len(address.City) > 100 || len(address.City) == 0 {
 				utils.Method(c, "invalid city")
 				return false
 			}
-			if len(address.Country) > 20 || len(address.Country) == 0 {
+			if len(address.Country) > 100 || len(address.Country) == 0 {
 				utils.Method(c, "invalid country")
 				return false
 			}
@@ -351,7 +351,7 @@ func (req *RequestEdit) Validate(c *gin.Context) bool {
 				utils.Method(c, "invalid address")
 				return false
 			}
-			if len(address.Label) > 20 || len(address.Label) < 3 {
+			if len(address.Label) > 50 || len(address.Label) < 3 {
 				utils.Method(c, "invalid label")
 				return false
 			}
@@ -663,7 +663,6 @@ func AllowedAction(c *gin.Context, action Action) bool {
 }
 
 func (user *User) GenerateToken() (string, error) {
-	fmt.Println("ff:", user.PhoneNumber)
 	claims := &Claims{
 		ID:          user.ID.Hex(),
 		Email:       user.Email,
@@ -1371,23 +1370,19 @@ func Cancel(orderIDInterface interface{}) (bool, bool) {
 	return true, transaction.IsDebit
 }
 
-func ValidateUser(name, lastName, id, front, back string) bool {
+func ValidateUser(id, front, back string) bool {
 	requestBody := RequestKYC{
-		Reference:   "1234561",
-		CallbackURL: "https://9999gold.ae",
-		Email:       "fasih@icloud.com",
-		Country:     "EU",
+		Reference:   fmt.Sprintf("%d", utils.GenerateRandomReference()),
+		CallbackURL: "",
+		Country:     "AE",
 		Language:    "EN",
-		EKYC: EKYC{
-			DocumentTwo: DocumentTwo{
-				Proof:           front,
-				AdditionalProof: back,
-				Name: Name{
-					FirstName:  name,
-					MiddleName: "",
-					LastName:   lastName,
-				},
-			},
+		Email:       "",
+		Document: DocumentProof{
+			Proof:                 front,
+			AdditionalProof:       back,
+			SupportedTypes:        []string{"id_card", "driving_license", "passport"},
+			BacksideProofRequired: "1",
+			VerificationMode:      "any",
 		},
 	}
 
@@ -1403,10 +1398,9 @@ func ValidateUser(name, lastName, id, front, back string) bool {
 
 	credentials := os.Getenv("KYCClient") + ":" + os.Getenv("KYCSecret")
 	encodedCredentials := base64.StdEncoding.EncodeToString([]byte(credentials))
-	authorizationHeader := "Basic " + encodedCredentials
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Basic "+authorizationHeader)
+	req.Header.Set("Authorization", "Basic "+encodedCredentials)
 
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -1426,6 +1420,5 @@ func ValidateUser(name, lastName, id, front, back string) bool {
 		return false
 	}
 
-	verificationResult := response.VerificationResult.EKYC
-	return verificationResult == 1
+	return response.Event == "verification.accepted"
 }

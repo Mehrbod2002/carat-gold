@@ -4,7 +4,6 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -70,14 +69,14 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 		})
 		return
 	}
-	// if user.ReTryOtp == 5 && time.Since(user.OtpValid) < time.Hour { // Test
-	// 	c.JSON(406, gin.H{
-	// 		"success": false,
-	// 		"message": "otp freezed for 1 hour",
-	// 		"data":    "otp_freezed_for_1_hour",
-	// 	})
-	// 	return
-	// }
+	if user.ReTryOtp == 5 && time.Since(user.OtpValid) < time.Hour { // Test
+		c.JSON(406, gin.H{
+			"success": false,
+			"message": "otp freezed for 1 hour",
+			"data":    "otp_freezed_for_1_hour",
+		})
+		return
+	}
 	otp_code := 12345
 	// otp_code := utils.GenerateRandomCode()
 	// sent, errMessage := models.Sendotp(user.PhoneNumber, fmt.Sprint(otp_code))
@@ -167,7 +166,7 @@ func LoginOneTimeLoginStep2(c *gin.Context) {
 		return
 	}
 
-	if time.Since(user.OtpValid) > time.Minute*2 { // Test
+	if time.Since(user.OtpValid) > time.Minute*2 {
 		c.JSON(400, gin.H{
 			"success": false,
 			"message": "request for otp first",
@@ -294,17 +293,16 @@ func SendOTP(c *gin.Context) {
 		utils.InternalError(c)
 		return
 	}
-	// if !existingUser.PhoneVerified {
 	allowToSend := time.Since(existingUser.OtpValid) > time.Minute*2
 	if allowToSend {
-		// if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) < time.Hour { // Test
-		// 	c.JSON(406, gin.H{
-		// 		"success": false,
-		// 		"message": "otp freezed for 1 hour",
-		// 		"data":    "otp_freezed_for_1_hour",
-		// 	})
-		// 	return
-		// }
+		if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) < time.Hour { // Test
+			c.JSON(406, gin.H{
+				"success": false,
+				"message": "otp freezed for 1 hour",
+				"data":    "otp_freezed_for_1_hour",
+			})
+			return
+		}
 		otp_code := 12345 // utils.GenerateRandomCode()
 		// sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
 		// if !sent {
@@ -443,7 +441,6 @@ func Register(c *gin.Context) {
 		}
 		newUser.ID = existingUser.ID
 
-		fmt.Println("Create token", newUser.PhoneNumber)
 		token, er := newUser.GenerateToken()
 		if er != nil {
 			log.Println(errs)

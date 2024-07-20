@@ -632,15 +632,7 @@ func SendDocuments(c *gin.Context) {
 		return
 	}
 
-	if len(user.FirstName) == 0 || len(user.LastName) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": utils.Cap("fill your name and last name first"),
-		})
-		return
-	}
-
-	validDocument := models.ValidateUser(user.FirstName, user.LastName, utils.GenerateReferenceID(), frontBase64, backBase64)
+	validDocument := models.ValidateUser(utils.GenerateReferenceID(), frontBase64, backBase64)
 	if !validDocument {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
