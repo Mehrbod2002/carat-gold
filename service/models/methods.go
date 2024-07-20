@@ -343,7 +343,7 @@ func (req *RequestEdit) Validate(c *gin.Context) bool {
 				utils.Method(c, "invalid country")
 				return false
 			}
-			if len(address.Region) > 20 || len(address.Region) == 0 {
+			if len(address.Region) > 50 || len(address.Region) == 0 {
 				utils.Method(c, "invalid region")
 				return false
 			}
