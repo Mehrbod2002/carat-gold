@@ -352,7 +352,7 @@ func (req *RequestEdit) Validate(c *gin.Context) bool {
 				return false
 			}
 			if len(address.Label) > 20 || len(address.Label) < 3 {
-				utils.Method(c, "invalid label ")
+				utils.Method(c, "invalid label")
 				return false
 			}
 		}
