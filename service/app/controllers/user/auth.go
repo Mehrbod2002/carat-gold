@@ -83,7 +83,7 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 		log.Println("otp : ", errMessage)
 		c.JSON(500, gin.H{
 			"success": false,
-			"message": utils.Cap(errMessage),
+			"message": utils.Cap("Failed to send sms"),
 			"data":    "failed_otp",
 		})
 		return
@@ -262,7 +262,7 @@ func SendOTP(c *gin.Context) {
 				log.Println("otp : ", errMessage)
 				c.JSON(500, gin.H{
 					"success": false,
-					"message": errMessage,
+					"message": utils.Cap("Failed to send sms"),
 					"data":    "failed_otp",
 				})
 				return
@@ -306,7 +306,7 @@ func SendOTP(c *gin.Context) {
 			log.Println("otp : ", errMessage)
 			c.JSON(500, gin.H{
 				"success": false,
-				"message": errMessage,
+				"message": utils.Cap("Failed to send sms"),
 				"data":    "failed_otp",
 			})
 			return
