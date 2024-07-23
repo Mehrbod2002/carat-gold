@@ -44,7 +44,7 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 		if exist == mongo.ErrNoDocuments {
 			c.JSON(400, gin.H{
 				"success": false,
-				"message": "invalid phone",
+				"message": utils.Cap("invalid phone"),
 				"data":    "invalid_phone",
 			})
 			return
@@ -57,7 +57,7 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 	if user.Freeze {
 		c.JSON(401, gin.H{
 			"success": false,
-			"message": "your account freezed by admin",
+			"message": utils.Cap("your account freezed by admin"),
 			"data":    "freezed_account",
 		})
 		return
@@ -65,25 +65,25 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 	if !user.PhoneVerified {
 		c.JSON(406, gin.H{
 			"success": false,
-			"message": "phone isn't validated",
+			"message": utils.Cap("phone isn't validated"),
 			"data":    "unverified_user",
 		})
 		return
 	}
-	if user.ReTryOtp == 5 && time.Since(user.OtpValid) < time.Hour {
-		c.JSON(406, gin.H{
-			"success": false,
-			"message": "otp freezed for 1 hour",
-			"data":    "otp_freezed_for_1_hour",
-		})
-		return
-	}
+	// if user.ReTryOtp == 5 && time.Since(user.OtpValid) < time.Hour { // Development
+	// 	c.JSON(406, gin.H{
+	// 		"success": false,
+	// 		"message": utils.Cap("otp freezed for 1 hour"),
+	// 		"data":    "otp_freezed_for_1_hour",
+	// 	})
+	// 	return
+	// }
 	sent, errMessage := models.Sendotp(user.PhoneNumber)
 	if !sent {
 		log.Println("otp : ", errMessage)
 		c.JSON(500, gin.H{
 			"success": false,
-			"message": errMessage,
+			"message": utils.Cap(errMessage),
 			"data":    "failed_otp",
 		})
 		return
@@ -106,7 +106,7 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "logged in",
+		"message": utils.Cap("logged in"),
 		"data":    "otp_sent",
 	})
 }
@@ -138,7 +138,7 @@ func LoginOneTimeLoginStep2(c *gin.Context) {
 		if exist == mongo.ErrNoDocuments {
 			c.JSON(400, gin.H{
 				"success": false,
-				"message": "invalid phone",
+				"message": utils.Cap("invalid phone"),
 				"data":    "invalid_phone",
 			})
 			return
@@ -150,34 +150,34 @@ func LoginOneTimeLoginStep2(c *gin.Context) {
 	if user.Freeze {
 		c.JSON(401, gin.H{
 			"success": false,
-			"message": "your account freezed by admin",
+			"message": utils.Cap("your account freezed by admin"),
 			"data":    "freezed_account",
 		})
 		return
 	}
 	if !user.PhoneVerified {
 		c.JSON(406, gin.H{
-			"success": false,
-			"message": "phone isn't validated",
-			"data":    "unverified_user",
+			"success":  false,
+			"message:": utils.Cap("phone isn't validated"),
+			"data":     "unverified_user",
 		})
 		return
 	}
 
 	if time.Since(user.OtpValid) > time.Minute*2 {
 		c.JSON(400, gin.H{
-			"success": false,
-			"message": "request for otp first",
-			"data":    "otp_expired",
+			"success":  false,
+			"message:": utils.Cap("request for otp first"),
+			"data":     "otp_expired",
 		})
 		return
 	}
 
 	if _, err := models.Verifyotp(user.PhoneNumber, fmt.Sprintf("%d", loginData.Otp)); err != nil {
 		c.JSON(406, gin.H{
-			"success": false,
-			"message": "invalid otp",
-			"data":    "invalid_otp",
+			"success":  false,
+			"message:": utils.Cap("invalid otp"),
+			"data":     "invalid_otp",
 		})
 	}
 
@@ -224,8 +224,8 @@ func LoginOneTimeLoginStep2(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "logged in",
+		"success":  true,
+		"message:": utils.Cap("logged in"),
 		"data": map[string]string{
 			"token":         token,
 			"refresh_token": refreshToken,
@@ -281,9 +281,9 @@ func SendOTP(c *gin.Context) {
 				return
 			}
 			c.JSON(200, gin.H{
-				"success": true,
-				"message": "done",
-				"data":    "otp_sent",
+				"success":  true,
+				"message:": utils.Cap("done"),
+				"data":     "otp_sent",
 			})
 			return
 		}
@@ -293,14 +293,14 @@ func SendOTP(c *gin.Context) {
 	}
 	allowToSend := time.Since(existingUser.OtpValid) > time.Minute*2
 	if allowToSend {
-		if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) < time.Hour {
-			c.JSON(406, gin.H{
-				"success": false,
-				"message": "otp freezed for 1 hour",
-				"data":    "otp_freezed_for_1_hour",
-			})
-			return
-		}
+		// if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) < time.Hour { // Development
+		// 	c.JSON(406, gin.H{
+		// 		"success": false,
+		// 		"message:": utils.Cap("otp freezed for 1 hour",
+		// 		"data":    "otp_freezed_for_1_hour",
+		// 	})
+		// 	return
+		// }
 		sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber)
 		if !sent {
 			log.Println("otp : ", errMessage)
@@ -328,15 +328,15 @@ func SendOTP(c *gin.Context) {
 		}
 		c.JSON(200, gin.H{
 			"success": true,
-			"message": "done",
+			"message": utils.Cap("done"),
 			"data":    "otp_sent",
 		})
 		return
 	} else {
 		c.JSON(406, gin.H{
-			"success": false,
-			"message": "2 minutes should pass to send sms",
-			"data":    "not_allowed_to_send_sms",
+			"success":  false,
+			"message:": "2 minutes should pass to send sms",
+			"data":     "not_allowed_to_send_sms",
 		})
 	}
 }
@@ -369,7 +369,7 @@ func Register(c *gin.Context) {
 		if exist == mongo.ErrNoDocuments {
 			c.JSON(400, gin.H{
 				"success": false,
-				"message": "request for otp first",
+				"message": utils.Cap("request for otp first"),
 				"data":    "invalid_otp",
 			})
 			return
@@ -381,7 +381,7 @@ func Register(c *gin.Context) {
 	if existingUser.PhoneNumber != registerData.PhoneNumber {
 		c.JSON(400, gin.H{
 			"success": false,
-			"message": "request for otp first",
+			"message": utils.Cap("request for otp first"),
 			"data":    "invalid_otp",
 		})
 		return
@@ -401,7 +401,7 @@ func Register(c *gin.Context) {
 	if _, err := models.Verifyotp(existingUser.PhoneNumber, fmt.Sprintf("%d", *registerData.OtpCode)); err != nil {
 		c.JSON(406, gin.H{
 			"success": false,
-			"message": "invalid otp",
+			"message": utils.Cap("invalid otp"),
 			"data":    "invalid_otp",
 		})
 	}
@@ -469,7 +469,7 @@ func Register(c *gin.Context) {
 
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
-			"message": "registered",
+			"message": utils.Cap("registered"),
 			"data": map[string]string{
 				"token":         token,
 				"refresh_token": refreshToken,
@@ -521,7 +521,7 @@ func Register(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
-			"message": "logged in",
+			"message": utils.Cap("logged in"),
 			"data": map[string]string{
 				"token":         token,
 				"refresh_token": refreshToken,
