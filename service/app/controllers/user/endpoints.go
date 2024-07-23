@@ -567,7 +567,7 @@ func SendDocuments(c *gin.Context) {
 	}
 
 	if user.StatusString == models.PendingStatus {
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": utils.Cap("user is awaiting for admin"),
 			"data":    "already_registered",
@@ -576,7 +576,7 @@ func SendDocuments(c *gin.Context) {
 	}
 
 	if user.UserVerified {
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": utils.Cap("user already verified"),
 			"data":    "already_registered",
@@ -661,7 +661,8 @@ func SendDocuments(c *gin.Context) {
 		"_id": user.ID,
 	}, bson.M{
 		"$set": bson.M{
-			"user_status": models.PendingStatus,
+			"user_status":   models.ApprovedStatus,
+			"user_verified": true,
 		},
 	}); err != nil {
 		utils.BadBinding(c)

@@ -238,7 +238,6 @@ type User struct {
 	PhoneNumber      string             `bson:"phone" json:"phone"`
 	Password         string             `bson:"password" json:"password"`
 	PhoneVerified    bool               `bson:"phone_verified" json:"phone_verified"`
-	OtpCode          *int               `bson:"otp_code" json:"otp_code"`
 	Address          []Address          `bson:"address" json:"address"`
 	ResetToken       string             `bson:"reset_token" json:"reset_token"`
 	ResetTokenValid  time.Time          `bson:"reset_token_valid" json:"reset_token_valid"`

@@ -4,6 +4,7 @@ import (
 	"carat-gold/models"
 	"carat-gold/utils"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -69,7 +70,7 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 		})
 		return
 	}
-	if user.ReTryOtp == 5 && time.Since(user.OtpValid) < time.Hour { // Test
+	if user.ReTryOtp == 5 && time.Since(user.OtpValid) < time.Hour {
 		c.JSON(406, gin.H{
 			"success": false,
 			"message": "otp freezed for 1 hour",
@@ -77,25 +78,22 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 		})
 		return
 	}
-	otp_code := 12345
-	// otp_code := utils.GenerateRandomCode()
-	// sent, errMessage := models.Sendotp(user.PhoneNumber, fmt.Sprint(otp_code))
-	// if !sent {
-	// 	log.Println("otp : ", errMessage)
-	// 	c.JSON(500, gin.H{
-	// 		"success": false,
-	// 		"message": errMessage,
-	// 		"data":    "failed_otp",
-	// 	})
-	// 	return
-	// }
+	sent, errMessage := models.Sendotp(user.PhoneNumber)
+	if !sent {
+		log.Println("otp : ", errMessage)
+		c.JSON(500, gin.H{
+			"success": false,
+			"message": errMessage,
+			"data":    "failed_otp",
+		})
+		return
+	}
 	if user.ReTryOtp == 5 && time.Since(user.OtpValid) > time.Hour {
 		user.ReTryOtp = 0
 	}
 	_, errs := db.Collection("users").UpdateOne(context.Background(),
 		bson.M{"_id": user.ID}, bson.M{
 			"$set": bson.M{
-				"otp_code":  &otp_code,
 				"otp_valid": time.Now().UTC(),
 				"retry_otp": user.ReTryOtp + 1,
 			},
@@ -174,13 +172,15 @@ func LoginOneTimeLoginStep2(c *gin.Context) {
 		})
 		return
 	}
-	if *user.OtpCode != *loginData.Otp {
+
+	if _, err := models.Verifyotp(user.PhoneNumber, fmt.Sprintf("%d", loginData.Otp)); err != nil {
 		c.JSON(406, gin.H{
 			"success": false,
 			"message": "invalid otp",
 			"data":    "invalid_otp",
 		})
 	}
+
 	_, errs := db.Collection("users").UpdateOne(context.Background(), bson.M{
 		"_id": user.ID,
 	}, bson.M{"$set": bson.M{
@@ -257,21 +257,19 @@ func SendOTP(c *gin.Context) {
 	}}).Decode(&existingUser)
 	if exist != nil {
 		if exist == mongo.ErrNoDocuments {
-			otp_code := 12345 // utils.GenerateRandomCode()
-			// sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
-			// if !sent {
-			// 	log.Println("otp : ", errMessage)
-			// 	c.JSON(500, gin.H{
-			// 		"success": false,
-			// 		"message": errMessage,
-			// 		"data":    "failed_otp",
-			// 	})
-			// 	return
-			// }
+			sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber)
+			if !sent {
+				log.Println("otp : ", errMessage)
+				c.JSON(500, gin.H{
+					"success": false,
+					"message": errMessage,
+					"data":    "failed_otp",
+				})
+				return
+			}
 			var user models.User
 			user.Email = ""
 			user.PhoneNumber = sendOTPData.PhoneNumber
-			user.OtpCode = &otp_code
 			user.ReTryOtp = 0
 			user.OtpValid = time.Now().UTC()
 			user.CreatedAt = time.Now().UTC()
@@ -295,7 +293,7 @@ func SendOTP(c *gin.Context) {
 	}
 	allowToSend := time.Since(existingUser.OtpValid) > time.Minute*2
 	if allowToSend {
-		if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) < time.Hour { // Test
+		if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) < time.Hour {
 			c.JSON(406, gin.H{
 				"success": false,
 				"message": "otp freezed for 1 hour",
@@ -303,24 +301,22 @@ func SendOTP(c *gin.Context) {
 			})
 			return
 		}
-		otp_code := 12345 // utils.GenerateRandomCode()
-		// sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber, fmt.Sprint(otp_code))
-		// if !sent {
-		// 	log.Println("otp : ", errMessage)
-		// 	c.JSON(500, gin.H{
-		// 		"success": false,
-		// 		"message": errMessage,
-		// 		"data":    "failed_otp",
-		// 	})
-		// 	return
-		// }
+		sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber)
+		if !sent {
+			log.Println("otp : ", errMessage)
+			c.JSON(500, gin.H{
+				"success": false,
+				"message": errMessage,
+				"data":    "failed_otp",
+			})
+			return
+		}
 		if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) > time.Hour {
 			existingUser.ReTryOtp = 0
 		}
 		_, err := db.Collection("users").UpdateOne(context.Background(),
 			bson.M{"_id": existingUser.ID}, bson.M{
 				"$set": bson.M{
-					"otp_code":  &otp_code,
 					"otp_valid": time.Now().UTC(),
 					"retry_otp": existingUser.ReTryOtp + 1,
 				},
@@ -401,13 +397,13 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
-	if *existingUser.OtpCode != *registerData.OtpCode {
-		c.JSON(400, gin.H{
+
+	if _, err := models.Verifyotp(existingUser.PhoneNumber, fmt.Sprintf("%d", *registerData.OtpCode)); err != nil {
+		c.JSON(406, gin.H{
 			"success": false,
-			"message": "invalid otp code",
+			"message": "invalid otp",
 			"data":    "invalid_otp",
 		})
-		return
 	}
 
 	if newRegister {
@@ -419,7 +415,6 @@ func Register(c *gin.Context) {
 			PhoneVerified: true,
 			UserVerified:  true,
 			StatusString:  models.ApprovedStatus,
-			OtpCode:       nil,
 			Reason:        "",
 		}
 		_, errs := db.Collection("users").UpdateOne(context.Background(), bson.M{

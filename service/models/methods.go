@@ -1213,6 +1213,35 @@ func SortedParamsToString(params map[string]interface{}) string {
 	return "{" + sortedString[:len(sortedString)-1] + "}"
 }
 
+func Verifyotp(mobileNumber, otpCode string) (bool, *string) {
+	mobileNumber = fmt.Sprintf("+%s", mobileNumber)
+	accountSID := os.Getenv("SID")
+	authToken := os.Getenv("SMS_TOKEN")
+	verificationSid := os.Getenv("VERIFY")
+
+	client := twilio.NewRestClientWithParams(twilio.ClientParams{
+		Username: accountSID,
+		Password: authToken,
+	})
+
+	verificationCheck, err := client.VerifyV2.CreateVerificationCheck(verificationSid, &openapi.CreateVerificationCheckParams{
+		To:   &mobileNumber,
+		Code: &otpCode,
+	})
+
+	if err != nil {
+		returnData := err.Error()
+		return false, &returnData
+	}
+
+	if *verificationCheck.Status == "approved" {
+		return true, nil
+	}
+
+	var returnData string = "Verification failed"
+	return false, &returnData
+}
+
 func Sendotp(mobileNumber string) (bool, string) {
 	mobileNumber = fmt.Sprintf("+%s", mobileNumber)
 	accountSID := os.Getenv("SID")
