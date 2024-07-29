@@ -920,17 +920,19 @@ func CreateTranscations(c *gin.Context) {
 
 	for _, product := range products {
 		if product.Amount == 0 {
-			c.JSON(http.StatusNotFound, gin.H{
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 				"success": false,
 				"message": utils.Cap("there is no more product left"),
 			})
+			return
 		}
 
 		if product.Hide {
-			c.JSON(http.StatusNotFound, gin.H{
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 				"success": false,
 				"message": utils.Cap("invalid product"),
 			})
+			return
 		}
 	}
 
@@ -1469,7 +1471,7 @@ func PayWithWallet(c *gin.Context) {
 	}
 
 	if !accepted {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"success": false,
 			"message": utils.Cap("invalid delivery method"),
 		})
@@ -1477,25 +1479,29 @@ func PayWithWallet(c *gin.Context) {
 	}
 
 	images := make(map[primitive.ObjectID][]models.Image)
+	requestedCounts := make(map[primitive.ObjectID]int)
+	for _, reqProduct := range request.ProductIDs {
+		requestedCounts[reqProduct]++
+	}
+
 	for _, product := range products {
-		for _, reqProduct := range request.ProductIDs {
-			if reqProduct == product.ID {
-				if product.Amount == 0 {
-					c.JSON(http.StatusNotFound, gin.H{
-						"success": false,
-						"message": utils.Cap("there is no more product left"),
-					})
-				}
-
-				if product.Hide {
-					c.JSON(http.StatusNotFound, gin.H{
-						"success": false,
-						"message": utils.Cap("invalid product"),
-					})
-				}
-
-				images[reqProduct] = product.Images
+		if count, exists := requestedCounts[product.ID]; exists {
+			if product.Amount < count {
+				c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+					"success": false,
+					"message": utils.Cap("there is no more product left"),
+				})
+				return
 			}
+
+			if product.Hide {
+				c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+					"success": false,
+					"message": utils.Cap("invalid product"),
+				})
+				return
+			}
+			images[product.ID] = product.Images
 		}
 	}
 
