@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -509,7 +510,6 @@ func EditUser(c *gin.Context) {
 		"message": utils.Cap("done"),
 	})
 }
-
 func GetUser(c *gin.Context) {
 	authUser, valid := models.ValidateSession(c)
 	if !valid {
@@ -524,9 +524,7 @@ func GetUser(c *gin.Context) {
 	}
 
 	var user models.User
-	exist := db.Collection("users").FindOne(context.Background(), bson.M{"$and": []bson.M{
-		{"_id": authUser.ID},
-	}}).Decode(&user)
+	exist := db.Collection("users").FindOne(context.Background(), bson.M{"_id": authUser.ID}).Decode(&user)
 	if exist != nil {
 		if exist == mongo.ErrNoDocuments {
 			utils.Unauthorized(c)
@@ -536,6 +534,10 @@ func GetUser(c *gin.Context) {
 		utils.InternalError(c)
 		return
 	}
+
+	sort.Slice(user.Wallet.Purchased, func(i, j int) bool {
+		return user.Wallet.Purchased[i].CreatedAt.After(user.Wallet.Purchased[j].CreatedAt)
+	})
 
 	c.JSON(200, gin.H{
 		"success": true,
