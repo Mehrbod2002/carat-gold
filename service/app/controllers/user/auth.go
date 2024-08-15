@@ -80,10 +80,9 @@ func LoginOneTimeLoginStep1(c *gin.Context) {
 	// }
 	sent, errMessage := models.Sendotp(user.PhoneNumber)
 	if !sent {
-		log.Println("otp : ", errMessage)
 		c.JSON(500, gin.H{
 			"success": false,
-			"message": utils.Cap("Failed to send sms"),
+			"message": utils.Cap(errMessage),
 			"data":    "failed_otp",
 		})
 		return
@@ -242,12 +241,10 @@ func SendOTP(c *gin.Context) {
 	}
 	err := sendOTPData.Validate(c)
 	if !err {
-		log.Println(err)
 		return
 	}
 	db, DBerr := utils.GetDB(c)
 	if DBerr != nil {
-		log.Println(DBerr)
 		return
 	}
 
@@ -259,10 +256,9 @@ func SendOTP(c *gin.Context) {
 		if exist == mongo.ErrNoDocuments {
 			sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber)
 			if !sent {
-				log.Println("otp : ", errMessage)
 				c.JSON(500, gin.H{
 					"success": false,
-					"message": utils.Cap("Failed to send sms"),
+					"message": utils.Cap(errMessage),
 					"data":    "failed_otp",
 				})
 				return
@@ -287,58 +283,58 @@ func SendOTP(c *gin.Context) {
 			})
 			return
 		}
-		log.Println(exist)
 		utils.InternalError(c)
 		return
 	}
-	allowToSend := time.Since(existingUser.OtpValid) > time.Minute*2
-	if allowToSend {
-		// if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) < time.Hour { // Development
-		// 	c.JSON(406, gin.H{
-		// 		"success": false,
-		// 		"message:": utils.Cap("otp freezed for 1 hour",
-		// 		"data":    "otp_freezed_for_1_hour",
-		// 	})
-		// 	return
-		// }
-		sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber)
-		if !sent {
-			log.Println("otp : ", errMessage)
-			c.JSON(500, gin.H{
-				"success": false,
-				"message": utils.Cap("Failed to send sms"),
-				"data":    "failed_otp",
-			})
-			return
-		}
-		if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) > time.Hour {
-			existingUser.ReTryOtp = 0
-		}
-		_, err := db.Collection("users").UpdateOne(context.Background(),
-			bson.M{"_id": existingUser.ID}, bson.M{
-				"$set": bson.M{
-					"otp_valid": time.Now().UTC(),
-					"retry_otp": existingUser.ReTryOtp + 1,
-				},
-			})
-		if err != nil {
-			log.Println(err)
-			utils.InternalError(c)
-			return
-		}
-		c.JSON(200, gin.H{
-			"success": true,
-			"message": utils.Cap("done"),
-			"data":    "otp_sent",
+	// allowToSend := time.Since(existingUser.OtpValid) > time.Minute*2
+	// if allowToSend {
+	// if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) < time.Hour { // Development
+	// 	c.JSON(406, gin.H{
+	// 		"success": false,
+	// 		"message:": utils.Cap("otp freezed for 1 hour",
+	// 		"data":    "otp_freezed_for_1_hour",
+	// 	})
+	// 	return
+	// }
+	sent, errMessage := models.Sendotp(sendOTPData.PhoneNumber)
+	if !sent {
+		log.Println("otp : ", errMessage)
+		c.JSON(500, gin.H{
+			"success": false,
+			"message": utils.Cap("Failed to send sms"),
+			"data":    "failed_otp",
 		})
 		return
-	} else {
-		c.JSON(406, gin.H{
-			"success":  false,
-			"message:": "2 minutes should pass to send sms",
-			"data":     "not_allowed_to_send_sms",
-		})
 	}
+	if existingUser.ReTryOtp == 5 && time.Since(existingUser.OtpValid) > time.Hour {
+		existingUser.ReTryOtp = 0
+	}
+	_, errUser := db.Collection("users").UpdateOne(context.Background(),
+		bson.M{"_id": existingUser.ID}, bson.M{
+			"$set": bson.M{
+				"otp_valid": time.Now().UTC(),
+				"retry_otp": existingUser.ReTryOtp + 1,
+			},
+		})
+	if errUser != nil {
+		log.Println(err)
+		utils.InternalError(c)
+		return
+	}
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": utils.Cap("done"),
+		"data":    "otp_sent",
+	})
+	return
+	// }
+	//  else {
+	// 	c.JSON(406, gin.H{
+	// 		"success":  false,
+	// 		"message:": "2 minutes should pass to send sms",
+	// 		"data":     "not_allowed_to_send_sms",
+	// 	})
+	// }
 }
 
 func Register(c *gin.Context) {
@@ -390,7 +386,7 @@ func Register(c *gin.Context) {
 		newRegister = true
 	}
 	if time.Since(existingUser.OtpValid) > time.Minute*5 {
-		c.JSON(400, gin.H{
+		c.AbortWithStatusJSON(400, gin.H{
 			"success": false,
 			"message": utils.Cap("otp expired"),
 			"data":    "otp_expired",
@@ -399,11 +395,12 @@ func Register(c *gin.Context) {
 	}
 
 	if _, err := models.Verifyotp(existingUser.PhoneNumber, fmt.Sprintf("%d", *registerData.OtpCode)); err != nil {
-		c.JSON(406, gin.H{
+		c.AbortWithStatusJSON(406, gin.H{
 			"success": false,
-			"message": utils.Cap("invalid otp"),
+			"message": utils.Cap(*err),
 			"data":    "invalid_otp",
 		})
+		return
 	}
 
 	if newRegister {

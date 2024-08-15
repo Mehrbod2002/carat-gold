@@ -1230,8 +1230,8 @@ func Verifyotp(mobileNumber, otpCode string) (bool, *string) {
 	})
 
 	if err != nil {
-		returnData := err.Error()
-		return false, &returnData
+		twilioError := err.(*twilioclient.TwilioRestError)
+		return false, &twilioError.Message
 	}
 
 	if *verificationCheck.Status == "approved" {
@@ -1261,7 +1261,7 @@ func Sendotp(mobileNumber string) (bool, string) {
 
 	if err != nil {
 		twilioError := err.(*twilioclient.TwilioRestError)
-		return false, twilioError.Error()
+		return false, twilioError.Message
 	}
 
 	return true, ""
