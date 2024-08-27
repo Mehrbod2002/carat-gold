@@ -472,7 +472,6 @@ func ValidateSession(c *gin.Context) (*User, bool) {
 	cookie_token, err := c.Request.Cookie("token")
 	if token == nil && tokenString == "" && err != nil {
 		log.Println(err)
-		utils.Unauthorized(c)
 		return nil, false
 	}
 	if tokenAdmins != "" {
@@ -489,7 +488,6 @@ func ValidateSession(c *gin.Context) (*User, bool) {
 	}
 	jwtSecret := os.Getenv("SESSION_SECRET")
 	if jwtSecret == "" {
-		utils.Unauthorized(c)
 		return nil, false
 	}
 
@@ -499,7 +497,6 @@ func ValidateSession(c *gin.Context) (*User, bool) {
 
 	if err != nil || !parsedToken.Valid {
 		log.Println(err)
-		utils.Unauthorized(c)
 		return nil, false
 	}
 

@@ -321,20 +321,12 @@ func SendOTP(c *gin.Context) {
 		utils.InternalError(c)
 		return
 	}
-	c.JSON(200, gin.H{
+
+	c.AbortWithStatusJSON(200, gin.H{
 		"success": true,
 		"message": utils.Cap("done"),
 		"data":    "otp_sent",
 	})
-	return
-	// }
-	//  else {
-	// 	c.JSON(406, gin.H{
-	// 		"success":  false,
-	// 		"message:": "2 minutes should pass to send sms",
-	// 		"data":     "not_allowed_to_send_sms",
-	// 	})
-	// }
 }
 
 func Register(c *gin.Context) {
@@ -533,7 +525,7 @@ func ValidateSession(c *gin.Context) {
 	token := session.Get("token")
 	tokenString := c.GetHeader("Authorization")
 	if token == nil && tokenString == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"success": false})
 		return
 	}
 	if token == nil {
@@ -542,7 +534,7 @@ func ValidateSession(c *gin.Context) {
 
 	jwtSecret := os.Getenv("SESSION_SECRET")
 	if jwtSecret == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"success": false})
 		return
 	}
 
@@ -552,7 +544,7 @@ func ValidateSession(c *gin.Context) {
 
 	if err != nil || !parsedToken.Valid {
 		log.Println(err)
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"success": false})
 		return
 	}
 
@@ -561,16 +553,16 @@ func ValidateSession(c *gin.Context) {
 	if ok && claims["_id"] != nil {
 		userID, ok := claims["_id"].(string)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"success": false})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"success": false})
 			return
 		}
 		if _, err := primitive.ObjectIDFromHex(userID); err == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"success": false})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"success": false})
 			return
 		}
-		c.JSON(http.StatusUnauthorized, gin.H{"success": true})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"success": true})
 		return
 	}
 
-	c.JSON(http.StatusUnauthorized, gin.H{"success": false})
+	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"success": false})
 }
