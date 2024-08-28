@@ -27,6 +27,17 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request, dataChannel <-chan 
 		return
 	}
 
+	lastDataLock.Lock()
+	if (lastData != DataMeta{}) {
+		if err := conn.WriteJSON(lastData); err != nil {
+			log.Printf("Failed to send last data to new client: %v", err)
+			lastDataLock.Unlock()
+			conn.Close()
+			return
+		}
+	}
+	lastDataLock.Unlock()
+
 	wssClientsLock.Lock()
 	wssClients[conn] = struct{}{}
 	wssClientsLock.Unlock()

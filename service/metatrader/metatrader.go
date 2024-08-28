@@ -67,6 +67,11 @@ func handleConnection(conn net.Conn, dataChannel chan DataMeta, errors chan<- er
 			}
 
 			data.Time = fmt.Sprintf("%d", time.Now().UTC().Unix())
+
+			lastDataLock.Lock()
+			lastData = data
+			lastDataLock.Unlock()
+
 			dataChannel <- data
 		}
 	}

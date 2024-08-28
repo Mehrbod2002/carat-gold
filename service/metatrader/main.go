@@ -20,6 +20,8 @@ var (
 			return true
 		},
 	}
+	lastData     DataMeta
+	lastDataLock sync.Mutex
 )
 
 func main() {
