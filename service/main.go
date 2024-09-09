@@ -18,9 +18,14 @@ import (
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
-	currentDir, _ := os.Getwd()
-	envFilePath := filepath.Join(currentDir, ".env")
-	err := godotenv.Load(envFilePath)
+	executablePath, err := os.UserHomeDir()
+	if err != nil {
+		log.Println("failed to get executable path")
+		return
+	}
+	executableDir := filepath.Dir(executablePath)
+	envFilePath := filepath.Join(executableDir, "admin", "carat-gold", "service", ".env")
+	err = godotenv.Load(envFilePath)
 	if err != nil {
 		log.Println("failed to load env file")
 		return
