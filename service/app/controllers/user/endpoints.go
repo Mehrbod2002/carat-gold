@@ -577,14 +577,14 @@ func SendDocuments(c *gin.Context) {
 		return
 	}
 
-	if user.UserVerified {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": utils.Cap("user already verified"),
-			"data":    "already_registered",
-		})
-		return
-	}
+	// if user.UserVerified {
+	// 	c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+	// 		"success": false,
+	// 		"message": utils.Cap("user already verified"),
+	// 		"data":    "already_registered",
+	// 	})
+	// 	return
+	// }
 
 	err = c.Request.ParseMultipartForm(10 << 20)
 	if err != nil {
