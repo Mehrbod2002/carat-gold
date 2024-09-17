@@ -510,6 +510,7 @@ func EditUser(c *gin.Context) {
 		"message": utils.Cap("done"),
 	})
 }
+
 func GetUser(c *gin.Context) {
 	authUser, valid := models.ValidateSession(c)
 	if !valid {
@@ -560,8 +561,11 @@ func SendDocuments(c *gin.Context) {
 		return
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+	defer cancel()
+
 	var user models.User
-	err := db.Collection("users").FindOne(context.Background(), bson.M{"_id": authUser.ID}).Decode(&user)
+	err := db.Collection("users").FindOne(ctx, bson.M{"_id": authUser.ID}).Decode(&user)
 	if err != nil {
 		log.Println(err)
 		utils.InternalError(c)
@@ -576,15 +580,6 @@ func SendDocuments(c *gin.Context) {
 		})
 		return
 	}
-
-	// if user.UserVerified {
-	// 	c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-	// 		"success": false,
-	// 		"message": utils.Cap("user already verified"),
-	// 		"data":    "already_registered",
-	// 	})
-	// 	return
-	// }
 
 	err = c.Request.ParseMultipartForm(10 << 20)
 	if err != nil {
@@ -650,7 +645,7 @@ func SendDocuments(c *gin.Context) {
 	}
 
 	if _, err := db.Collection("documents").
-		UpdateOne(context.Background(), bson.M{
+		UpdateOne(ctx, bson.M{
 			"user_id": user.ID,
 		}, bson.M{
 			"$set": update,
@@ -659,7 +654,7 @@ func SendDocuments(c *gin.Context) {
 		return
 	}
 
-	if _, err := db.Collection("users").UpdateOne(context.Background(), bson.M{
+	if _, err := db.Collection("users").UpdateOne(ctx, bson.M{
 		"_id": user.ID,
 	}, bson.M{
 		"$set": bson.M{
